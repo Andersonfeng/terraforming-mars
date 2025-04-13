@@ -23,12 +23,13 @@ sudo -u postgres psql -U postgres
 Edit the authoriation rules configuration file
 
 ```
-sudo nano /etc/postgresql/12/main/pg_hba.conf
+sudo nano /etc/postgresql/16/main/pg_hba.conf
 ```
 
 And add this line to the bottom
 
 ```
+# Integration testing for terraforming-mars
 local   all             tfmtest                                 md5
 ```
 
@@ -48,7 +49,7 @@ psql -U tfmtest --host=localhost --dbname=tfmtest -W
 
 ## Set the environment variable for the password
 
-Add this line to your `.env` file, still assuming the password is "diablo"
+Add this line to `tests/integration/.env`, still assuming the password is "diablo"
 
 ```
 POSTGRES_INTEGRATION_TEST_PASSWORD=diablo
@@ -58,4 +59,10 @@ Now you can run the postgresql test.
 
 ```
 npm run test:integration
+```
+
+or just
+
+```
+npm run test:postgresql
 ```

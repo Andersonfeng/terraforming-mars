@@ -3,8 +3,8 @@
         <div v-if="showtitle === true" class="nofloat wf-component-title">{{ $t(playerinput.title) }}</div>
         <label v-for="card in getOrderedCards()" :key="card.name" :class="getCardBoxClass(card)">
             <template v-if="!card.isDisabled">
-              <input v-if="isSelectOnlyOneCard()" type="radio" v-model="cards" :value="card" />
-              <input v-else type="checkbox" v-model="cards" :value="card" :disabled="playerinput.maxCardsToSelect !== undefined && Array.isArray(cards) && cards.length >= playerinput.maxCardsToSelect && cards.includes(card) === false" />
+              <input v-if="selectOnlyOneCard" type="radio" v-model="cards" :value="card" />
+              <input v-else type="checkbox" v-model="cards" :value="card" :disabled="playerinput.max !== undefined && Array.isArray(cards) && cards.length >= playerinput.max && cards.includes(card) === false" />
             </template>
             <Card :card="card" :actionUsed="isCardActivated(card)" :robotCard="robotCard(card)">
               <template v-if="playerinput.showOwner">
@@ -15,9 +15,10 @@
             </Card>
         </label>
         <div v-if="hasCardWarning()" class="card-warning">{{ $t(warning) }}</div>
+        <warnings-component :warnings="warnings"></warnings-component>
         <div v-if="showsave === true" class="nofloat">
-            <Button :disabled="isOptionalToManyCards() && cardsSelected() === 0" type="submit" @click="saveData" :title="buttonLabel()" />
-            <Button :disabled="isOptionalToManyCards() && cardsSelected() > 0" v-if="isOptionalToManyCards()" @click="saveData" type="submit" :title="$t('Skip this action')" />
+            <AppButton :disabled="isOptionalToManyCards && cardsSelected() === 0" type="submit" @click="saveData" :title="buttonLabel()" />
+            <AppButton :disabled="isOptionalToManyCards && cardsSelected() > 0" v-if="isOptionalToManyCards" @click="saveData" type="submit" :title="$t('Skip this action')" />
         </div>
     </div>
 </template>
@@ -25,27 +26,30 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import Button from '@/client/components/common/Button.vue';
+import AppButton from '@/client/components/common/AppButton.vue';
+import WarningsComponent from '@/client/components/WarningsComponent.vue';
 import {Color} from '@/common/Color';
 import {Message} from '@/common/logs/Message';
 import {CardOrderStorage} from '@/client/utils/CardOrderStorage';
 import {PlayerViewModel} from '@/common/models/PlayerModel';
-import {VueModelCheckbox, VueModelRadio} from '@/client/types';
 import Card from '@/client/components/card/Card.vue';
 import {CardModel} from '@/common/models/CardModel';
 import {CardName} from '@/common/cards/CardName';
-import {PlayerInputModel} from '@/common/models/PlayerInputModel';
+import {SelectCardModel} from '@/common/models/PlayerInputModel';
 import {sortActiveCards} from '@/client/utils/ActiveCardsSortingOrder';
-import {InputResponse} from '@/common/inputs/InputResponse';
+import {SelectCardResponse} from '@/common/inputs/InputResponse';
+import {Warning} from '@/common/cards/Warning';
 
-interface Owner {
+type Owner = {
   name: string;
   color: Color;
 }
 
-interface SelectCardModel {
-  cards: VueModelRadio<CardModel> | VueModelCheckbox<Array<CardModel>>;
+type WidgetDataModel = {
+  // The selected item or items
+  cards: CardModel | Array<CardModel>;
   warning: string | Message | undefined;
+  warnings: ReadonlyArray<Warning> | undefined;
   owners: Map<CardName, Owner>,
 }
 
@@ -56,10 +60,10 @@ export default Vue.extend({
       type: Object as () => PlayerViewModel,
     },
     playerinput: {
-      type: Object as () => PlayerInputModel,
+      type: Object as () => SelectCardModel,
     },
     onsave: {
-      type: Function as unknown as () => (out: InputResponse) => void,
+      type: Function as unknown as () => (out: SelectCardResponse) => void,
     },
     showsave: {
       type: Boolean,
@@ -70,16 +74,18 @@ export default Vue.extend({
       type: Boolean,
     },
   },
-  data() {
+  data(): WidgetDataModel {
     return {
       cards: [],
       warning: undefined,
       owners: new Map(),
-    } as SelectCardModel;
+      warnings: undefined,
+    };
   },
   components: {
     Card,
-    Button,
+    WarningsComponent,
+    AppButton,
   },
   watch: {
     cards() {
@@ -90,13 +96,13 @@ export default Vue.extend({
     cardsSelected(): number {
       if (Array.isArray(this.cards)) {
         return this.cards.length;
-      } else if (this.cards === false || this.cards === undefined) {
+      } else if (this.cards === undefined) {
         return 0;
       }
       return 1;
     },
-    getOrderedCards(): Array<CardModel> {
-      let cards: Array<CardModel> = [];
+    getOrderedCards(): ReadonlyArray<CardModel> {
+      let cards: ReadonlyArray<CardModel> = [];
       if (this.playerinput.cards !== undefined) {
         if (this.playerinput.selectBlueCardAction) {
           cards = sortActiveCards(this.playerinput.cards);
@@ -111,7 +117,7 @@ export default Vue.extend({
       if (this.playerinput.showOwner) {
         // Optimization so getOwners isn't repeatedly called.
         this.owners.clear();
-        this.playerinput.cards?.forEach((card) => {
+        this.playerinput.cards.forEach((card) => {
           const owner = this.findOwner(card);
           if (owner !== undefined) this.owners.set(card.name, owner);
         });
@@ -119,24 +125,40 @@ export default Vue.extend({
       return cards;
     },
     hasCardWarning() {
+      // This is pretty clunky, to be honest.
       if (Array.isArray(this.cards)) {
+        if (this.cards.length === 1) {
+          this.warnings = this.cards[0].warnings;
+          if (this.cards[0].warning !== undefined) {
+            this.warning = this.cards[0].warning;
+            return true;
+          }
+        }
         return false;
-      } else if (typeof this.cards === 'object' && this.cards.warning !== undefined) {
-        this.warning = this.cards.warning;
-        return true;
+      } else if (typeof this.cards === 'object') {
+        this.warnings = this.cards.warnings;
+        if (this.cards.warning !== undefined) {
+          this.warning = this.cards.warning;
+          return true;
+        }
       }
       return false;
-    },
-    isOptionalToManyCards(): boolean {
-      return this.playerinput.maxCardsToSelect !== undefined &&
-             this.playerinput.maxCardsToSelect > 1 &&
-             this.playerinput.minCardsToSelect === 0;
     },
     getData(): Array<CardName> {
       return Array.isArray(this.$data.cards) ? this.$data.cards.map((card) => card.name) : [this.$data.cards.name];
     },
+    canSave() {
+      const len = this.getData().length;
+      if (len > this.playerinput.min) {
+        return false;
+      }
+      if (len < this.playerinput.max) {
+        return false;
+      }
+      return true;
+    },
     saveData() {
-      this.onsave([this.getData()]);
+      this.onsave({type: 'card', cards: this.getData()});
     },
     getCardBoxClass(card: CardModel): string {
       if (this.playerinput.showOwner && this.getOwner(card) !== undefined) {
@@ -146,27 +168,34 @@ export default Vue.extend({
     },
     findOwner(card: CardModel): Owner | undefined {
       for (const player of this.playerView.players) {
-        if (player.playedCards.find((c) => c.name === card.name) || player.corporationCard?.name === card.name) {
+        if (player.tableau.find((c) => c.name === card.name)) {
           return {name: player.name, color: player.color};
         }
       }
       return undefined;
     },
     getOwner(card: CardModel): Owner {
-      return this.owners.get(card.name) ?? {name: 'unknown', color: Color.NEUTRAL};
-    },
-    isSelectOnlyOneCard() : boolean {
-      return this.playerinput.maxCardsToSelect === 1 && this.playerinput.minCardsToSelect === 1;
-    },
-    buttonLabel(): string {
-      return this.isSelectOnlyOneCard() ? this.playerinput.buttonLabel : this.playerinput.buttonLabel + ' ' + this.cardsSelected();
+      return this.owners.get(card.name) ?? {name: 'unknown', color: 'neutral'};
     },
     isCardActivated(card: CardModel): boolean {
       // Copied from PlayerMixin.
       return this.playerView.thisPlayer.actionsThisGeneration.includes(card.name);
     },
+    buttonLabel(): string {
+      return this.selectOnlyOneCard ? this.playerinput.buttonLabel : this.playerinput.buttonLabel + ' ' + this.cardsSelected();
+    },
     robotCard(card: CardModel): CardModel | undefined {
       return this.playerView.thisPlayer.selfReplicatingRobotsCards?.find((r) => r.name === card.name);
+    },
+  },
+  computed: {
+    selectOnlyOneCard() : boolean {
+      return this.playerinput.max === 1 && this.playerinput.min === 1;
+    },
+    isOptionalToManyCards(): boolean {
+      return this.playerinput.max !== undefined &&
+             this.playerinput.max > 1 &&
+             this.playerinput.min === 0;
     },
   },
 });

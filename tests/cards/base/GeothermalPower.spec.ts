@@ -1,14 +1,13 @@
 import {expect} from 'chai';
-import {GeothermalPower} from '../../../src/cards/base/GeothermalPower';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {GeothermalPower} from '../../../src/server/cards/base/GeothermalPower';
+import {cast} from '../../TestingUtils';
 
-describe('GeothermalPower', function() {
-  it('Should play', function() {
+describe('GeothermalPower', () => {
+  it('Should play', () => {
     const card = new GeothermalPower();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(2);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.energy).to.eq(2);
   });
 });

@@ -1,48 +1,75 @@
 import {expect} from 'chai';
-import {IProjectCard} from '../../src/cards/IProjectCard';
-import {Pluto} from '../../src/colonies/Pluto';
-import {Game} from '../../src/Game';
-import {SelectCard} from '../../src/inputs/SelectCard';
-import {Player} from '../../src/Player';
-import {TestPlayers} from '../TestPlayers';
-import {TestingUtils} from '../TestingUtils';
+import {cast} from '../TestingUtils';
+import {IProjectCard} from '../../src/server/cards/IProjectCard';
+import {Pluto} from '../../src/server/colonies/Pluto';
+import {IGame} from '../../src/server/IGame';
+import {SelectCard} from '../../src/server/inputs/SelectCard';
+import {TestPlayer} from '../TestPlayer';
+import {runAllActions} from '../TestingUtils';
+import {testGame} from '../TestGame';
 
-describe('Pluto', function() {
-  let pluto: Pluto; let player: Player; let player2: Player; let game: Game;
+describe('Pluto', () => {
+  let pluto: Pluto;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     pluto = new Pluto();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
-    game.gameOptions.coloniesExtension = true;
+    [game, player, player2] = testGame(2, {coloniesExtension: true});
     game.colonies.push(pluto);
   });
 
-  it('Should build', function() {
+  it('Should build', () => {
     pluto.addColony(player);
-    TestingUtils.runAllActions(game); // Draw cards
+    runAllActions(game); // Draw cards
     expect(player.cardsInHand).has.lengthOf(2);
   });
 
-  it('Should trade', function() {
+  it('Should trade', () => {
     pluto.trade(player);
-    TestingUtils.runAllActions(game); // Draw cards
+    runAllActions(game); // Draw cards
     expect(player.cardsInHand).has.lengthOf(1);
   });
 
-  it('Should give trade bonus', function() {
+  it('Should give trade bonus', () => {
     pluto.addColony(player);
+    runAllActions(game); // Draw a card
+    expect(player.cardsInHand).has.lengthOf(2);
 
     pluto.trade(player2);
+    runAllActions(game); // Draw a card
+    expect(player.cardsInHand).has.lengthOf(3);
 
-    TestingUtils.runAllActions(game);
-
-    const input = player.getWaitingFor()! as SelectCard<IProjectCard>;
-    expect(input).to.be.an.instanceof(SelectCard);
+    const input = cast(player.getWaitingFor(), SelectCard<IProjectCard>);
     input.cb([input.cards[0]]); // Discard a card
+
+    runAllActions(game);
 
     expect(player.cardsInHand).has.lengthOf(2);
     expect(player2.cardsInHand).has.lengthOf(1);
+  });
+
+  it('Reward in order #4536', () => {
+    pluto.addColony(player);
+    pluto.addColony(player);
+    runAllActions(game);
+    expect(player.cardsInHand).has.lengthOf(4);
+
+    pluto.trade(player2);
+
+    runAllActions(game);
+
+    const selectCard = cast(player.popWaitingFor(), SelectCard<IProjectCard>);
+    expect(player.cardsInHand).has.lengthOf(5);
+    selectCard.cb([selectCard.cards[0]]); // Discard a card
+    expect(player.cardsInHand).has.lengthOf(4);
+
+    runAllActions(game);
+
+    const selectCard2 = cast(player.popWaitingFor(), SelectCard<IProjectCard>);
+    expect(player.cardsInHand).has.lengthOf(5);
+    selectCard2.cb([selectCard2.cards[0]]); // Discard a card
+    expect(player.cardsInHand).has.lengthOf(4);
   });
 });

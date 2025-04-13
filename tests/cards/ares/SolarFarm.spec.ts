@@ -1,26 +1,25 @@
 import {expect} from 'chai';
-import {AresHandler} from '../../../src/ares/AresHandler';
-import {SolarFarm} from '../../../src/cards/ares/SolarFarm';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
+import {AresHandler} from '../../../src/server/ares/AresHandler';
+import {SolarFarm} from '../../../src/server/cards/ares/SolarFarm';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
 import {TileType} from '../../../src/common/TileType';
-import {ARES_OPTIONS_WITH_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('SolarFarm', function() {
-  let card: SolarFarm; let player: Player; let game: Game;
+describe('SolarFarm', () => {
+  let card: SolarFarm;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new SolarFarm();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_WITH_HAZARDS);
+    [game, player] = testGame(2, {aresExtension: true, aresHazards: true});
   });
 
-  it('Play', function() {
+  it('Play', () => {
     // Find the first spot with no hazard tile on it to place a city.
     const space = game.board.getAvailableSpacesForCity(player).filter((s) => !AresHandler.hasHazardTile(s))[0];
     // Hack the space to have a large number of plants, just to show a matching
@@ -35,18 +34,20 @@ describe('SolarFarm', function() {
       SpaceBonus.PLANT,
     ];
 
-    const action = card.play(player);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpcae = cast(player.popWaitingFor(), SelectSpace);
 
-    expect(action).instanceOf(SelectSpace);
+    expect(player.production.energy).eq(0);
 
-    expect(player.getProduction(Resources.ENERGY)).eq(0);
     const citySpace = game.board.getAvailableSpacesOnLand(player).filter((s) => !AresHandler.hasHazardTile(s))[0];
-    action.cb(citySpace);
+    selectSpcae.cb(citySpace);
+
     expect(citySpace.player).to.eq(player);
     expect(citySpace.tile!.tileType).to.eq(TileType.SOLAR_FARM);
     expect(citySpace.adjacency).to.deep.eq({
       bonus: [SpaceBonus.ENERGY, SpaceBonus.ENERGY],
     });
-    expect(player.getProduction(Resources.ENERGY)).eq(7);
+    expect(player.production.energy).eq(7);
   });
 });

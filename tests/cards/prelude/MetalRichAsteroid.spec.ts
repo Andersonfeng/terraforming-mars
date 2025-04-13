@@ -1,15 +1,13 @@
 import {expect} from 'chai';
-import {MetalRichAsteroid} from '../../../src/cards/prelude/MetalRichAsteroid';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {MetalRichAsteroid} from '../../../src/server/cards/prelude/MetalRichAsteroid';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('Metal-RichAsteroid', function() {
-  it('Should play', function() {
+describe('Metal-RichAsteroid', () => {
+  it('Should play', () => {
     const card = new MetalRichAsteroid();
-    const player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('foobar', [player], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [game, player] = testGame(1);
+    cast(card.play(player), undefined);
     expect(player.titanium).to.eq(4);
     expect(player.steel).to.eq(4);
     expect(game.getTemperature()).to.equal(-28);

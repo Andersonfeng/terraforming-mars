@@ -1,5 +1,5 @@
 <template>
-  <component :is="getComponentName(playerinput.inputType)"
+  <component :is="componentName"
     :players="players"
     :playerView="playerView"
     :playerinput="playerinput"
@@ -11,25 +11,50 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import {PlayerInputTypes} from '@/common/input/PlayerInputTypes';
+import {PlayerInputType} from '@/common/input/PlayerInputType';
 import {PlayerViewModel, PublicPlayerModel} from '@/common/models/PlayerModel';
 import {PlayerInputModel} from '@/common/models/PlayerInputModel';
+import {InputResponse} from '@/common/inputs/InputResponse';
 import AndOptions from '@/client/components/AndOptions.vue';
 import OrOptions from '@/client/components/OrOptions.vue';
 import SelectAmount from '@/client/components/SelectAmount.vue';
 import SelectCard from '@/client/components/SelectCard.vue';
-import SelectHowToPay from '@/client/components/SelectHowToPay.vue';
-import SelectHowToPayForProjectCard from '@/client/components/SelectHowToPayForProjectCard.vue';
+import SelectPayment from '@/client/components/SelectPayment.vue';
+import SelectProjectCardToPlay from '@/client/components/SelectProjectCardToPlay.vue';
 import SelectInitialCards from '@/client/components/SelectInitialCards.vue';
 import SelectOption from '@/client/components/SelectOption.vue';
 import SelectPlayer from '@/client/components/SelectPlayer.vue';
 import SelectSpace from '@/client/components/SelectSpace.vue';
-import SelectPartyPlayer from '@/client/components/SelectPartyPlayer.vue';
-import SelectPartyToSendDelegate from '@/client/components/SelectPartyToSendDelegate.vue';
+import SelectDelegate from '@/client/components/SelectDelegate.vue';
+import SelectParty from '@/client/components/SelectParty.vue';
 import SelectColony from '@/client/components/SelectColony.vue';
 import SelectProductionToLose from '@/client/components/SelectProductionToLose.vue';
 import ShiftAresGlobalParameters from '@/client/components/ShiftAresGlobalParameters.vue';
-import {InputResponse} from '@/common/inputs/InputResponse';
+import SelectGlobalEvent from '@/client/components/SelectGlobalEvent.vue';
+import SelectResource from '@/client/components/SelectResource.vue';
+import SelectResources from '@/client/components/SelectResources.vue';
+
+const typeToComponentName: Record<PlayerInputType, string> = {
+  'and': 'and-options',
+  'card': 'SelectCard',
+  'projectCard': 'SelectProjectCardToPlay',
+  'initialCards': 'SelectInitialCards',
+  'or': 'or-options',
+  'option': 'select-option',
+  'payment': 'SelectPayment',
+  'space': 'select-space',
+  'player': 'select-player',
+  'amount': 'select-amount',
+  'delegate': 'select-delegate',
+  'party': 'select-party',
+  'colony': 'select-colony',
+  'productionToLose': 'select-production-to-lose',
+  'aresGlobalParameters': 'shift-ares-global-parameters',
+  'globalEvent': 'select-global-event',
+  'policy': 'select-policy',
+  'resource': 'select-resource',
+  'resources': 'select-resources',
+};
 
 export default Vue.component('player-input-factory', {
   props: {
@@ -58,16 +83,19 @@ export default Vue.component('player-input-factory', {
     'select-amount': SelectAmount,
     SelectCard,
     'select-option': SelectOption,
-    SelectHowToPay,
-    SelectHowToPayForProjectCard,
+    SelectPayment,
+    SelectProjectCardToPlay,
     SelectInitialCards,
     'select-player': SelectPlayer,
     'select-space': SelectSpace,
-    'select-party-player': SelectPartyPlayer,
-    'select-party-to-send-delegate': SelectPartyToSendDelegate,
+    'select-delegate': SelectDelegate,
+    'select-party': SelectParty,
     'select-colony': SelectColony,
     SelectProductionToLose,
     ShiftAresGlobalParameters,
+    SelectGlobalEvent,
+    'select-resource': SelectResource,
+    'select-resources': SelectResources,
   },
   methods: {
     saveData() {
@@ -77,41 +105,10 @@ export default Vue.component('player-input-factory', {
       const canSave = (this.$children[0] as any).canSave;
       return canSave ? canSave() : true;
     },
-    getComponentName(inputType: PlayerInputTypes): string {
-      switch (inputType) {
-      case PlayerInputTypes.AND_OPTIONS:
-        return 'and-options';
-      case PlayerInputTypes.SELECT_CARD:
-        return 'SelectCard';
-      case PlayerInputTypes.SELECT_HOW_TO_PAY_FOR_PROJECT_CARD:
-        return 'SelectHowToPayForProjectCard';
-      case PlayerInputTypes.SELECT_INITIAL_CARDS:
-        return 'SelectInitialCards';
-      case PlayerInputTypes.OR_OPTIONS:
-        return 'or-options';
-      case PlayerInputTypes.SELECT_OPTION:
-        return 'select-option';
-      case PlayerInputTypes.SELECT_HOW_TO_PAY:
-        return 'SelectHowToPay';
-      case PlayerInputTypes.SELECT_SPACE:
-        return 'select-space';
-      case PlayerInputTypes.SELECT_PLAYER:
-        return 'select-player';
-      case PlayerInputTypes.SELECT_AMOUNT:
-        return 'select-amount';
-      case PlayerInputTypes.SELECT_DELEGATE:
-        return 'select-party-player';
-      case PlayerInputTypes.SELECT_PARTY_TO_SEND_DELEGATE:
-        return 'select-party-to-send-delegate';
-      case PlayerInputTypes.SELECT_COLONY:
-        return 'select-colony';
-      case PlayerInputTypes.SELECT_PRODUCTION_TO_LOSE:
-        return 'select-production-to-lose';
-      case PlayerInputTypes.SHIFT_ARES_GLOBAL_PARAMETERS:
-        return 'shift-ares-global-parameters';
-      default:
-        throw new Error('Unsupported input type: ' + inputType);
-      }
+  },
+  computed: {
+    componentName(): string {
+      return typeToComponentName[this.playerinput.type];
     },
   },
 });

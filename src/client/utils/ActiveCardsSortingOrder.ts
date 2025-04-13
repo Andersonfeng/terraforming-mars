@@ -1,7 +1,7 @@
 import {CardName} from '@/common/cards/CardName';
 import {CardModel} from '@/common/models/CardModel';
 
-export function sortActiveCards(inCards: Array<CardModel>): Array<CardModel> {
+export function sortActiveCards(inCards: ReadonlyArray<CardModel>): ReadonlyArray<CardModel> {
   const firstCardIndex = -1;
   return inCards.slice().sort(function(cardA: CardModel, cardB: CardModel) {
     return (ActiveCardsSortingOrder.get(cardA.name) || firstCardIndex) - (ActiveCardsSortingOrder.get(cardB.name) || firstCardIndex);
@@ -157,7 +157,7 @@ export const ActiveCardsSortingOrder: Map<CardName, number> = new Map([
   CardName.MAXWELL_BASE,
   CardName.MOHOLE_LAKE,
   CardName.SEARCH_FOR_LIFE,
-  CardName.REFUGEE_CAMP,
+  CardName.REFUGEE_CAMPS,
   CardName.SECURITY_FLEET,
 
   // Other passive cards

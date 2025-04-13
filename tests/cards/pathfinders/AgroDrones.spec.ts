@@ -1,30 +1,30 @@
 import {expect} from 'chai';
-import {AgroDrones} from '../../../src/cards/pathfinders/AgroDrones';
-import {Game} from '../../../src/Game';
+import {setTemperature} from '../../TestingUtils';
+import {AgroDrones} from '../../../src/server/cards/pathfinders/AgroDrones';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestingUtils';
 
-describe('AgroDrones', function() {
+describe('AgroDrones', () => {
   let card: AgroDrones;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AgroDrones();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
     player.playedCards.push(card);
   });
 
-  it('canPlay', function() {
-    (game as any).temperature = -20;
-    expect(player.canPlayIgnoringCost(card)).is.false;
+  it('canPlay', () => {
+    setTemperature(game, -20);
+    expect(card.canPlay(player)).is.false;
 
-    (game as any).temperature = -18;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    setTemperature(game, -18);
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('Can act', function() {
+  it('Can act', () => {
     player.steel = 0;
     player.energy = 0;
 
@@ -46,7 +46,7 @@ describe('AgroDrones', function() {
     expect(card.canAct(player)).is.true;
   });
 
-  it('act', function() {
+  it('act', () => {
     player.steel = 1;
     player.energy = 1;
     player.plants = 0;

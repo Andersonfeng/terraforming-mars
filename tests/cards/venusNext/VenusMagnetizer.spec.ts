@@ -1,37 +1,38 @@
 import {expect} from 'chai';
-import {VenusMagnetizer} from '../../../src/cards/venusNext/VenusMagnetizer';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {VenusMagnetizer} from '../../../src/server/cards/venusNext/VenusMagnetizer';
+import {IGame} from '../../../src/server/IGame';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, setVenusScaleLevel} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('VenusMagnetizer', function() {
-  let card : VenusMagnetizer; let player : Player; let game : Game;
+describe('VenusMagnetizer', () => {
+  let card: VenusMagnetizer;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new VenusMagnetizer();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    (game as any).venusScaleLevel = 8;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    setVenusScaleLevel(game, 8);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    (game as any).venusScaleLevel = 10;
-    expect(player.canPlayIgnoringCost(card)).is.true;
-    expect(card.play()).is.undefined;
+  it('Should play', () => {
+    setVenusScaleLevel(game, 10);
+    expect(card.canPlay(player)).is.true;
+    cast(card.play(player), undefined);
   });
 
-  it('Should act', function() {
-    player.addProduction(Resources.ENERGY, 2);
+  it('Should act', () => {
+    player.production.add(Resource.ENERGY, 2);
     player.playedCards.push(card);
 
     card.action(player);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
+    expect(player.production.energy).to.eq(1);
     expect(game.getVenusScaleLevel()).to.eq(2);
   });
 });

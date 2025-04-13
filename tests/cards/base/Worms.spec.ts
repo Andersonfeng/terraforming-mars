@@ -1,31 +1,33 @@
 import {expect} from 'chai';
-import {Worms} from '../../../src/cards/base/Worms';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Worms} from '../../../src/server/cards/base/Worms';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
+import {setOxygenLevel} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('Worms', function() {
-  let card : Worms; let player : Player; let game : Game;
+describe('Worms', () => {
+  let card: Worms;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Worms();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    (game as any).oxygenLevel = 3;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    setOxygenLevel(game, 3);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    (game as any).oxygenLevel = 4;
-    expect(player.canPlayIgnoringCost(card)).is.true;
-    player.playedCards.push(card);
+  it('Should play', () => {
+    setOxygenLevel(game, 4);
+    expect(card.canPlay(player)).is.true;
+    const tardigrades = new Tardigrades();
+    player.playedCards.push(tardigrades);
 
     card.play(player);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    expect(player.production.plants).to.eq(1);
   });
 });

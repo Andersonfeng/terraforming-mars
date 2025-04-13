@@ -1,8 +1,21 @@
 #player-home, #spectator-home {
     padding-left: 20px;
     padding-top: 20px;
-    background: linear-gradient(transparent, #000), url(assets/stars.jpg);
+    background: linear-gradient(transparent, #000), url(./assets/stars.jpg);
     background-attachment: fixed;
+
+    > div:not([class]), > div:not([class]) > div.player_home_block:first-child {
+        > a:after {
+            content: '🔗';
+            border-radius: 32px;
+            margin-left: 5px;
+        }
+        > a:hover, a:focus {
+            background: rgba(180, 180, 180, 0.3);
+            border-radius: 6px;
+            text-decoration: none;
+        }
+    }
 }
 
 // text shadows
@@ -110,27 +123,27 @@
         background-color: rgb(245, 116, 187, 0.2);
     }
     .city-count {
-        background: url(assets/icon_city.png) center no-repeat;
+        background: url(./assets/icon_city.png) center no-repeat;
         filter: invert(100%) contrast(200%);
     }
 
     .colony-count {
-        background: url(assets/icon_colony.png) center no-repeat;
+        background: url(./assets/icon_colony.png) center no-repeat;
         background-size: 24px;
     }
 
     .influence-count {
-        background: url(assets/icon_influence.png) center no-repeat;
+        background: url(./assets/icon_influence.png) center no-repeat;
         filter: invert(100%) contrast(200%);
         background-size: 28px;
     }
 
     .card-count {
-        background: url(assets/preferences_cards.png) center no-repeat;
+        background: url(./assets/preferences_cards.png) center no-repeat;
     }
 
     .vp-count {
-        background-image: url(assets/board/mars.png);
+        background-image: url(./assets/board/mars.png);
         background-size: 65px;
         background-position: center;
 
@@ -163,6 +176,15 @@
     margin-left: 3px;
     box-sizing: content-box;
     z-index: 2;
+    &::after {
+        text-transform: capitalize;
+    }
+    &.tag-tr::after {
+        text-transform: uppercase;
+    }
+    &.tag-vp::after {
+        text-transform: uppercase;
+    }
 }
 
 .tag-type-main {
@@ -198,7 +220,7 @@
     background: linear-gradient(#cc8b00, #805700, #805700) !important;
     background-position: 0px !important;
 }
-.tag-vp::after {
+.tag-vp::before {
     position: absolute;
     content: "VP";
     font-family: Prototype;
@@ -240,21 +262,31 @@
 }
 
 .tag-tr {
-    background-image: url(assets/resources/tr.png);
-    background-image: url(assets/resources/tr.png);
+    background-image: url(./assets/resources/tr.png);
     background-size: 49px 38px !important;
     background-position: -4px -2px !important;
 }
+.tag-handicap {
+    background-image: url(./assets/resources/handicap.png);
+    background-size: 42px 35px !important;
+    background-color: transparent;
+    box-shadow: none;
+    border-radius: unset;
+    filter: drop-shadow(.5px .5px 0 black)
+        drop-shadow(-.5px .5px 0 black)
+        drop-shadow(.5px -.5px 0 black)
+        drop-shadow(-.5px -.5px 0 black);
+}
+
 .tag-escape {
     background-image: url(./assets/expansion_icons/expansion_icon_escapeVelocity.png);
-    background-color: black;
-    background-size: 40px;
-    background-position: -3px;
-    border-radius: 20px;
+    background-size: 56px;
+    background-position: -8px;
+    border-radius: 18px;
 }
 .tag-city-count {
-    background-image: url(assets/tiles/city.png);
-    background-image: url(assets/tiles/city.png);
+    background-image: url(./assets/tiles/city.png);
+    background-image: url(./assets/tiles/city.png);
     border-radius: 0px !important;
     background-color: transparent !important;
     box-shadow: none !important;
@@ -267,14 +299,14 @@
 }
 
 .tag-colony-count {
-    background: url(assets/tiles/colony.png) no-repeat;
+    background: url(./assets/tiles/colony.png) no-repeat;
     background-size: 34px;
     border-radius: 0px;
     box-shadow: none;
 }
 
-  .tag-influence-count {
-    background-image: url(assets/misc/influence.png);
+.tag-influence-count {
+    background-image: url(./assets/misc/influence.png);
     border: none !important;
     background-color: transparent !important;
     box-shadow: none !important;
@@ -284,7 +316,35 @@
     filter: brightness(0.8);
     border-radius: 0px !important;
     background-position: 0px !important;
-  }
+}
+
+
+.tag-excavation-count {
+  background-image: url(./assets/underworld/excavate.png);
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  background-size: 34px !important;
+  width: 34px !important;
+  height: 34px !important;
+  filter: brightness(0.8);
+  border-radius: 0px !important;
+  background-position: 0px !important;
+}
+
+.tag-corruption-count {
+  background-image: url(./assets/underworld/corruption.png);
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  background-size: 34px !important;
+  width: 34px !important;
+  height: 34px !important;
+  filter: brightness(0.8);
+  border-radius: 0px !important;
+  background-position: 0px !important;
+}
+
 .player-board-blue-action-counter{
     margin-top: 8px;
 }
@@ -326,7 +386,7 @@
     height: 60px;
     line-height: 60px;
     font-size: 28px;
-    background-image: url(assets/board/mars.png);
+    background-image: url(./assets/board/mars.png);
     background-size: 120px 120px;
     background-position: 88px 92px;
     border-top: 5px solid #bb8760;
@@ -375,11 +435,9 @@
     }
 
     .player_name {
-        color: #ccc;
         text-shadow: 1px 1px 1px #222, -1px -1px 2px #666;
-        padding: 1px 5px;
+        padding: 2px 5px;
         border-radius: 4px;
-        font-weight: bold;
     }
 
     .tags_cont {
@@ -527,217 +585,94 @@
             border-radius: 10px 10px 0 0;
         }
 
-        .ma-name--terraformer {
-            background-image: url(assets/ma/terraformer.png);
+        @ma-name:
+          terraformer, mayor, gardener, builder, planner,
+          landlord, banker, scientist, thermalist, miner,
+
+          generalist, specialist, ecologist, tycoon, legend,
+          celebrity, industrialist, desert-settler, estate-dealer, benefactor,
+
+          diversifier, tactician, polar-explorer, energizer, rim-settler,
+          cultivator, magnate, space-baron, excentric, contractor,
+
+          hoverlord, venuphile,
+
+          networker, entrepreneur,
+
+          lunar-magnate, lunarchitect, full-moon, one-giant-step,
+
+          economizer, pioneer, land-specialist, martian,
+          cosmic-settler, botanist, promoter, zoologist, a-manufacturer,
+
+          v-electrician, smith, tradesman, irrigator, capitalist,
+          forecaster, edgedancer, visionary, naturalist, voyager,
+
+          rugged, purifier,
+
+          agronomist, engineer, farmer,
+          ;
+        each(@ma-name, {
+          .ma-name--@{value} {
+            background-image: url("assets/ma/@{value}.png");
+          }
+        })
+
+        /* TODO(kberg): move these files up a level. */
+        @ma-name-fanmade:
+          colonizer, minimalist, terran, tropicalist,
+          curator, tourist, a-engineer, a-zoologist,
+
+          t-collector, firestarter, terra-pioneer, spacefarer, gambler,
+          biologist, t-politician, urbanist, warmonger,
+          incorporator, manufacturer, politician,
+        ;
+        each(@ma-name-fanmade, {
+          .ma-name--@{value} {
+            background-image: url("assets/ma/fanmade/@{value}.png");
+          }
+        })
+
+        @ma-name-modular:
+          administrator, constructor, founder, highlander, hydrologist, investor,
+          landscaper, metropolist, mogul, thawer, traveller,
+
+          collector, electrician, fundraiser, geologist, landshaper, lobbyist, philantropist,
+          planetologist, producer, researcher, sponsor, forester, breeder, thermoengineer,
+        ;
+        each(@ma-name-modular, {
+          .ma-name--@{value} {
+            background-image: url("assets/ma/modular/@{value}.png");
+          }
+        })
+
+        // TODO(kberg): Set better background sizes.
+        // Underworld
+        .ma-name--kingpin {
+          background-image: url(./assets/ma/underworld/kingpin.png);
+          background-repeat: no-repeat;
+          background-size: 153px !important;
+          background-position: -6px -5px !important;
         }
 
-        .ma-name--mayor {
-            background-image: url(assets/ma/mayor.png);
+        .ma-name--edgelord {
+          background-image: url(./assets/ma/underworld/edgelord.png);
+          background-repeat: no-repeat;
+          background-size: 153px !important;
+          background-position: -6px -5px !important;
         }
 
-        .ma-name--gardener {
-            background-image: url(assets/ma/gardener.png);
+        .ma-name--tunneler {
+          background-image: url(./assets/ma/underworld/tunneler.png);
+          background-repeat: no-repeat;
+          background-size: 180px !important;
+          background-position: -21px -7px !important;
         }
 
-        .ma-name--builder {
-            background-image: url(assets/ma/builder.png);
-        }
-
-        .ma-name--planner {
-            background-image: url(assets/ma/planner.png);
-        }
-
-        .ma-name--generalist {
-            background-image: url(assets/ma/generalist.png);
-        }
-
-        .ma-name--specialist {
-            background-image: url(assets/ma/specialist.png);
-        }
-
-        .ma-name--ecologist {
-            background-image: url(assets/ma/ecologist.png);
-        }
-
-        .ma-name--tycoon {
-            background-image: url(assets/ma/tycoon.png);
-        }
-
-        .ma-name--legend {
-            background-image: url(assets/ma/legend.png);
-        }
-
-        .ma-name--diversifier {
-            background-image: url(assets/ma/diversifier.png);
-        }
-
-        .ma-name--tactician {
-            background-image: url(assets/ma/tactician.png);
-        }
-
-        .ma-name--polar-explorer {
-            background-image: url(assets/ma/polar_explorer.png);
-        }
-
-        .ma-name--energizer {
-            background-image: url(assets/ma/energizer.png);
-        }
-
-        .ma-name--rim-settler {
-            background-image: url(assets/ma/rim_settler.png);
-        }
-
-        .ma-name--hoverlord {
-            background-image: url(assets/ma/hoverlord.png);
-        }
-
-        .ma-name--landlord {
-            background-image: url(assets/ma/landlord.png);
-        }
-
-        .ma-name--banker {
-            background-image: url(assets/ma/banker.png);
-        }
-
-        .ma-name--scientist {
-            background-image: url(assets/ma/scientist.png);
-        }
-
-        .ma-name--thermalist {
-            background-image: url(assets/ma/thermalist.png);
-        }
-
-        .ma-name--miner {
-            background-image: url(assets/ma/miner.png);
-        }
-
-        .ma-name--celebrity {
-            background-image: url(assets/ma/celebrity.png);
-        }
-
-        .ma-name--industrialist {
-            background-image: url(assets/ma/industrialist.png);
-        }
-
-        .ma-name--desert-settler {
-            background-image: url(assets/ma/desert_settler.png);
-        }
-
-        .ma-name--estate-dealer {
-            background-image: url(assets/ma/estate_dealer.png);
-        }
-
-        .ma-name--benefactor {
-            background-image: url(assets/ma/benefactor.png);
-        }
-
-        .ma-name--cultivator {
-            background-image: url(assets/ma/cultivator.png);
-        }
-
-        .ma-name--magnate {
-            background-image: url(assets/ma/magnate.png);
-        }
-
-        .ma-name--space-baron {
-            background-image: url(assets/ma/space_baron.png);
-        }
-
-        .ma-name--excentric {
-            background-image: url(assets/ma/excentric.png);
-        }
-
-        .ma-name--contractor {
-            background-image: url(assets/ma/contractor.png);
-        }
-
-        .ma-name--venuphile {
-            background-image: url(assets/ma/venuphile.png);
-        }
-
-        .ma-name--economizer {
-            background-image: url(assets/ma/economizer.png);
-        }
-
-        .ma-name--pioneer {
-            background-image: url(assets/ma/pioneer.png);
-        }
-
-        .ma-name--land-specialist {
-            background-image: url(assets/ma/land-specialist.png);
-        }
-
-        .ma-name--martian {
-            background-image: url(assets/ma/martian.png);
-        }
-
-        .ma-name--businessperson {
-            background-image: url(assets/ma/businessperson.png);
-        }
-
-        .ma-name--cosmic-settler {
-            background-image: url(assets/ma/cosmic-settler.png);
-        }
-
-        .ma-name--botanist {
-            background-image: url(assets/ma/botanist.png);
-        }
-
-        .ma-name--coordinator {
-            background-image: url(assets/ma/coordinator.png);
-        }
-
-        .ma-name--zoologist {
-            background-image: url(assets/ma/zoologist.png);
-        }
-
-        .ma-name--manufacturer {
-            background-image: url(assets/ma/manufacturer.png);
-        }
-
-        .ma-name--electrician {
-            background-image: url(assets/ma/electrician.png);
-            padding-top: 61px;
-        }
-
-        .ma-name--smith {
-            background-image: url(assets/ma/smith.png);
-            padding-top: 61px;
-        }
-
-        .ma-name--tradesman {
-            background-image: url(assets/ma/tradesman.png);
-            padding-top: 61px;
-        }
-
-        .ma-name--irrigator {
-            background-image: url(assets/ma/irrigator.png);
-            padding-top: 61px;
-        }
-
-        .ma-name--capitalist {
-            background-image: url(assets/ma/capitalist.png);
-            padding-top: 61px;
-        }
-
-        .ma-name--adapter {
-            background-image: url(assets/ma/adapter.png);
-        }
-
-        .ma-name--edgedancer {
-            background-image: url(assets/ma/edgedancer.png);
-        }
-
-        .ma-name--naturalist {
-            background-image: url(assets/ma/naturalist.png);
-        }
-
-        .ma-name--hoarder {
-            background-image: url(assets/ma/hoarder.png);
-        }
-
-        .ma-name--voyager {
-            background-image: url(assets/ma/voyager.png);
+        .ma-name--risktaker {
+          background-image: url(./assets/ma/underworld/risktaker.png);
+          background-size: 165px !important;
+          background-position: -11px -5px !important;
+          background-repeat: no-repeat;
         }
 
         .ma-description {
@@ -752,18 +687,11 @@
 
         }
     }
-
-    .pwned-item {
-        .ma-name,
-        .ma-description {
-            opacity: 1;
-        }
-    }
 }
 
 .with-turmoil {
     .ma-name--terraformer {
-        background-image: url(assets/ma/terraformer26.png) !important;
+        background-image: url(./assets/ma/terraformer26.png) !important;
     }
 }
 
@@ -847,6 +775,22 @@
         vertical-align: top;
         margin: 0px 0px 10px 0px;
     }
+    .inactiveColony {
+      transform: scale(.9);
+      opacity: .7;
+    }
+}
+
+.discarded-colonies-for-aridor {
+    margin-bottom: 25px;
+    margin-top: -25px;
+
+    .small_colony {
+        transform:scale(.5);
+        width: 220px;
+        height: 150px;
+        margin-top: 0px;
+    }
 }
 
 .colonies-fleets-cont {
@@ -861,7 +805,7 @@
 }
 
 .colonies-fleet {
-    background: url(assets/colony_ships.png) no-repeat;
+    background: url(./assets/colony_ships.png) no-repeat;
     width: 70px;
     height: 70px;
     display: inline-block;
@@ -1020,6 +964,9 @@
     text-align: center;
     cursor: pointer;
 
+    &.hand-toggle {
+        background-color: rgba(60,60,60, 0.75);
+    }
     &.active {
         background-color: rgba(47,146,225, 0.75);
     }
@@ -1028,6 +975,10 @@
     }
     &.event {
         background-color: rgba(237,106,21, 0.75);
+    }
+    &.hand-toggle-transparent {
+        background-color: rgba(60,60,60, 0.5);
+        color: #fff8;
     }
     &.active-transparent {
         background-color: rgba(47,146,225, 0.5);
@@ -1067,4 +1018,10 @@
         font-family: Prototype;
         color: #000;
     }
+}
+
+#spectator-link + span {
+    div {
+		    width: calc(100% - 450px);
+		}
 }

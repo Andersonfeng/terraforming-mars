@@ -1,5 +1,5 @@
-// Is board-cont necessary?
 <template>
+  <!-- Is board-cont necessary? -->
   <div class="board-cont moon-board" id="moon_board">
     <svg id="moon_board_legend" height="550" width="630" class="board-legend">
       <g id="mare_imbrium" transform="translate(250, 40)">
@@ -40,14 +40,14 @@
       </g>
     </svg>
 
-    <div class="board-outer-spaces">
+    <div id="moon_board_outer_spaces" class="board-outer-spaces">
       <MoonSpace :space="getSpaceById('m01')" text="Luna Trade Station"></MoonSpace>
       <MoonSpace :space="getSpaceById('m37')" text="Momentum Virium Habitat"></MoonSpace>
     </div>
 
     <div class="global-numbers">
-      <div class="global-numbers-colony">
-        <div :class="getScaleCSS(lvl)" v-for="(lvl, i) in getValuesForParameter('colony')" :key="i">{{ lvl.strValue }}</div>
+      <div class="global-numbers-habitat">
+        <div :class="getScaleCSS(lvl)" v-for="(lvl, i) in getValuesForParameter('habitat')" :key="i">{{ lvl.strValue }}</div>
       </div>
 
       <div class="global-numbers-logistics">
@@ -62,16 +62,16 @@
 
     <div class="board" id="moon_board">
       <MoonSpace
-        v-for="curSpace in getAllNonColonySpaces()"
-        :key="curSpace.id"
-        :space="curSpace"
-        :is_selectable="true"
-        :hideTiles="hideTiles"
+        v-for="space in getAllNonColonySpaces()"
+        :key="space.id"
+        :space="space"
+        :tileView="tileView"
         data-test="moon-board-space"
       />
     </div>
   </div>
 </template>
+
 <script lang="ts">
 
 import Vue from 'vue';
@@ -79,11 +79,14 @@ import {MoonModel} from '@/common/models/MoonModel';
 import {SpaceModel} from '@/common/models/SpaceModel';
 import {SpaceType} from '@/common/boards/SpaceType';
 import MoonSpace from '@/client/components/moon/MoonSpace.vue';
+import {TileView} from '../board/TileView';
+import {SpaceId} from '@/common/Types';
 
-class MoonParamLevel {
-  constructor(public value: number, public isActive: boolean, public strValue: string) {
-  }
-}
+type MoonParamLevel = {
+  value: number,
+  isActive: boolean,
+  strValue: string,
+};
 
 export default Vue.extend({
   name: 'MoonBoard',
@@ -91,9 +94,9 @@ export default Vue.extend({
     model: {
       type: Object as () => MoonModel,
     },
-    hideTiles: {
-      type: Boolean,
-      default: false,
+    tileView: {
+      type: String as () => TileView,
+      default: 'show',
     },
   },
   components: {
@@ -111,7 +114,7 @@ export default Vue.extend({
         return s.spaceType !== SpaceType.COLONY;
       });
     },
-    getSpaceById(spaceId: string) {
+    getSpaceById(spaceId: SpaceId) {
       for (const space of this.model.spaces) {
         if (space.id === spaceId) {
           return space;
@@ -119,7 +122,7 @@ export default Vue.extend({
       }
       throw new Error('Board space not found by id \'' + spaceId + '\'');
     },
-    getValuesForParameter(targetParameter: string): Array<MoonParamLevel> {
+    getValuesForParameter(targetParameter: 'logistics' | 'mining' | 'habitat'): Array<MoonParamLevel> {
       let curValue: number;
 
       switch (targetParameter) {
@@ -129,24 +132,28 @@ export default Vue.extend({
       case 'mining':
         curValue = this.model.miningRate;
         break;
-      case 'colony':
-        curValue = this.model.colonyRate;
+      case 'habitat':
+        curValue = this.model.habitatRate;
         break;
       default:
         throw new Error('Wrong parameter to get values from: ' + targetParameter);
       }
 
-      const values: Array<MoonParamLevel> = [];
-      for (let value: number = 8; value >= 0; value -= 1) {
-        const strValue = value.toString();
-        values.push(
-          new MoonParamLevel(value, value === curValue, strValue),
-        );
+      const values = [];
+      for (let value = 8; value >= 0; value -= 1) {
+        values.push({
+          value: value,
+          isActive: value === curValue,
+          strValue: value.toString(),
+        });
       }
       return values;
     },
     getScaleCSS(paramLevel: MoonParamLevel): string {
       let css = 'global-numbers-value val-' + paramLevel.value + ' ';
+      if (paramLevel.value === 0) {
+        css += 'zero-gap ';
+      }
       if (paramLevel.isActive) {
         css += 'val-is-active';
       }

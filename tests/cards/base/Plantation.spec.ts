@@ -1,31 +1,52 @@
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {expect} from 'chai';
-import {InventorsGuild} from '../../../src/cards/base/InventorsGuild';
-import {Plantation} from '../../../src/cards/base/Plantation';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions, setOxygenLevel, testRedsCosts} from '../../TestingUtils';
+import {InventorsGuild} from '../../../src/server/cards/base/InventorsGuild';
+import {Plantation} from '../../../src/server/cards/base/Plantation';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('Plantation', function() {
-  let card : Plantation; let player : Player; let game : Game;
+describe('Plantation', () => {
+  let card: Plantation;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Plantation();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.playedCards.push(new InventorsGuild(), new InventorsGuild());
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).is.not.undefined;
-    action.cb(action.availableSpaces[0]);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+    action.cb(action.spaces[0]);
     expect(game.getOxygenLevel()).to.eq(1);
   });
+
+  const redsRuns = [
+    {oxygen: 12, expected: 3},
+    {oxygen: 13, expected: 3},
+    {oxygen: 14, expected: 0},
+  ] as const;
+
+  for (const run of redsRuns) {
+    it('Works with reds ' + JSON.stringify(run), () => {
+      const [game, player/* , player2 */] = testGame(2, {turmoilExtension: true});
+
+      // Card requirement
+      player.tagsForTest = {science: 2};
+
+      setOxygenLevel(game, run.oxygen);
+      testRedsCosts(() => player.canPlay(card), player, card.cost, run.expected);
+    });
+  }
 });

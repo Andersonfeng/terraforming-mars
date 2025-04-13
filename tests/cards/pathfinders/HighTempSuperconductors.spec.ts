@@ -1,31 +1,31 @@
 import {expect} from 'chai';
-import {HighTempSuperconductors} from '../../../src/cards/pathfinders/HighTempSuperconductors';
-import {Thorgate} from '../../../src/cards/corporation/Thorgate';
-import {Game} from '../../../src/Game';
+import {HighTempSuperconductors} from '../../../src/server/cards/pathfinders/HighTempSuperconductors';
+import {Thorgate} from '../../../src/server/cards/corporation/Thorgate';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {Reds} from '../../../src/turmoil/parties/Reds';
-import {Kelvinists, KELVINISTS_POLICY_1} from '../../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../../src/turmoil/Turmoil';
-import {TestingUtils} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {Reds} from '../../../src/server/turmoil/parties/Reds';
+import {Kelvinists, KELVINISTS_POLICY_1} from '../../../src/server/turmoil/parties/Kelvinists';
+import {Turmoil} from '../../../src/server/turmoil/Turmoil';
+import {fakeCard, setRulingParty} from '../../TestingUtils';
 import {Units} from '../../../src/common/Units';
-import {Tags} from '../../../src/common/cards/Tags';
-import {PowerPlantStandardProject} from '../../../src/cards/base/standardProjects/PowerPlantStandardProject';
+import {Tag} from '../../../src/common/cards/Tag';
+import {PowerPlantStandardProject} from '../../../src/server/cards/base/standardProjects/PowerPlantStandardProject';
+import {PartyName} from '../../../src/common/turmoil/PartyName';
 
-describe('HighTempSuperconductors', function() {
+describe('HighTempSuperconductors', () => {
   let card: HighTempSuperconductors;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let turmoil: Turmoil;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new HighTempSuperconductors();
-    game = newTestGame(1, {turmoilExtension: true});
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {turmoilExtension: true});
     turmoil = Turmoil.getTurmoil(game);
   });
 
-  it('canPlay', function() {
+  it('canPlay', () => {
     player.megaCredits = card.cost;
     turmoil.rulingParty = new Reds();
     expect(player.canPlay(card)).is.false;
@@ -33,29 +33,29 @@ describe('HighTempSuperconductors', function() {
     expect(player.canPlay(card)).is.true;
   });
 
-  it('play', function() {
+  it('play', () => {
     card.play(player);
-    expect(player.getProductionForTest()).deep.eq(Units.of({energy: 2}));
+    expect(player.production.asUnits()).deep.eq(Units.of({energy: 2}));
   });
 
-  it('discount power tag', function() {
+  it('discount power tag', () => {
     player.playedCards.push(card);
 
     // Not power tag
-    const cost10 = TestingUtils.fakeCard({cost: 10, tags: [Tags.CITY]});
+    const cost10 = fakeCard({cost: 10, tags: [Tag.CITY]});
     player.megaCredits = 9;
     expect(player.canPlay(cost10)).is.false;
     player.megaCredits = 10;
     expect(player.canPlay(cost10)).is.true;
 
-    const cost10WithTag = TestingUtils.fakeCard({cost: 10, tags: [Tags.ENERGY]});
+    const cost10WithTag = fakeCard({cost: 10, tags: [Tag.POWER]});
     player.megaCredits = 6;
     expect(player.canPlay(cost10WithTag)).is.false;
     player.megaCredits = 7;
     expect(player.canPlay(cost10WithTag)).is.true;
   });
 
-  it('discount standard project', function() {
+  it('discount standard project', () => {
     player.playedCards.push(card);
 
     const powerPlant = new PowerPlantStandardProject();
@@ -66,9 +66,9 @@ describe('HighTempSuperconductors', function() {
   });
 
 
-  it('double-discount with Thorgate', function() {
+  it('double-discount with Thorgate', () => {
     player.playedCards.push(card);
-    player.corporationCard = new Thorgate();
+    player.corporations.push(new Thorgate());
 
     const powerPlant = new PowerPlantStandardProject();
     player.megaCredits = powerPlant.cost - 7;
@@ -77,8 +77,8 @@ describe('HighTempSuperconductors', function() {
     expect(powerPlant.canAct(player)).is.true;
   });
 
-  it('discount Kelvinists ruling bonus', function() {
-    TestingUtils.setRulingPartyAndRulingPolicy(game, turmoil, new Kelvinists(), 'kp01');
+  it('discount Kelvinists ruling bonus', () => {
+    setRulingParty(game, PartyName.KELVINISTS);
 
     player.megaCredits = 9;
     expect(KELVINISTS_POLICY_1.canAct(player)).is.false;

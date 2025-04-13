@@ -1,31 +1,33 @@
 import {expect} from 'chai';
-import {Player} from '../../../src/Player';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Resources} from '../../../src/common/Resources';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {Resource} from '../../../src/common/Resource';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
-import {CommercialDistrictAres} from '../../../src/cards/ares/CommercialDistrictAres';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
+import {CommercialDistrictAres} from '../../../src/server/cards/ares/CommercialDistrictAres';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('CommercialDistrictAres', function() {
-  let card : CommercialDistrictAres; let player : Player;
+describe('CommercialDistrictAres', () => {
+  let card: CommercialDistrictAres;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CommercialDistrictAres();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+    [game, player] = testGame(2, {aresExtension: true});
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.ENERGY, 1);
+  it('Should play', () => {
+    expect(card.canPlay(player)).is.false;
+    player.production.add(Resource.ENERGY, 1);
     expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action instanceof SelectSpace);
-    action.cb(action.availableSpaces[0]);
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+    action.cb(action.spaces[0]);
 
-    expect(action.availableSpaces[0].adjacency).to.deep.eq({bonus: [SpaceBonus.MEGACREDITS, SpaceBonus.MEGACREDITS]});
+    expect(action.spaces[0].adjacency).to.deep.eq({bonus: [SpaceBonus.MEGACREDITS, SpaceBonus.MEGACREDITS]});
   });
 });

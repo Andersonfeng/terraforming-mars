@@ -4,7 +4,7 @@ import {PlayerId, GameId, SpectatorId} from '../Types';
 import {Phase} from '../Phase';
 import {GameOptionsModel} from './GameOptionsModel';
 
-export interface SimpleGameModel {
+export type SimpleGameModel = {
     activePlayer: Color;
     id: GameId;
     phase: Phase;
@@ -12,9 +12,10 @@ export interface SimpleGameModel {
     spectatorId: SpectatorId | undefined;
     gameOptions: GameOptionsModel;
     lastSoloGeneration: number;
+    expectedPurgeTimeMs: number;
 }
 
-interface SimplePlayerModel {
+type SimplePlayerModel = {
     color: Color;
     id: PlayerId;
     name: string;

@@ -1,48 +1,77 @@
 import {expect} from 'chai';
-import {RobinsonIndustries} from '../../../src/cards/prelude/RobinsonIndustries';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {RobinsonIndustries} from '../../../src/server/cards/prelude/RobinsonIndustries';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions, testGame} from '../../TestingUtils';
+import {Helion} from '../../../src/server/cards/corporation/Helion';
+import {SelectPayment} from '../../../src/server/inputs/SelectPayment';
+import {Payment} from '../../../src/common/inputs/Payment';
 
-describe('RobinsonIndustries', function() {
-  let card : RobinsonIndustries; let player : Player;
+describe('RobinsonIndustries', () => {
+  let card: RobinsonIndustries;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new RobinsonIndustries();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
-    player.corporationCard = card;
+    [game, player] = testGame(1);
+    player.corporations.push(card);
   });
 
-  it('Can\'t act', function() {
+  it('Can not act', () => {
     player.megaCredits = 3;
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Can act', function() {
+  it('Can act', () => {
     player.megaCredits = 4;
     expect(card.canAct(player)).is.true;
 
-    const result = card.action(player) as OrOptions;
+    const result = cast(card.action(player), OrOptions);
     expect(result.options).has.lengthOf(6);
 
     result.options[1].cb();
-    expect(player.getProduction(Resources.STEEL)).to.eq(1);
+    runAllActions(game);
+    expect(player.production.steel).to.eq(1);
     expect(player.megaCredits).to.eq(0);
   });
 
-  it('Only allows to choose from lowest production(s)', function() {
-    player.addProduction(Resources.MEGACREDITS, -1);
-    let result = card.action(player) as OrOptions;
+  it('Only allows to choose from lowest production(s)', () => {
+    player.production.add(Resource.MEGACREDITS, -1);
+    let result = cast(card.action(player), OrOptions);
     expect(result.options).has.lengthOf(1);
 
-    player.addProduction(Resources.MEGACREDITS, 5);
-    player.addProduction(Resources.TITANIUM, 1);
-    player.addProduction(Resources.PLANTS, 2);
+    player.production.add(Resource.MEGACREDITS, 5);
+    player.production.add(Resource.TITANIUM, 1);
+    player.production.add(Resource.PLANTS, 2);
 
-    result = card.action(player) as OrOptions;
+    result = cast(card.action(player), OrOptions);
     expect(result.options).has.lengthOf(3);
+  });
+
+  it('Helion + Robinson Industries', () => {
+    const helion = new Helion();
+    helion.play(player);
+    player.corporations.push(helion);
+    player.megaCredits = 3;
+    expect(card.canAct(player)).is.false;
+    player.heat = 1;
+    expect(card.canAct(player)).is.true;
+
+    // Setting a larger amount of heat just to make the test results more interesting
+    player.heat = 5;
+
+    const selectResource = cast(card.action(player), OrOptions);
+    expect((selectResource.options[1].title as String).includes('steel')).is.true;
+
+    selectResource.options[1].cb();
+    runAllActions(game);
+    const selectPayment = cast(player.popWaitingFor(), SelectPayment);
+    selectPayment.cb({...Payment.EMPTY, megaCredits: 2, heat: 2});
+    expect(player.production.steel).to.eq(1);
+    expect(player.megaCredits).to.eq(1);
+    expect(player.heat).to.eq(3);
   });
 });

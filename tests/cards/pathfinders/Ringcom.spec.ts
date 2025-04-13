@@ -1,47 +1,54 @@
 import {expect} from 'chai';
-import {Ringcom} from '../../../src/cards/pathfinders/Ringcom';
-import {Game} from '../../../src/Game';
+import {Ringcom} from '../../../src/server/cards/pathfinders/Ringcom';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
 import {CardName} from '../../../src/common/cards/CardName';
-import {TestingUtils} from '../../TestingUtils';
-import {Tags} from '../../../src/common/cards/Tags';
+import {fakeCard, runAllActions} from '../../TestingUtils';
+import {Tag} from '../../../src/common/cards/Tag';
 
-describe('Ringcom', function() {
+describe('Ringcom', () => {
   let card: Ringcom;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Ringcom();
-    game = newTestGame(2);
-    player = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 1);
-    player.corporationCard = card;
+    [game, player, player2] = testGame(2);
+    player.corporations.push(card);
   });
 
-  it('initialAction', function() {
-    const a = TestingUtils.fakeCard({name: 'A' as CardName, tags: [Tags.JOVIAN]});
-    const b = TestingUtils.fakeCard({name: 'B' as CardName, tags: []});
-    const c = TestingUtils.fakeCard({name: 'C' as CardName, tags: [Tags.EARTH]});
-    const d = TestingUtils.fakeCard({name: 'D' as CardName, tags: [Tags.JOVIAN]});
-    game.dealer.deck.push(a, b, c, d);
+  it('play', () => {
+    expect(player.titanium).eq(0);
+    expect(player.production.megacredits).eq(0);
+    card.play(player);
+    expect(player.titanium).eq(1);
+    expect(player.production.megacredits).eq(3);
+  });
 
-    card.initialAction(player);
+  it('initialAction', () => {
+    const a = fakeCard({name: 'A' as CardName, tags: [Tag.JOVIAN]});
+    const b = fakeCard({name: 'B' as CardName, tags: []});
+    const c = fakeCard({name: 'C' as CardName, tags: [Tag.EARTH]});
+    const d = fakeCard({name: 'D' as CardName, tags: [Tag.JOVIAN]});
+    game.projectDeck.drawPile.push(a, b, c, d);
+
+    player.deferInitialAction(card);
+    runAllActions(game);
 
     expect(player.cardsInHand).has.members([a, d]);
   });
 
-  it('when you play a jovian tag', function() {
-    const a = TestingUtils.fakeCard({name: 'A' as CardName, tags: [Tags.JOVIAN]});
+  it('when you play a jovian tag', () => {
+    const a = fakeCard({name: 'A' as CardName, tags: [Tag.JOVIAN]});
     expect(player.titanium).eq(0);
     player.playCard(a);
     expect(player.titanium).eq(1);
   });
 
-  it('when opponent plays a jovian tag', function() {
-    const a = TestingUtils.fakeCard({name: 'A' as CardName, tags: [Tags.JOVIAN]});
+  it('when opponent plays a jovian tag', () => {
+    const a = fakeCard({name: 'A' as CardName, tags: [Tag.JOVIAN]});
     expect(player.titanium).eq(0);
     player2.playCard(a);
     expect(player.titanium).eq(1);

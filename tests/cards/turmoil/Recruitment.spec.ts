@@ -1,28 +1,23 @@
 import {expect} from 'chai';
-import {Recruitment} from '../../../src/cards/turmoil/Recruitment';
-import {Game} from '../../../src/Game';
+import {Recruitment} from '../../../src/server/cards/turmoil/Recruitment';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
 
-describe('Recruitment', function() {
-  it('Should play', function() {
+describe('Recruitment', () => {
+  it('Should play', () => {
     const card = new Recruitment();
-    const player = TestPlayers.BLUE.newPlayer();
+    const [game, player] = testGame(1, {turmoilExtension: true});
 
-    const gameOptions = TestingUtils.setCustomGameOptions();
-    const game = Game.newInstance('foobar', [player], player, gameOptions);
+    game.turmoil!.parties.forEach((party) => {
+      party.delegates.clear();
+    });
+    expect(card.canPlay(player)).is.not.true;
 
-        game.turmoil!.parties.forEach((party) => {
-          party.delegates = [];
-        });
-        expect(card.canPlay(player)).is.not.true;
+    game.turmoil!.sendDelegateToParty('NEUTRAL', PartyName.GREENS, game);
+    expect(card.canPlay(player)).is.not.true;
+    game.turmoil!.sendDelegateToParty('NEUTRAL', PartyName.GREENS, game);
+    expect(card.canPlay(player)).is.true;
 
-        game.turmoil!.sendDelegateToParty('NEUTRAL', PartyName.GREENS, game);
-        expect(card.canPlay(player)).is.not.true;
-        game.turmoil!.sendDelegateToParty('NEUTRAL', PartyName.GREENS, game);
-        expect(card.canPlay(player)).is.true;
-
-        card.play(player);
+    card.play(player);
   });
 });

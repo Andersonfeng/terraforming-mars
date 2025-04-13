@@ -1,26 +1,26 @@
 import {expect} from 'chai';
-import {FusionPower} from '../../../src/cards/base/FusionPower';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {FusionPower} from '../../../src/server/cards/base/FusionPower';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('FusionPower', function() {
-  let card : FusionPower; let player : Player;
+describe('FusionPower', () => {
+  let card: FusionPower;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new FusionPower();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    player.tagsForTest = {power: 1};
+    expect(card.canPlay(player)).is.not.true;
+    player.tagsForTest = {power: 2};
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('Should play', function() {
-    player.playedCards.push(card, card);
-    expect(player.canPlayIgnoringCost(card)).is.true;
-
+  it('Should play', () => {
     card.play(player);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(3);
+    expect(player.production.energy).to.eq(3);
   });
 });

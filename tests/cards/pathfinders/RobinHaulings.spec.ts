@@ -1,40 +1,39 @@
 import {expect} from 'chai';
-import {RobinHaulings} from '../../../src/cards/pathfinders/RobinHaulings';
-import {Game} from '../../../src/Game';
+import {RobinHaulings} from '../../../src/server/cards/pathfinders/RobinHaulings';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {TestingUtils} from '../../TestingUtils';
-import {Tags} from '../../../src/common/cards/Tags';
-import {OrOptions} from '../../../src/inputs/OrOptions';
+import {testGame} from '../../TestGame';
+import {cast, fakeCard, runAllActions} from '../../TestingUtils';
+import {Tag} from '../../../src/common/cards/Tag';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
 
-describe('RobinHaulings', function() {
+describe('RobinHaulings', () => {
   let card: RobinHaulings;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new RobinHaulings();
-    game = newTestGame(2);
-    player = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 0);
-    player.corporationCard = card;
+    [game, player, player2] = testGame(2);
+    player.corporations.push(card);
   });
 
   it('play', () => {
     expect(card.resourceCount).eq(0);
     card.play(player);
+    runAllActions(game);
     expect(card.resourceCount).eq(1);
   });
 
   it('onCardPlayed', () => {
     expect(card.resourceCount).eq(0);
 
-    player.playCard(TestingUtils.fakeCard({tags: [Tags.EARTH]}));
+    player.playCard(fakeCard({tags: [Tag.EARTH]}));
 
     expect(card.resourceCount).eq(0);
 
-    player.playCard(TestingUtils.fakeCard({tags: [Tags.VENUS, Tags.VENUS]}));
+    player.playCard(fakeCard({tags: [Tag.VENUS, Tag.VENUS]}));
 
     expect(card.resourceCount).eq(0);
   });
@@ -42,11 +41,11 @@ describe('RobinHaulings', function() {
   it('onCardPlayed, other player', () => {
     expect(card.resourceCount).eq(0);
 
-    player2.playCard(TestingUtils.fakeCard({tags: [Tags.EARTH]}));
+    player2.playCard(fakeCard({tags: [Tag.EARTH]}));
 
     expect(card.resourceCount).eq(0);
 
-    player2.playCard(TestingUtils.fakeCard({tags: [Tags.VENUS, Tags.VENUS]}));
+    player2.playCard(fakeCard({tags: [Tag.VENUS, Tag.VENUS]}));
 
     expect(card.resourceCount).eq(0);
   });
@@ -60,11 +59,7 @@ describe('RobinHaulings', function() {
   });
 
   it('action, venus', () => {
-    const action = card.action(player);
-
-    expect(action).instanceOf(OrOptions);
-
-    const orOptions = action as OrOptions;
+    const orOptions = cast(card.action(player), OrOptions);
 
     expect(orOptions.options).has.length(2);
     expect(game.getVenusScaleLevel()).eq(0);
@@ -77,11 +72,7 @@ describe('RobinHaulings', function() {
   });
 
   it('action, oxygen', () => {
-    const action = card.action(player);
-
-    expect(action).instanceOf(OrOptions);
-
-    const orOptions = action as OrOptions;
+    const orOptions = cast(card.action(player), OrOptions);
 
     expect(orOptions.options).has.length(2);
     expect(game.getOxygenLevel()).eq(0);

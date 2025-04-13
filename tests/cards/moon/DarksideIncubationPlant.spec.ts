@@ -1,22 +1,19 @@
-import {Game} from '../../../src/Game';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {TestPlayer} from '../../TestPlayer';
-import {DarksideIncubationPlant} from '../../../src/cards/moon/DarksideIncubationPlant';
 import {expect} from 'chai';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {DarksideIncubationPlant} from '../../../src/server/cards/moon/DarksideIncubationPlant';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
 
 describe('DarksideIncubationPlant', () => {
   let player: TestPlayer;
   let card: DarksideIncubationPlant;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new DarksideIncubationPlant();
   });
 
@@ -25,48 +22,47 @@ describe('DarksideIncubationPlant', () => {
     player.megaCredits = card.cost;
 
     player.titanium = 1;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
 
     player.titanium = 0;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('act', () => {
     expect(card.resourceCount).eq(0);
 
-    let options = card.action(player);
-    expect(options).is.undefined;
+    const action1 = card.action(player);
+    expect(action1).is.undefined;
     expect(card.resourceCount).eq(1);
 
-    options = card.action(player);
-    expect(options).is.undefined;
+    const action2 = card.action(player);
+    expect(action2).is.undefined;
     expect(card.resourceCount).eq(2);
 
-    options = card.action(player);
-    expect(options).instanceOf(OrOptions);
+    const action3 = cast(card.action(player), OrOptions);
 
     // Second option is add a resource.
-    (options! as OrOptions).options[1].cb();
+    action3.options[1].cb();
     expect(card.resourceCount).eq(3);
 
-    // First option removes 2 resources and raises the colony rate.
-    expect(MoonExpansion.moonData(game).colonyRate).eq(0);
-    (options! as OrOptions).options[0].cb();
+    // First option removes 2 resources and raises the habitat rate.
+    expect(MoonExpansion.moonData(game).habitatRate).eq(0);
+    action3.options[0].cb();
     expect(card.resourceCount).eq(1);
-    expect(MoonExpansion.moonData(game).colonyRate).eq(1);
+    expect(MoonExpansion.moonData(game).habitatRate).eq(1);
   });
 
   it('victoryPoints', () => {
     card.resourceCount = 0;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 1;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 2;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 3;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 4;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
   });
 });
 

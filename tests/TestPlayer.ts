@@ -1,84 +1,75 @@
-import {Player} from '../src/Player';
-import {PlayerInput} from '../src/PlayerInput';
+import {Player} from '../src/server/Player';
+import {PlayerInput} from '../src/server/PlayerInput';
 import {Color} from '../src/common/Color';
-import {Units} from '../src/common/Units';
-import {Tags} from '../src/common/cards/Tags';
+import {Tag} from '../src/common/cards/Tag';
 import {InputResponse} from '../src/common/inputs/InputResponse';
+import {Tags} from '../src/server/player/Tags';
+import {IProjectCard} from '../src/server/cards/IProjectCard';
+import {PlayerId} from '../src/common/Types';
 
+type Options = {name: string, beginner?: boolean, idSuffix?: string};
+
+class TestPlayerFactory {
+  constructor(private color: Color) {}
+  newPlayer(opts?: Partial<Options>): TestPlayer {
+    return new TestPlayer(this.color, opts);
+  }
+}
+
+class TestTags extends Tags {
+  private testPlayer: TestPlayer;
+  constructor(player: TestPlayer) {
+    super(player);
+    this.testPlayer = player;
+  }
+
+  public override rawCount(tag: Tag, includeEventsTags:boolean = false): number {
+    return this.testPlayer.tagsForTest !== undefined ?
+      this.testPlayer.tagsForTest[tag] ?? 0 :
+      super.rawCount(tag, includeEventsTags);
+  }
+}
 export class TestPlayer extends Player {
-  constructor(color: Color) {
-    super('player-' + color, color, false, 0, 'p-' + color + '-id');
+  // Prefer these players when testing, as their IDs are easy to recognize in output. Plus TestPlayer instances have useful support methods.
+  public static BLUE: TestPlayerFactory = new TestPlayerFactory('blue');
+  public static RED: TestPlayerFactory = new TestPlayerFactory('red');
+  public static YELLOW: TestPlayerFactory = new TestPlayerFactory('yellow');
+  public static GREEN: TestPlayerFactory = new TestPlayerFactory('green');
+  public static BLACK: TestPlayerFactory = new TestPlayerFactory('black');
+  public static PURPLE: TestPlayerFactory = new TestPlayerFactory('purple');
+  public static ORANGE: TestPlayerFactory = new TestPlayerFactory('orange');
+  public static PINK: TestPlayerFactory = new TestPlayerFactory('pink');
+
+  constructor(color: Color, opts?: Partial<Options>) {
+    const name = opts?.name ?? 'player-' + color;
+
+    // If a name is supplied, use it as part of the ID. Otherwise use
+    // color in the ID.
+    const coreId = opts?.name ?? color;
+    const idSuffix = opts?.idSuffix ?? '';
+    const id: PlayerId = `p-${coreId}-id${idSuffix}`;
+
+    super(
+      name,
+      color,
+      opts?.beginner ?? false,
+      0,
+      id);
+    this.tags = new TestTags(this);
   }
 
-  public setProductionForTest(units: Partial<Units>) {
-    if (units.megacredits !== undefined) {
-      this.megaCreditProduction = units.megacredits;
-    }
-    if (units.steel !== undefined) {
-      this.steelProduction = units.steel;
-    }
-    if (units.titanium !== undefined) {
-      this.titaniumProduction = units.titanium;
-    }
-    if (units.plants !== undefined) {
-      this.plantProduction = units.plants;
-    }
-    if (units.energy !== undefined) {
-      this.energyProduction = units.energy;
-    }
-    if (units.heat !== undefined) {
-      this.heatProduction = units.heat;
-    }
-  }
-
-  public getProductionForTest(): Units {
-    return {
-      megacredits: this.megaCreditProduction,
-      steel: this.steelProduction,
-      titanium: this.titaniumProduction,
-      plants: this.plantProduction,
-      energy: this.energyProduction,
-      heat: this.heatProduction,
-    };
-  }
-
-  public getResourcesForTest(): Units {
-    return {
-      megacredits: this.megaCredits,
-      steel: this.steel,
-      titanium: this.titanium,
-      plants: this.plants,
-      energy: this.energy,
-      heat: this.heat,
-    };
-  }
-
-  // Just makes it public, and therefore callable for testing.
-  public override getStandardProjectOption() {
-    return super.getStandardProjectOption();
-  }
-
-  public tagsForTest: Partial<TagsForTest> | undefined = undefined;
-
-  public override getRawTagCount(tag: Tags, includeEventsTags:boolean = false): number {
-    return this.tagsForTest !== undefined ?
-      this.tagsForTest[tag] ?? 0 :
-      super.getRawTagCount(tag, includeEventsTags);
-  }
+  public tagsForTest: Partial<Record<Tag, number>> | undefined = undefined;
 
   public override runInput(input: InputResponse, pi: PlayerInput): void {
     super.runInput(input, pi);
   }
 
-  public purse(): Units {
-    return Units.of({
-      megacredits: this.megaCredits,
-      steel: this.steel,
-      titanium: this.titanium,
-      plants: this.plants,
-      energy: this.energy,
-      heat: this.heat,
-    });
+  public popWaitingFor2(): [PlayerInput | undefined, (() => void) | undefined] {
+    const waitingFor = this.waitingFor;
+    const waitingForCb = this.waitingForCb;
+    this.waitingFor = undefined;
+    this.waitingForCb = undefined;
+    return [waitingFor, waitingForCb];
   }
 
   public popWaitingFor(): PlayerInput | undefined {
@@ -87,23 +78,8 @@ export class TestPlayer extends Player {
     this.waitingForCb = undefined;
     return waitingFor;
   }
-}
 
-export interface TagsForTest {
-  building: number;
-  space: number;
-  science: number;
-  power: number;
-  earth: number;
-  jovian: number;
-  venus: number;
-  plant: number;
-  microbe: number;
-  animal: number;
-  city: number;
-  wild: number;
-  moon: number;
-  event: number;
-  mars: number;
-  clone: number;
+  public getPlayableCardsForTest(): Array<IProjectCard> {
+    return this.getPlayableCards().map((entry) => entry.card);
+  }
 }

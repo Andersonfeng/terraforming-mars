@@ -1,35 +1,35 @@
 import {expect} from 'chai';
-import {ConvertHeat} from '../../../../src/cards/base/standardActions/ConvertHeat';
+import {ConvertHeat} from '../../../../src/server/cards/base/standardActions/ConvertHeat';
 import {Phase} from '../../../../src/common/Phase';
-import {Player} from '../../../../src/Player';
-import {setCustomGameOptions} from '../../../TestingUtils';
-import {TestPlayers} from '../../../TestPlayers';
-import {Game} from '../../../../src/Game';
-import {PoliticalAgendas} from '../../../../src/turmoil/PoliticalAgendas';
-import {Reds} from '../../../../src/turmoil/parties/Reds';
+import {cast, churn, setTemperature} from '../../../TestingUtils';
+import {TestPlayer} from '../../../TestPlayer';
+import {PoliticalAgendas} from '../../../../src/server/turmoil/PoliticalAgendas';
+import {Reds} from '../../../../src/server/turmoil/parties/Reds';
 import {MAX_TEMPERATURE} from '../../../../src/common/constants';
+import {testGame} from '../../../TestGame';
+import {IGame} from '../../../../src/server/IGame';
 
-describe('ConvertHeat', function() {
-  let card: ConvertHeat; let player: Player;
+describe('ConvertHeat', () => {
+  let card: ConvertHeat;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ConvertHeat();
-    player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player, setCustomGameOptions());
+    [game, player] = testGame(2, {turmoilExtension: true});
   });
 
-  it('Can not act without heat', function() {
+  it('Can not act without heat', () => {
     expect(card.canAct(player)).eq(false);
     player.heat = 7;
     expect(card.canAct(player)).eq(false);
   });
 
-  it('Can not act with reds', function() {
+  it('Can not act with reds', () => {
     player.heat = 8;
-    player.game.phase = Phase.ACTION;
-    player.game.turmoil!.rulingParty = new Reds();
-    PoliticalAgendas.setNextAgenda(player.game.turmoil!, player.game);
+    game.phase = Phase.ACTION;
+    game.turmoil!.rulingParty = new Reds();
+    PoliticalAgendas.setNextAgenda(game.turmoil!, game);
     expect(card.canAct(player)).eq(false);
     player.megaCredits = 2;
     expect(card.canAct(player)).eq(false);
@@ -37,17 +37,27 @@ describe('ConvertHeat', function() {
     expect(card.canAct(player)).eq(true);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.heat = 8;
     expect(card.canAct(player)).eq(true);
-    expect(card.action(player)).eq(undefined);
-    expect(player.game.getTemperature()).eq(-28);
+    expect(churn(card.action(player), player)).eq(undefined);
+    expect(game.getTemperature()).eq(-28);
   });
 
-  it('Can not act when maximized', function() {
+  it('Spending heat when the global parameter is at its goal is a valid stall action', () => {
     player.heat = 8;
+
     expect(card.canAct(player)).eq(true);
-    (player.game as any).temperature = MAX_TEMPERATURE;
-    expect(card.canAct(player)).eq(false);
+
+    setTemperature(game, MAX_TEMPERATURE);
+
+    expect(player.getTerraformRating()).eq(20);
+    expect(card.canAct(player)).eq(true);
+
+    cast(card.action(player), undefined);
+
+    expect(game.getTemperature()).eq(MAX_TEMPERATURE);
+    expect(player.heat).eq(0);
+    expect(player.getTerraformRating()).eq(20);
   });
 });

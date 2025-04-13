@@ -1,29 +1,31 @@
 import {expect} from 'chai';
-import {DirectedImpactors} from '../../../src/cards/promo/DirectedImpactors';
-import {RotatorImpacts} from '../../../src/cards/venusNext/RotatorImpacts';
+import {DirectedImpactors} from '../../../src/server/cards/promo/DirectedImpactors';
+import {RotatorImpacts} from '../../../src/server/cards/venusNext/RotatorImpacts';
 import {MAX_TEMPERATURE} from '../../../src/common/constants';
-import {Game} from '../../../src/Game';
-import {HowToPay} from '../../../src/common/inputs/HowToPay';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectHowToPay} from '../../../src/inputs/SelectHowToPay';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {IGame} from '../../../src/server/IGame';
+import {Payment} from '../../../src/common/inputs/Payment';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectPayment} from '../../../src/server/inputs/SelectPayment';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, setTemperature} from '../../TestingUtils';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {testGame} from '../../TestGame';
 
-describe('DirectedImpactors', function() {
-  let card : DirectedImpactors; let player : Player; let game : Game;
+describe('DirectedImpactors', () => {
+  let card: DirectedImpactors;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new DirectedImpactors();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    expect(card.play()).is.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
   });
 
-  it('Should act - single action choice, single target', function() {
+  it('Should act - single action choice, single target', () => {
     player.playedCards.push(card);
     expect(card.canAct(player)).is.not.true;
 
@@ -34,8 +36,8 @@ describe('DirectedImpactors', function() {
     // can add resource to itself
     card.action(player);
     expect(game.deferredActions).has.lengthOf(1);
-    const selectHowToPay = game.deferredActions.peek()!.execute() as SelectHowToPay;
-    selectHowToPay.cb({steel: 0, heat: 0, titanium: 1, megaCredits: 3, microbes: 0, floaters: 0} as HowToPay);
+    const selectPayment = cast(game.deferredActions.peek()!.execute(), SelectPayment);
+    selectPayment.cb({...Payment.EMPTY, titanium: 1, megaCredits: 3});
 
     expect(player.megaCredits).to.eq(0);
     expect(player.titanium).to.eq(0);
@@ -48,7 +50,7 @@ describe('DirectedImpactors', function() {
     expect(card.resourceCount).to.eq(0);
   });
 
-  it('Should act - multiple action choices, multiple targets', function() {
+  it('Should act - multiple action choices, multiple targets', () => {
     const card2 = new RotatorImpacts();
     player.playedCards.push(card, card2);
 
@@ -56,7 +58,7 @@ describe('DirectedImpactors', function() {
     player.titanium = 1;
     card.resourceCount = 1;
 
-    const action = card.action(player) as OrOptions;
+    const action = cast(card.action(player), OrOptions);
 
     // can remove resource to raise temperature
     action.options[0].cb();
@@ -65,21 +67,21 @@ describe('DirectedImpactors', function() {
     expect(card.resourceCount).to.eq(0);
 
     // can add resource to any card
-    const selectCard = action.options[1].cb();
+    const selectCard = cast(action.options[1].cb(), SelectCard);
     expect(game.deferredActions).has.lengthOf(1);
-    const selectHowToPay = game.deferredActions.peek()!.execute() as SelectHowToPay;
-    selectHowToPay.cb({steel: 0, heat: 0, titanium: 1, megaCredits: 3, microbes: 0, floaters: 0} as HowToPay);
+    const selectPayment = cast(game.deferredActions.peek()!.execute(), SelectPayment);
+    selectPayment.cb({...Payment.EMPTY, titanium: 1, megaCredits: 3});
 
-        selectCard!.cb([card2]);
-        expect(card2.resourceCount).to.eq(1);
-        expect(player.megaCredits).to.eq(0);
-        expect(player.titanium).to.eq(0);
+    selectCard!.cb([card2]);
+    expect(card2.resourceCount).to.eq(1);
+    expect(player.megaCredits).to.eq(0);
+    expect(player.titanium).to.eq(0);
   });
 
-  it('Can still spend resource even if temperature is max', function() {
+  it('Can still spend resource even if temperature is max', () => {
     player.playedCards.push(card);
     card.resourceCount = 1;
-    (game as any).temperature = MAX_TEMPERATURE;
+    setTemperature(game, MAX_TEMPERATURE);
 
     expect(card.canAct(player)).is.true;
   });

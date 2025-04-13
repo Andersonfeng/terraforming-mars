@@ -1,26 +1,26 @@
 import {expect} from 'chai';
-import {Sabotage} from '../../../src/cards/base/Sabotage';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast} from '../../TestingUtils';
+import {Sabotage} from '../../../src/server/cards/base/Sabotage';
+import {testGame} from '../../TestGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('Sabotage', function() {
-  let card : Sabotage; let player : Player; let player2: Player;
+describe('Sabotage', () => {
+  let card: Sabotage;
+  let player: TestPlayer;
+  let player2: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Sabotage();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player);
+    [/* game */, player, player2] = testGame(2);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player2.titanium = 3;
     player2.steel = 4;
     player2.megaCredits = 7;
 
-    const action = card.play(player) as OrOptions;
+    const action = cast(card.play(player), OrOptions);
 
     expect(action.options).has.lengthOf(4);
 

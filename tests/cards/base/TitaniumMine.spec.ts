@@ -1,17 +1,13 @@
 import {expect} from 'chai';
-import {TitaniumMine} from '../../../src/cards/base/TitaniumMine';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {TitaniumMine} from '../../../src/server/cards/base/TitaniumMine';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('TitaniumMine', function() {
-  it('Should play', function() {
+describe('TitaniumMine', () => {
+  it('Should play', () => {
     const card = new TitaniumMine();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(1);
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
+    expect(player.production.titanium).to.eq(1);
   });
 });

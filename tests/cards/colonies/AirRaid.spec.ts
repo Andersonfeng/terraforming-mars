@@ -1,35 +1,34 @@
 import {expect} from 'chai';
-import {AirRaid} from '../../../src/cards/colonies/AirRaid';
-import {Dirigibles} from '../../../src/cards/venusNext/Dirigibles';
-import {Player} from '../../../src/Player';
-import {StormCraftIncorporated} from '../../../src/cards/colonies/StormCraftIncorporated';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {ICard} from '../../../src/cards/ICard';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {TestPlayers} from '../../TestPlayers';
+import {AirRaid} from '../../../src/server/cards/colonies/AirRaid';
+import {Dirigibles} from '../../../src/server/cards/venusNext/Dirigibles';
+import {StormCraftIncorporated} from '../../../src/server/cards/colonies/StormCraftIncorporated';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {ICard} from '../../../src/server/cards/ICard';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {cast} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('AirRaid', function() {
-  let card : AirRaid; let player : Player; let player2 : Player; let corpo: StormCraftIncorporated;
+describe('AirRaid', () => {
+  let card: AirRaid;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let stormcraftIncorporated: StormCraftIncorporated;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AirRaid();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player);
+    [/* game */, player, player2] = testGame(3);
 
-    corpo = new StormCraftIncorporated();
-    player.corporationCard = corpo;
+    stormcraftIncorporated = new StormCraftIncorporated();
+    player.corporations.push(stormcraftIncorporated);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play - multiple targets', function() {
-    const player3 = TestPlayers.YELLOW.newPlayer();
-    Game.newInstance('foobar', [player, player2, player3], player);
-    player.addResourceTo(corpo);
+  it('Should play - multiple targets', () => {
+    player.addResourceTo(stormcraftIncorporated);
     expect(card.canPlay(player)).is.true;
 
     const otherCardWithFloater = new Dirigibles();
@@ -38,30 +37,30 @@ describe('AirRaid', function() {
     player2.megaCredits = 4;
 
     card.play(player);
-    const option1 = player.game.deferredActions.pop()!.execute() as OrOptions;
-    const option2 = player.game.deferredActions.pop()!.execute() as SelectCard<ICard>;
+    const option1 = cast(player.game.deferredActions.pop()!.execute(), OrOptions);
+    const option2 = cast(player.game.deferredActions.pop()!.execute(), SelectCard<ICard>);
 
     option1.options[0].cb();
     expect(player2.megaCredits).to.eq(0);
     expect(player.megaCredits).to.eq(4);
 
-    option2.cb([corpo]);
-    expect(corpo.resourceCount).to.eq(0);
+    option2.cb([stormcraftIncorporated]);
+    expect(stormcraftIncorporated.resourceCount).to.eq(0);
   });
 
-  it('Should play - single target for floater removal and MC removal', function() {
-    player.addResourceTo(corpo);
+  it('Should play - single target for floater removal and MC removal', () => {
+    player.addResourceTo(stormcraftIncorporated);
     expect(card.canPlay(player)).is.true;
 
     player2.megaCredits = 4;
     card.play(player);
 
-    const option = player.game.deferredActions.pop()!.execute() as OrOptions; // Steal money
+    const option = cast(player.game.deferredActions.pop()!.execute(), OrOptions); // Steal money
     expect(option.options).has.lengthOf(2);
     option.options[0].cb();
     player.game.deferredActions.pop()!.execute(); // Remove floater
 
-    expect(corpo.resourceCount).to.eq(0);
+    expect(stormcraftIncorporated.resourceCount).to.eq(0);
     expect(player2.megaCredits).to.eq(0);
     expect(player.megaCredits).to.eq(4);
   });

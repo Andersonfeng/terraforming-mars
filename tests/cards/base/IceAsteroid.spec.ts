@@ -1,15 +1,27 @@
-import {expect} from 'chai';
-import {IceAsteroid} from '../../../src/cards/base/IceAsteroid';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {IceAsteroid} from '../../../src/server/cards/base/IceAsteroid';
+import {testGame} from '../../TestGame';
+import {cast, maxOutOceans, testRedsCosts} from '../../TestingUtils';
 
-describe('IceAsteroid', function() {
-  it('Should play', function() {
+describe('IceAsteroid', () => {
+  it('Should play', () => {
     const card = new IceAsteroid();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
   });
+
+  const redsRuns = [
+    {oceans: 0, expected: 6},
+    {oceans: 7, expected: 6},
+    {oceans: 8, expected: 3},
+    {oceans: 9, expected: 0},
+  ] as const;
+
+  for (const run of redsRuns) {
+    it('Works with reds ' + JSON.stringify(run), () => {
+      const card = new IceAsteroid();
+      const [/* game */, player, player2] = testGame(2, {turmoilExtension: true});
+      maxOutOceans(player2, run.oceans);
+      testRedsCosts(() => player.canPlay(card), player, card.cost, run.expected);
+    });
+  }
 });

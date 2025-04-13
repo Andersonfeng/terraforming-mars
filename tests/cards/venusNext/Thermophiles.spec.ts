@@ -1,65 +1,64 @@
 import {expect} from 'chai';
-import {Thermophiles} from '../../../src/cards/venusNext/Thermophiles';
-import {VenusianInsects} from '../../../src/cards/venusNext/VenusianInsects';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, churn, runAllActions, setVenusScaleLevel} from '../../TestingUtils';
+import {Thermophiles} from '../../../src/server/cards/venusNext/Thermophiles';
+import {VenusianInsects} from '../../../src/server/cards/venusNext/VenusianInsects';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('Thermophiles', function() {
-  let card : Thermophiles; let player : Player; let game : Game;
+describe('Thermophiles', () => {
+  let card: Thermophiles;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Thermophiles();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    (game as any).venusScaleLevel = 4;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    setVenusScaleLevel(game, 4);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    (game as any).venusScaleLevel = 6;
-    expect(player.canPlayIgnoringCost(card)).is.true;
-    const action = card.play();
-    expect(action).is.undefined;
+  it('Should play', () => {
+    setVenusScaleLevel(game, 6);
+    expect(card.canPlay(player)).is.true;
+    cast(card.play(player), undefined);
   });
 
-  it('Should act - multiple targets', function() {
-    card.play();
+  it('Should act - multiple targets', () => {
+    card.play(player);
     player.playedCards.push(card, new VenusianInsects());
 
-    const action = card.action(player);
-    expect(action).instanceOf(SelectCard);
-        action!.cb([card]);
-        expect(card.resourceCount).to.eq(1);
-
-        player.addResourceTo(card);
-
-        const orOptions = card.action(player) as OrOptions;
-        expect(orOptions).is.not.undefined;
-        expect(orOptions instanceof OrOptions).is.true;
-        orOptions.options[0].cb();
-        expect(card.resourceCount).to.eq(0);
-        expect(game.getVenusScaleLevel()).to.eq(2);
-  });
-
-  it('Should act - single target', function() {
-    card.play();
-    player.playedCards.push(card);
-
-    const action = card.action(player);
-    expect(action instanceof SelectCard).is.not.true;
+    card.action(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectCard);
+    action.cb([card]);
     expect(card.resourceCount).to.eq(1);
 
     player.addResourceTo(card);
 
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions instanceof OrOptions).is.true;
+    const orOptions = cast(churn(card.action(player), player), OrOptions);
+    orOptions.options[0].cb();
+    expect(card.resourceCount).to.eq(0);
+    expect(game.getVenusScaleLevel()).to.eq(2);
+  });
+
+  it('Should act - single target', () => {
+    card.play(player);
+    player.playedCards.push(card);
+
+    const action = card.action(player);
+    cast(action, undefined);
+    runAllActions(game);
+    expect(card.resourceCount).to.eq(1);
+
+    player.addResourceTo(card);
+
+    const orOptions = cast(churn(card.action(player), player), OrOptions);
     orOptions.options[0].cb();
     expect(card.resourceCount).to.eq(0);
     expect(game.getVenusScaleLevel()).to.eq(2);

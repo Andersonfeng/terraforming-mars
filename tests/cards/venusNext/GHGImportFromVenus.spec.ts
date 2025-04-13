@@ -1,19 +1,15 @@
 import {expect} from 'chai';
-import {GHGImportFromVenus} from '../../../src/cards/venusNext/GHGImportFromVenus';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {GHGImportFromVenus} from '../../../src/server/cards/venusNext/GHGImportFromVenus';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('GHGImportFromVenus', function() {
-  it('Should play', function() {
+describe('GHGImportFromVenus', () => {
+  it('Should play', () => {
     const card = new GHGImportFromVenus();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, redPlayer], player);
+    const [game, player] = testGame(2);
 
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.HEAT)).to.eq(3);
+    cast(card.play(player), undefined);
+    expect(player.production.heat).to.eq(3);
     expect(game.getVenusScaleLevel()).to.eq(2);
   });
 });

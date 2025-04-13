@@ -1,45 +1,48 @@
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
 import {expect} from 'chai';
-import {AerobrakedAmmoniaAsteroid} from '../../../src/cards/base/AerobrakedAmmoniaAsteroid';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Decomposers} from '../../../src/cards/base/Decomposers';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {AerobrakedAmmoniaAsteroid} from '../../../src/server/cards/base/AerobrakedAmmoniaAsteroid';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Decomposers} from '../../../src/server/cards/base/Decomposers';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('AerobrakedAmmoniaAsteroid', function() {
-  let card : AerobrakedAmmoniaAsteroid; let player : Player;
+describe('AerobrakedAmmoniaAsteroid', () => {
+  let card: AerobrakedAmmoniaAsteroid;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AerobrakedAmmoniaAsteroid();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play without microbe cards', function() {
+  it('Should play without microbe cards', () => {
     player.playedCards.push(card);
     const action = card.play(player);
-    expect(player.getProduction(Resources.HEAT)).to.eq(3);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    expect(player.production.heat).to.eq(3);
+    expect(player.production.plants).to.eq(1);
 
     // It's okay to not have a card to collect Microbes on
-    expect(action).is.undefined;
+    cast(action, undefined);
   });
 
-  it('Adds microbes automatically if only 1 target', function() {
+  it('Adds microbes automatically if only 1 target', () => {
     player.playedCards.push(card);
 
     const selectedCard = new Ants();
     player.playedCards.push(selectedCard);
 
     card.play(player);
-    expect(player.getProduction(Resources.HEAT)).to.eq(3);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    runAllActions(game);
+
+    expect(player.production.heat).to.eq(3);
+    expect(player.production.plants).to.eq(1);
     expect(selectedCard.resourceCount).to.eq(2);
   });
 
-  it('Adds microbes to another card', function() {
+  it('Adds microbes to another card', () => {
     player.playedCards.push(card);
 
     // Add card to collect Microbes on
@@ -47,13 +50,16 @@ describe('AerobrakedAmmoniaAsteroid', function() {
     const otherMicrobeCard = new Decomposers();
     player.playedCards.push(selectedCard, otherMicrobeCard);
 
-    const action = card.play(player);
-    expect(player.getProduction(Resources.HEAT)).to.eq(3);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    cast(card.play(player), undefined);
 
-    expect(action).is.not.undefined;
-        action!.cb([selectedCard]);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectCard);
 
-        expect(selectedCard.resourceCount).to.eq(2);
+    expect(player.production.heat).to.eq(3);
+    expect(player.production.plants).to.eq(1);
+
+    action.cb([selectedCard]);
+
+    expect(selectedCard.resourceCount).to.eq(2);
   });
 });

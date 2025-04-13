@@ -1,14 +1,11 @@
 import {expect} from 'chai';
-import {AdvancedAlloys} from '../../../src/cards/base/AdvancedAlloys';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {AdvancedAlloys} from '../../../src/server/cards/base/AdvancedAlloys';
+import {testGame} from '../../TestGame';
 
-describe('AdvancedAlloys', function() {
-  it('Should play', function() {
+describe('AdvancedAlloys', () => {
+  it('Should play', () => {
     const card = new AdvancedAlloys();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    const [/* game */, player] = testGame(2);
     card.play(player);
     expect(player.getTitaniumValue()).to.eq(4);
     expect(player.getSteelValue()).to.eq(3);

@@ -1,26 +1,22 @@
 import {expect} from 'chai';
-import {Game} from '../../../src/Game';
 import {TileType} from '../../../src/common/TileType';
-import {NuclearZoneAres} from '../../../src/cards/ares/NuclearZoneAres';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
+import {NuclearZoneAres} from '../../../src/server/cards/ares/NuclearZoneAres';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('NuclearZoneAres', function() {
-  it('Should play', function() {
+describe('NuclearZoneAres', () => {
+  it('Should play', () => {
     const card = new NuclearZoneAres();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-
-    const game = Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
-
-    const action = card.play(player);
-    if (action !== undefined) {
-      const space = action.availableSpaces[0];
-      action.cb(space);
-      expect(space.tile && space.tile.tileType).to.eq(TileType.NUCLEAR_ZONE);
-      expect(card.getVictoryPoints()).to.eq(-2);
-      expect(space.adjacency).deep.eq({bonus: [], cost: 2});
-    }
+    const [game, player] = testGame(2, {aresExtension: true});
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+    const space = action.spaces[0];
+    action.cb(space);
+    expect(space.tile?.tileType).to.eq(TileType.NUCLEAR_ZONE);
+    expect(card.getVictoryPoints(player)).to.eq(-2);
+    expect(space.adjacency).deep.eq({bonus: [], cost: 2});
     expect(game.getTemperature()).to.eq(-26);
   });
 });

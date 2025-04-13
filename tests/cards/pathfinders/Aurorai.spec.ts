@@ -1,31 +1,33 @@
 import {expect} from 'chai';
-import {Aurorai} from '../../../src/cards/pathfinders/Aurorai';
-import {Game} from '../../../src/Game';
+import {Aurorai} from '../../../src/server/cards/pathfinders/Aurorai';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {TestingUtils} from '../../TestingUtils';
-import {GreeneryStandardProject} from '../../../src/cards/base/standardProjects/GreeneryStandardProject';
+import {testGame} from '../../TestGame';
+import {cast, runAllActions} from '../../TestingUtils';
+import {GreeneryStandardProject} from '../../../src/server/cards/base/standardProjects/GreeneryStandardProject';
+import {AsteroidStandardProject} from '../../../src/server/cards/base/standardProjects/AsteroidStandardProject';
+import {SelectPayment} from '../../../src/server/inputs/SelectPayment';
+import {Payment} from '../../../src/common/inputs/Payment';
 
-describe('Aurorai', function() {
+describe('Aurorai', () => {
   let card: Aurorai;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Aurorai();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
-    player.corporationCard = card;
+    [game, player] = testGame(1);
+    player.corporations.push(card);
   });
 
   it('on TR bump', () => {
     expect(card.resourceCount).eq(0);
     player.increaseTerraformRating();
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
     expect(card.resourceCount).eq(1);
 
-    player.increaseTerraformRatingSteps(3);
-    TestingUtils.runAllActions(game);
+    player.increaseTerraformRating(3);
+    runAllActions(game);
     expect(card.resourceCount).eq(4);
   });
 
@@ -41,5 +43,34 @@ describe('Aurorai', function() {
 
     card.resourceCount++;
     expect(greenery.canAct(player)).is.true;
+  });
+
+  it('paying for asteroid standard project', () => {
+    const asteroid = new AsteroidStandardProject();
+    expect(asteroid.canAct(player)).is.false;
+
+    player.megaCredits = 10;
+    card.resourceCount = 1;
+    expect(asteroid.canAct(player)).is.false;
+
+    card.resourceCount = 3;
+    expect(asteroid.canAct(player)).is.true;
+
+    const playerInput = asteroid.action(player);
+    expect(playerInput).is.undefined;
+    runAllActions(game);
+
+    const selectPayment = cast(player.popWaitingFor(), SelectPayment);
+    expect(selectPayment.paymentOptions.auroraiData).is.true;
+
+    expect(game.getTemperature()).eq(-30);
+    expect(() =>
+      selectPayment.process({type: 'payment', payment: {...Payment.EMPTY, megaCredits: 4, auroraiData: 2}}, player),
+    ).to.throw(/Did not spend enough/);
+
+    selectPayment.process({type: 'payment', payment: {...Payment.EMPTY, megaCredits: 8, auroraiData: 2}}, player),
+    expect(game.getTemperature()).eq(-28);
+    expect(player.megaCredits).eq(2);
+    expect(player.getSpendable('auroraiData')).eq(1);
   });
 });

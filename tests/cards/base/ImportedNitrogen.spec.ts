@@ -1,41 +1,41 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Birds} from '../../../src/cards/base/Birds';
-import {ImportedNitrogen} from '../../../src/cards/base/ImportedNitrogen';
-import {Pets} from '../../../src/cards/base/Pets';
-import {Tardigrades} from '../../../src/cards/base/Tardigrades';
-import {ICard} from '../../../src/cards/ICard';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast} from '../../TestingUtils';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Birds} from '../../../src/server/cards/base/Birds';
+import {ImportedNitrogen} from '../../../src/server/cards/base/ImportedNitrogen';
+import {Pets} from '../../../src/server/cards/base/Pets';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
+import {ICard} from '../../../src/server/cards/ICard';
+import {IGame} from '../../../src/server/IGame';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('ImportedNitrogen', function() {
-  let card : ImportedNitrogen; let player : Player; let game : Game;
+describe('ImportedNitrogen', () => {
+  let card: ImportedNitrogen;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ImportedNitrogen();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play without animals and microbes', function() {
+  it('Should play without animals and microbes', () => {
     card.play(player);
     expect(player.getTerraformRating()).to.eq(21);
     expect(player.plants).to.eq(4);
   });
 
-  it('Should play with only animals', function() {
+  it('Should play with only animals', () => {
     const pets = new Pets();
     const birds = new Birds();
     player.playedCards.push(pets, birds);
     card.play(player);
 
-    const addMicrobes = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
-    expect(addMicrobes).is.undefined;
+    expect(game.deferredActions.pop()!.execute()).is.undefined;
 
-    const addAnimals = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
+    const addAnimals = cast(game.deferredActions.pop()!.execute(), SelectCard<ICard>);
     addAnimals.cb([pets]);
     expect(pets.resourceCount).to.eq(2);
 
@@ -43,24 +43,23 @@ describe('ImportedNitrogen', function() {
     expect(player.plants).to.eq(4);
   });
 
-  it('Should play with only microbes', function() {
+  it('Should play with only microbes', () => {
     const tardigrades = new Tardigrades();
     const ants = new Ants();
     player.playedCards.push(tardigrades, ants);
     card.play(player);
 
-    const addMicrobes = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
+    const addMicrobes = cast(game.deferredActions.pop()!.execute(), SelectCard<ICard>);
     addMicrobes.cb([tardigrades]);
     expect(tardigrades.resourceCount).to.eq(3);
 
-    const addAnimals = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
-    expect(addAnimals).is.undefined;
+    expect(game.deferredActions.pop()!.execute()).is.undefined;
 
     expect(player.getTerraformRating()).to.eq(21);
     expect(player.plants).to.eq(4);
   });
 
-  it('Should play with animals and microbes', function() {
+  it('Should play with animals and microbes', () => {
     const pets = new Pets();
     const birds = new Birds();
     const tardigrades = new Tardigrades();
@@ -68,11 +67,11 @@ describe('ImportedNitrogen', function() {
     player.playedCards.push(pets, tardigrades, birds, ants);
     card.play(player);
 
-    const addMicrobes = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
+    const addMicrobes = cast(game.deferredActions.pop()!.execute(), SelectCard<ICard>);
     addMicrobes.cb([tardigrades]);
     expect(tardigrades.resourceCount).to.eq(3);
 
-    const addAnimals = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
+    const addAnimals = cast(game.deferredActions.pop()!.execute(), SelectCard<ICard>);
     addAnimals.cb([pets]);
     expect(pets.resourceCount).to.eq(2);
 

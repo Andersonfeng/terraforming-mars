@@ -1,15 +1,14 @@
 import {expect} from 'chai';
-import {Mohole} from '../../../src/cards/prelude/Mohole';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Mohole} from '../../../src/server/cards/prelude/Mohole';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('Mohole', function() {
-  it('Should play', function() {
+describe('Mohole', () => {
+  it('Should play', () => {
     const card = new Mohole();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.HEAT)).to.eq(3);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.heat).to.eq(3);
     expect(player.heat).to.eq(3);
   });
 });

@@ -1,22 +1,18 @@
 import {expect} from 'chai';
-import {IshtarMining} from '../../../src/cards/venusNext/IshtarMining';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {IshtarMining} from '../../../src/server/cards/venusNext/IshtarMining';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('IshtarMining', function() {
-  it('Should play', function() {
+describe('IshtarMining', () => {
+  it('Should play', () => {
     const card = new IshtarMining();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, redPlayer], player);
+    const [game, player] = testGame(2);
     game.increaseVenusScaleLevel(player, 3);
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
     game.increaseVenusScaleLevel(player, 3);
     expect(game.getVenusScaleLevel()).to.eq(12);
-    expect(player.canPlayIgnoringCost(card)).is.true;
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(1);
+    expect(card.canPlay(player)).is.true;
+    cast(card.play(player), undefined);
+    expect(player.production.titanium).to.eq(1);
   });
 });

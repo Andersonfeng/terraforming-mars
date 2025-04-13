@@ -1,82 +1,92 @@
 import {expect} from 'chai';
-import {CharityDonation} from '../../../src/cards/pathfinders/CharityDonation';
-import {Game} from '../../../src/Game';
+import {CharityDonation} from '../../../src/server/cards/pathfinders/CharityDonation';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {AcquiredCompany} from '../../../src/cards/base/AcquiredCompany';
-import {BeamFromAThoriumAsteroid} from '../../../src/cards/base/BeamFromAThoriumAsteroid';
-import {CEOsFavoriteProject} from '../../../src/cards/base/CEOsFavoriteProject';
-import {Decomposers} from '../../../src/cards/base/Decomposers';
-import {TestingUtils} from '../../TestingUtils';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {SelectCard} from '../../../src/inputs/SelectCard';
+import {AcquiredCompany} from '../../../src/server/cards/base/AcquiredCompany';
+import {BeamFromAThoriumAsteroid} from '../../../src/server/cards/base/BeamFromAThoriumAsteroid';
+import {CEOsFavoriteProject} from '../../../src/server/cards/base/CEOsFavoriteProject';
+import {Decomposers} from '../../../src/server/cards/base/Decomposers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
 
-describe('CharityDonation', function() {
+describe('CharityDonation', () => {
   let card: CharityDonation;
   let player1: TestPlayer;
   let player2: TestPlayer;
   let player3: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CharityDonation();
-    game = newTestGame(3);
-    player1 = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 1);
-    player3 = getTestPlayer(game, 2);
+    [game, player1, player2, player3] = testGame(3);
   });
 
-  it('play', function() {
+  const canPlayRuns = [
+    {deck: 2, expected: false},
+    {deck: 3, expected: false},
+    {deck: 4, expected: true},
+  ] as const;
+  for (const run of canPlayRuns) {
+    it('canPlay: ' + JSON.stringify(run), () => {
+      game.projectDeck.drawPile.length = run.deck;
+
+      expect(card.canPlay(player1)).eq(run.expected);
+    });
+  }
+
+  it('play', () => {
     const acquiredCompany = new AcquiredCompany();
     const beamFromAThoriumAsteroid = new BeamFromAThoriumAsteroid();
     const ceosFavoriteProject = new CEOsFavoriteProject();
     const decomposers = new Decomposers();
-    game.dealer.deck.push(decomposers, ceosFavoriteProject, beamFromAThoriumAsteroid, acquiredCompany);
+    game.projectDeck.drawPile.push(decomposers, ceosFavoriteProject, beamFromAThoriumAsteroid, acquiredCompany);
 
-    (player1 as any).waitingFor = undefined;
-    (player2 as any).waitingFor = undefined;
-    (player3 as any).waitingFor = undefined;
+    player1.popWaitingFor();
+    player2.popWaitingFor();
+    player3.popWaitingFor();
 
     // Letting player 2 go first to test the wraparound nature of the algorithm.
     card.play(player2);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(player1.getWaitingFor()).is.undefined;
-    expect(player3.getWaitingFor()).is.undefined;
-    const selectCard2 = TestingUtils.cast(player2.getWaitingFor(), SelectCard);
+    cast(player1.getWaitingFor(), undefined);
+    cast(player3.getWaitingFor(), undefined);
+    const selectCard2 = cast(player2.getWaitingFor(), SelectCard);
 
     expect(selectCard2.cards).deep.eq([acquiredCompany, beamFromAThoriumAsteroid, ceosFavoriteProject, decomposers]);
 
-    player2.process([[beamFromAThoriumAsteroid.name]]);
+    player2.process({type: 'card', cards: [beamFromAThoriumAsteroid.name]});
 
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(player1.getWaitingFor()).is.undefined;
-    expect(player2.getWaitingFor()).is.undefined;
-    const selectCard3 = TestingUtils.cast(player3.getWaitingFor(), SelectCard);
+    cast(player1.getWaitingFor(), undefined);
+    cast(player2.getWaitingFor(), undefined);
+    const selectCard3 = cast(player3.getWaitingFor(), SelectCard);
 
     expect(selectCard3.cards).deep.eq([acquiredCompany, ceosFavoriteProject, decomposers]);
 
-    player3.process([[decomposers.name]]);
+    player3.process({type: 'card', cards: [decomposers.name]});
 
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(player2.getWaitingFor()).is.undefined;
-    expect(player3.getWaitingFor()).is.undefined;
-    const selectCard1 = TestingUtils.cast(player1.getWaitingFor(), SelectCard);
+    cast(player2.getWaitingFor(), undefined);
+    cast(player3.getWaitingFor(), undefined);
+    const selectCard1 = cast(player1.getWaitingFor(), SelectCard);
 
     expect(selectCard1.cards).deep.eq([acquiredCompany, ceosFavoriteProject]);
 
-    player1.process([[acquiredCompany.name]]);
+    player1.process({type: 'card', cards: [acquiredCompany.name]});
 
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(player1.getWaitingFor()).is.undefined;
-    expect(player2.getWaitingFor()).is.undefined;
-    expect(player3.getWaitingFor()).is.undefined;
+    cast(player1.getWaitingFor(), undefined);
+    cast(player2.getWaitingFor(), undefined);
+    cast(player3.getWaitingFor(), undefined);
 
     expect(player1.cardsInHand).deep.eq([acquiredCompany]);
     expect(player2.cardsInHand).deep.eq([beamFromAThoriumAsteroid]);
     expect(player3.cardsInHand).deep.eq([decomposers]);
-    expect(game.dealer.discarded).deep.eq([ceosFavoriteProject]);
+    expect(game.projectDeck.discardPile).deep.eq([ceosFavoriteProject]);
   });
 });

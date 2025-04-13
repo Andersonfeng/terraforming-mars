@@ -1,16 +1,14 @@
-
 import {expect} from 'chai';
-import {AsteroidMining} from '../../../src/cards/base/AsteroidMining';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {AsteroidMining} from '../../../src/server/cards/base/AsteroidMining';
+import {cast} from '../../TestingUtils';
 
-describe('AsteroidMining', function() {
-  it('Should play', function() {
+describe('AsteroidMining', () => {
+  it('Should play', () => {
     const card = new AsteroidMining();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(2);
-    expect(card.getVictoryPoints()).to.eq(2);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.titanium).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(2);
   });
 });

@@ -1,26 +1,30 @@
-import {ButterflyEffect} from '../../../src/cards/ares/ButterflyEffect';
+import {ButterflyEffect} from '../../../src/server/cards/ares/ButterflyEffect';
 import {expect} from 'chai';
-import {ARES_OPTIONS_WITH_HAZARDS} from '../../ares/AresTestHelper';
-import {ShiftAresGlobalParameters} from '../../../src/inputs/ShiftAresGlobalParameters';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {ShiftAresGlobalParameters} from '../../../src/server/inputs/ShiftAresGlobalParameters';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
-import {Game} from '../../../src/Game';
-import {runAllActions, cast} from '../../TestingUtils';
+import {IGame} from '../../../src/server/IGame';
+import {cast, churn} from '../../TestingUtils';
+import {HAZARD_CONSTRAINTS} from '../../../src/common/ares/AresData';
+import {AresHandler} from '../../../src/server/ares/AresHandler';
 
-describe('ButterflyEffect', function() {
+describe('ButterflyEffect', () => {
   let card: ButterflyEffect;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ButterflyEffect();
-    game = newTestGame(2, ARES_OPTIONS_WITH_HAZARDS);
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(2, {
+      aresExtension: true,
+      aresHazards: true,
+    });
   });
 
-  it('play', function() {
+  it('play', () => {
     const priorTerraformingRating = player.getTerraformRating();
-    card.play(player);
+
+    const input = cast(churn(card.play(player), player), ShiftAresGlobalParameters);
     expect(player.getTerraformRating()).eq(priorTerraformingRating + 1);
 
     const originalHazardData = game.aresData!.hazardData;
@@ -29,8 +33,6 @@ describe('ButterflyEffect', function() {
     expect(originalHazardData.severeErosionTemperature.threshold).eq(-4);
     expect(originalHazardData.severeDustStormOxygen.threshold).eq(5);
 
-    runAllActions(game);
-    const input = cast(player.getWaitingFor(), ShiftAresGlobalParameters);
     input.cb(
       {
         lowOceanDelta: -1,
@@ -45,5 +47,18 @@ describe('ButterflyEffect', function() {
     expect(revisedHazardData.removeDustStormsOceanCount.threshold).eq(7);
     expect(revisedHazardData.severeErosionTemperature.threshold).eq(-6);
     expect(revisedHazardData.severeDustStormOxygen.threshold).eq(6);
+  });
+
+  it('do not present input if all global parameters are high enough', () => {
+    AresHandler.ifAres(game, (aresData) => {
+      for (const constraint of HAZARD_CONSTRAINTS) {
+        aresData.hazardData[constraint].available = false;
+      }
+    });
+
+    const priorTerraformingRating = player.getTerraformRating();
+
+    expect(churn(card.play(player), player)).is.undefined;
+    expect(player.getTerraformRating()).eq(priorTerraformingRating + 1);
   });
 });

@@ -1,29 +1,30 @@
 import {expect} from 'chai';
-import {FoodFactory} from '../../../src/cards/base/FoodFactory';
+import {FoodFactory} from '../../../src/server/cards/base/FoodFactory';
+import {Resource} from '../../../src/common/Resource';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
 
-describe('FoodFactory', function() {
-  let card : FoodFactory; let player : TestPlayer;
+describe('FoodFactory', () => {
+  let card: FoodFactory;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new FoodFactory();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.PLANTS, 1);
+  it('Should play', () => {
+    player.production.add(Resource.PLANTS, 1);
     expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(0);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(4);
+    expect(player.production.plants).to.eq(0);
+    expect(player.production.megacredits).to.eq(4);
 
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

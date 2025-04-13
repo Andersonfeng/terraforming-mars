@@ -1,23 +1,22 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {EconomicHelp} from '../../../src/cards/pathfinders/EconomicHelp';
-import {Game} from '../../../src/Game';
+import {testGame} from '../../TestGame';
+import {EconomicHelp} from '../../../src/server/cards/pathfinders/EconomicHelp';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
 import {Units} from '../../../src/common/Units';
 
-describe('EconomicHelp', function() {
+describe('EconomicHelp', () => {
   let card: EconomicHelp;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EconomicHelp();
-    game = newTestGame(1, {pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {pathfindersExpansion: true, venusNextExtension: true});
   });
 
-  it('Play - one lowest influence tracks', function() {
-    expect(player.getProductionForTest()).deep.eq(Units.EMPTY);
+  it('Play - one lowest influence tracks', () => {
+    expect(player.production.asUnits()).deep.eq(Units.EMPTY);
     game.pathfindersData = {
       venus: 0,
       earth: 1,
@@ -29,7 +28,7 @@ describe('EconomicHelp', function() {
 
     card.play(player);
 
-    expect(player.getProductionForTest()).deep.eq(Units.of({megacredits: 1}));
+    expect(player.production.asUnits()).deep.eq(Units.of({megacredits: 1}));
     expect(game.pathfindersData).deep.eq({
       venus: 3,
       earth: 1,
@@ -40,7 +39,7 @@ describe('EconomicHelp', function() {
     });
   });
 
-  it('Play - two lowest influence tracks', function() {
+  it('Play - two lowest influence tracks', () => {
     game.pathfindersData = {
       venus: 2,
       earth: 1,
@@ -62,7 +61,7 @@ describe('EconomicHelp', function() {
     });
   });
 
-  it('Play - all influence tracks tied', function() {
+  it('Play - all influence tracks tied', () => {
     expect(game.pathfindersData).deep.eq({
       venus: 0,
       earth: 0,
@@ -84,12 +83,12 @@ describe('EconomicHelp', function() {
     });
   });
 
-  it('Play - ignore maximized tracks', function() {
+  it('Play - ignore maximized tracks', () => {
     game.pathfindersData = {
-      venus: 18,
-      earth: 18,
-      mars: 18,
-      jovian: 15,
+      venus: 17, // At the maximum
+      earth: 18, // Max is 22
+      mars: 17, // At the maximmum
+      jovian: 14, // At the maximum
       moon: -1,
       vps: [],
     };
@@ -97,12 +96,17 @@ describe('EconomicHelp', function() {
     card.play(player);
 
     expect(game.pathfindersData).deep.eq({
-      venus: 18,
+      venus: 17,
       earth: 21,
-      mars: 18,
-      jovian: 15,
+      mars: 17,
+      jovian: 14,
       moon: -1,
       vps: [],
     });
   });
+
+  // Economic Help does not correctly raise a planetary influence track when
+  // the relevant (lowest) non-completed track is higher than any other already
+  // completed track. Example: A non-completed Moon track will not be raised
+  // if it is higher than a completed Jovian track.
 });

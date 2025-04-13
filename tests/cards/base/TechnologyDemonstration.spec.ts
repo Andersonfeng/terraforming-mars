@@ -1,16 +1,13 @@
 import {expect} from 'chai';
-import {TechnologyDemonstration} from '../../../src/cards/base/TechnologyDemonstration';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {TechnologyDemonstration} from '../../../src/server/cards/base/TechnologyDemonstration';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('TechnologyDemonstration', function() {
-  it('Should play', function() {
+describe('TechnologyDemonstration', () => {
+  it('Should play', () => {
     const card = new TechnologyDemonstration();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
     expect(player.cardsInHand).has.lengthOf(2);
     expect(player.cardsInHand[0]).not.to.eq(player.cardsInHand[1]);
   });

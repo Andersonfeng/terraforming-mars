@@ -1,42 +1,42 @@
 import {expect} from 'chai';
-import {CupolaCity} from '../../../src/cards/base/CupolaCity';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
+import {CupolaCity} from '../../../src/server/cards/base/CupolaCity';
+import {IGame} from '../../../src/server/IGame';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions, setOxygenLevel} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {assertPlaceCity} from '../../assertions';
 
-describe('CupolaCity', function() {
-  let card : CupolaCity; let player : Player; let game : Game;
+describe('CupolaCity', () => {
+  let card: CupolaCity;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CupolaCity();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play without energy production', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play without energy production', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can\'t play if oxygen level too high', function() {
-    player.addProduction(Resources.ENERGY, 1);
-    (game as any).oxygenLevel = 10;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play if oxygen level too high', () => {
+    player.production.add(Resource.ENERGY, 1);
+    setOxygenLevel(game, 10);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.ENERGY, 1);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    player.production.add(Resource.ENERGY, 1);
+    expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
+    cast(card.play(player), undefined);
+    runAllActions(player.game);
 
-    action.cb(action.availableSpaces[0]);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(3);
-    expect(action.availableSpaces[0].tile && action.availableSpaces[0].tile.tileType).to.eq(TileType.CITY);
+    assertPlaceCity(player, player.popWaitingFor());
+
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.megacredits).to.eq(3);
   });
 });

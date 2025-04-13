@@ -1,21 +1,21 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {VitalColony} from '../../../src/cards/pathfinders/VitalColony';
-import {Player} from '../../../src/Player';
-import {SelectColony} from '../../../src/inputs/SelectColony';
+import {testGame} from '../../TestGame';
+import {VitalColony} from '../../../src/server/cards/pathfinders/VitalColony';
+import {SelectColony} from '../../../src/server/inputs/SelectColony';
 import {ColonyName} from '../../../src/common/colonies/ColonyName';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
+import {IGame} from '../../../src/server/IGame';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('VitalColony', function() {
+describe('VitalColony', () => {
   let card: VitalColony;
-  let player: Player;
-  let game: Game;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new VitalColony();
     // 2 players to remove an early-game solo action in the deferred actions queue.
-    game = newTestGame(2, {
+    [game, player] = testGame(2, {
       coloniesExtension: true,
       customColoniesList: [
         // The important thing is that Europa is absent.
@@ -25,23 +25,18 @@ describe('VitalColony', function() {
         ColonyName.TITAN,
         ColonyName.TRITON],
     });
-    player = getTestPlayer(game, 0);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
 
-    const buildColonyAction = game.deferredActions.pop()!.execute();
-
-    expect(buildColonyAction).is.instanceOf(SelectColony);
-
-    const selectColony = buildColonyAction as SelectColony;
-    const colonyName = selectColony.colonies[0].name as ColonyName;
+    const selectColony = cast(game.deferredActions.pop()!.execute(), SelectColony);
+    const colonyName = selectColony.colonies[0].name;
 
     expect(colonyName).eq(ColonyName.GANYMEDE);
 
     selectColony.cb(selectColony.colonies[0]);
 
-    expect(player.getProduction(Resources.PLANTS)).eq(2);
+    expect(player.production.plants).eq(2);
   });
 });

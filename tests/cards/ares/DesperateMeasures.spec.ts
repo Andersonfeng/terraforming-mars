@@ -1,35 +1,36 @@
 import {expect} from 'chai';
-import {DesperateMeasures} from '../../../src/cards/ares/DesperateMeasures';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
+import {DesperateMeasures} from '../../../src/server/cards/ares/DesperateMeasures';
+import {IGame} from '../../../src/server/IGame';
 import {TileType} from '../../../src/common/TileType';
-import {AresTestHelper, ARES_OPTIONS_WITH_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
-import {addOcean} from '../../TestingUtils';
+import {AresTestHelper} from '../../ares/AresTestHelper';
+import {TestPlayer} from '../../TestPlayer';
+import {addOcean, cast} from '../../TestingUtils';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {testGame} from '../../TestGame';
 
-describe('DesperateMeasures', function() {
-  let card : DesperateMeasures; let player : Player; let game : Game;
+describe('DesperateMeasures', () => {
+  let card: DesperateMeasures;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new DesperateMeasures();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_WITH_HAZARDS);
+    [game, player] = testGame(2, {aresExtension: true, aresHazards: true});
   });
 
-  it('play on top of dust storm', function() {
+  it('play on top of dust storm', () => {
     const tiles = AresTestHelper.byTileType(AresTestHelper.getHazards(player));
     const protectedDustStorm = tiles.get(TileType.DUST_STORM_MILD)![0];
 
     const priorTr = player.getTerraformRating();
 
-    card.play(player).cb(protectedDustStorm);
+    cast(card.play(player), SelectSpace).cb(protectedDustStorm);
 
     expect(player.getTerraformRating()).eq(priorTr + 1);
     expect(game.getOxygenLevel()).eq(1);
   });
 
-  it('play on top of erosion tile', function() {
+  it('play on top of erosion tile', () => {
     // 3 oceans brings out the erosion tiles
     addOcean(player);
     addOcean(player);
@@ -41,26 +42,27 @@ describe('DesperateMeasures', function() {
     const priorTr = player.getTerraformRating();
     const priorTemp = game.getTemperature();
 
-    card.play(player).cb(protectedErosion);
+    cast(card.play(player), SelectSpace).cb(protectedErosion);
 
     expect(player.getTerraformRating()).eq(priorTr + 1);
     expect(game.getTemperature()).eq(priorTemp + 2);
   });
 
-  it('hazard tile with player marker cannot be played on', function() {
+  it('hazard tile with player marker cannot be played on', () => {
     const tiles = AresTestHelper.byTileType(AresTestHelper.getHazards(player));
     const protectedDustStorm = tiles.get(TileType.DUST_STORM_MILD)![0];
+    player.megaCredits = 8;
     expect(game.board.getAvailableSpacesOnLand(player).map((s) => s.id)).contains(protectedDustStorm.id);
 
-    card.play(player).cb(protectedDustStorm);
+    cast(card.play(player), SelectSpace).cb(protectedDustStorm);
 
     expect(game.board.getAvailableSpacesOnLand(player).map((s) => s.id)).not.contains(protectedDustStorm.id);
   });
 
-  it('hazard tile with player marker is not removed after placing the sixth ocean', function() {
+  it('hazard tile with player marker is not removed after placing the sixth ocean', () => {
     const tiles = AresTestHelper.byTileType(AresTestHelper.getHazards(player));
     const protectedDustStorm = tiles.get(TileType.DUST_STORM_MILD)![0];
-    card.play(player).cb(protectedDustStorm);
+    cast(card.play(player), SelectSpace).cb(protectedDustStorm);
 
     // The sixth ocean removes dust storms.
     addOcean(player);

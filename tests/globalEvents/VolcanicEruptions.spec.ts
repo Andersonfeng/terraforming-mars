@@ -1,29 +1,22 @@
 import {expect} from 'chai';
-import {Game} from '../../src/Game';
-import {Resources} from '../../src/common/Resources';
-import {VolcanicEruptions} from '../../src/turmoil/globalEvents/VolcanicEruptions';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {VolcanicEruptions} from '../../src/server/turmoil/globalEvents/VolcanicEruptions';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {testGame} from '../TestingUtils';
 
-describe('VolcanicEruptions', function() {
-  it('resolve play', function() {
+describe('VolcanicEruptions', () => {
+  it('resolve play', () => {
     const card = new VolcanicEruptions();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
-    const turmoil = Turmoil.newInstance(game);
-
-    turmoil.initGlobalEvent(game);
-    turmoil.chairman = player2.id;
+    const [game, player, player2] = testGame(2, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
-    expect(player.getProduction(Resources.HEAT)).to.eq(0);
-    expect(player2.getProduction(Resources.HEAT)).to.eq(3);
+    expect(player.production.heat).to.eq(0);
+    expect(player2.production.heat).to.eq(3);
     expect(game.getTemperature()).to.eq(-26);
   });
 });

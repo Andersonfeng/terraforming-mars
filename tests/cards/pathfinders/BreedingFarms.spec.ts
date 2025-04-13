@@ -1,39 +1,37 @@
 import {expect} from 'chai';
-import {BreedingFarms} from '../../../src/cards/pathfinders/BreedingFarms';
-import {Fish} from '../../../src/cards/base/Fish';
-import {Game} from '../../../src/Game';
+import {BreedingFarms} from '../../../src/server/cards/pathfinders/BreedingFarms';
+import {Fish} from '../../../src/server/cards/base/Fish';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {TestingUtils} from '../../TestingUtils';
+import {runAllActions, testGame} from '../../TestingUtils';
 
-describe('BreedingFarms', function() {
+describe('BreedingFarms', () => {
   let card: BreedingFarms;
   let player: TestPlayer;
   let fish: Fish;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new BreedingFarms();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    [/* game */, player] = testGame(1);
     player.playedCards.push(card);
     fish = new Fish();
+    player.popWaitingFor();
   });
 
-  it('canPlay', function() {
+  it('canPlay', () => {
     player.tagsForTest = {};
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     player.tagsForTest = {science: 1};
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     player.tagsForTest = {animal: 1};
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     player.tagsForTest = {science: 1, animal: 1};
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('play', function() {
+  it('play', () => {
     expect(player.getTerraformRating()).eq(14);
     expect(player.game.getTemperature()).eq(-30);
 
@@ -43,7 +41,7 @@ describe('BreedingFarms', function() {
     expect(player.game.getTemperature()).eq(-28);
   });
 
-  it('Can act', function() {
+  it('Can act', () => {
     player.plants = 0;
     player.playedCards = [];
 
@@ -65,13 +63,13 @@ describe('BreedingFarms', function() {
     expect(card.canAct(player)).is.true;
   });
 
-  it('act', function() {
+  it('act', () => {
     player.plants = 1;
     fish.resourceCount = 0;
     player.playedCards = [fish];
 
     player.defer(card.action(player));
-    TestingUtils.runAllActions(player.game);
+    runAllActions(player.game);
     player.getWaitingFor()?.cb([fish]);
 
     expect(player.plants).eq(0);

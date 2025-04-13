@@ -1,28 +1,45 @@
 import {expect} from 'chai';
-import {EcologyExperts} from '../../../src/cards/prelude/EcologyExperts';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {EcologyExperts} from '../../../src/server/cards/prelude/EcologyExperts';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions, testGame} from '../../TestingUtils';
+import {AICentral} from '../../../src/server/cards/base/AICentral';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {SelectProjectCardToPlay} from '../../../src/server/inputs/SelectProjectCardToPlay';
 
-describe('EcologyExperts', function() {
-  let card : EcologyExperts; let player : Player;
+describe('EcologyExperts', () => {
+  let card: EcologyExperts;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EcologyExperts();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    [/* game */, player] = testGame(1);
   });
 
-  it('Gets requirement bonus', function() {
-    expect(card.getRequirementBonus(player)).to.eq(0);
+  it('Gets requirement bonus', () => {
+    expect(card.getGlobalParameterRequirementBonus(player)).to.eq(0);
     player.lastCardPlayed = card.name;
-    expect(card.getRequirementBonus(player)).to.eq(50);
+    expect(card.getGlobalParameterRequirementBonus(player)).to.eq(50);
   });
 
-  it('Should play', function() {
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+  it('Should play', () => {
+    // AI Central needs 3 science tags.
+    const aiCentral = new AICentral();
+    // Ants needs 4% oxygen
+    const ants = new Ants();
+    player.cardsInHand = [aiCentral, ants];
+    player.megaCredits = Math.max(aiCentral.cost, ants.cost);
+
+    expect(player.canPlay(aiCentral)).is.false;
+    expect(player.canPlay(ants)).is.false;
+
+    player.playCard(card);
+    runAllActions(player.game);
+    const selectProjectCardToPlay = cast(player.popWaitingFor(), SelectProjectCardToPlay);
+    expect(selectProjectCardToPlay.cards).deep.eq([ants]);
+
+    // Ecology Experts doesn't touch tag requirements.
+    expect(player.canPlay(aiCentral)).is.false;
+    // But it does touch global requirements.
+    expect(player.canPlay(ants)).is.true;
   });
 });

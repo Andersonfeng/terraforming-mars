@@ -1,39 +1,35 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {FirstLunarSettlement} from '../../../src/cards/moon/FirstLunarSettlement';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {FirstLunarSettlement} from '../../../src/server/cards/moon/FirstLunarSettlement';
 import {expect} from 'chai';
-import {Resources} from '../../../src/common/Resources';
-import {PlaceMoonColonyTile} from '../../../src/moon/PlaceMoonColonyTile';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {PlaceMoonHabitatTile} from '../../../src/server/moon/PlaceMoonHabitatTile';
 
 describe('FirstLunarSettlement', () => {
-  let game: Game;
-  let player: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player: TestPlayer;
+  let moonData: MoonData;
   let card: FirstLunarSettlement;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
     card = new FirstLunarSettlement();
   });
 
   it('play', () => {
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(0);
+    expect(player.production.megacredits).eq(0);
     expect(player.getTerraformRating()).eq(14);
-    expect(moonData.colonyRate).eq(0);
+    expect(moonData.habitatRate).eq(0);
 
     card.play(player);
-    const placeTileAction = game.deferredActions.peek() as PlaceMoonColonyTile;
-    placeTileAction!.execute()!.cb(moonData.moon.spaces[2]);
+    const placeTileAction = cast(game.deferredActions.peek(), PlaceMoonHabitatTile);
+    placeTileAction.execute()!.cb(moonData.moon.spaces[2]);
 
-    expect(moonData.colonyRate).eq(1);
+    expect(moonData.habitatRate).eq(1);
     expect(player.getTerraformRating()).eq(15);
   });
 });

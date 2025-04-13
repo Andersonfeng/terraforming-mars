@@ -1,16 +1,13 @@
 import {expect} from 'chai';
-import {BribedCommittee} from '../../../src/cards/base/BribedCommittee';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {BribedCommittee} from '../../../src/server/cards/base/BribedCommittee';
+import {testGame} from '../../TestGame';
 
-describe('BribedCommittee', function() {
-  it('Should play', function() {
+describe('BribedCommittee', () => {
+  it('Should play', () => {
     const card = new BribedCommittee();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    const [/* game */, player] = testGame(2);
     card.play(player);
-    expect(card.getVictoryPoints()).to.eq(-2);
+    expect(card.getVictoryPoints(player)).to.eq(-2);
     expect(player.getTerraformRating()).to.eq(22);
   });
 });

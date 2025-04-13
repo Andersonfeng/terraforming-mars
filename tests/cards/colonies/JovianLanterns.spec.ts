@@ -1,37 +1,36 @@
 import {expect} from 'chai';
-import {JovianLanterns} from '../../../src/cards/colonies/JovianLanterns';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {JovianLanterns} from '../../../src/server/cards/colonies/JovianLanterns';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {cast} from '../../TestingUtils';
 
-describe('JovianLanterns', function() {
-  let card : JovianLanterns; let player : Player;
+describe('JovianLanterns', () => {
+  let card: JovianLanterns;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new JovianLanterns();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
     expect(player.getTerraformRating()).to.eq(21);
   });
 
-  it('Can\'t act', function() {
+  it('Can not act', () => {
     player.playedCards.push(card);
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.titanium = 3;
     expect(card.canAct(player)).is.true;
 
     const action = card.action(player);
-    expect(action).is.undefined;
+    cast(action, undefined);
     expect(card.resourceCount).to.eq(2);
     expect(player.titanium).to.eq(2);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

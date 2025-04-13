@@ -1,22 +1,23 @@
 import {expect} from 'chai';
-import {BigAsteroid} from '../../../src/cards/base/BigAsteroid';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {BigAsteroid} from '../../../src/server/cards/base/BigAsteroid';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
 import {runAllActions, cast} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('BigAsteroid', function() {
-  let card : BigAsteroid; let player : Player; let player2 : Player; let game : Game;
+describe('BigAsteroid', () => {
+  let card: BigAsteroid;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new BigAsteroid();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player2.plants = 5;
     card.play(player);
     runAllActions(game);
@@ -31,8 +32,8 @@ describe('BigAsteroid', function() {
     expect(player.titanium).to.eq(4);
   });
 
-  it('Works fine in solo', function() {
-    game = Game.newInstance('foobar', [player], player);
+  it('Works fine in solo', () => {
+    const [game, player] = testGame(1);
     player.plants = 5;
     card.play(player);
     expect(game.deferredActions).has.lengthOf(1);

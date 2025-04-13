@@ -1,48 +1,50 @@
 import {expect} from 'chai';
-import {Livestock} from '../../../src/cards/base/Livestock';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Livestock} from '../../../src/server/cards/base/Livestock';
+import {IGame} from '../../../src/server/IGame';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {runAllActions, setOxygenLevel} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('Livestock', function() {
-  let card : Livestock; let player : Player; let game : Game;
+describe('Livestock', () => {
+  let card: Livestock;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Livestock();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play without plant production', function() {
-    (game as any).oxygenLevel = 9;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play without plant production', () => {
+    setOxygenLevel(game, 9);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can\'t play if oxygen level too low', function() {
-    (game as any).oxygenLevel = 8;
-    player.addProduction(Resources.PLANTS, 1);
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play if oxygen level too low', () => {
+    setOxygenLevel(game, 8);
+    player.production.add(Resource.PLANTS, 1);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.PLANTS, 1);
-    (game as any).oxygenLevel = 9;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    player.production.add(Resource.PLANTS, 1);
+    setOxygenLevel(game, 9);
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
     player.playedCards.push(card);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(0);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    expect(player.production.plants).to.eq(0);
+    expect(player.production.megacredits).to.eq(2);
 
     player.addResourceTo(card, 4);
-    expect(card.getVictoryPoints()).to.eq(4);
+    expect(card.getVictoryPoints(player)).to.eq(4);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.playedCards.push(card);
     card.action(player);
+    runAllActions(game);
     expect(card.resourceCount).to.eq(1);
   });
 });

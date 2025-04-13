@@ -1,73 +1,62 @@
 import {expect} from 'chai';
-import {AquiferStandardProject} from '../../../../src/cards/base/standardProjects/AquiferStandardProject';
-import {maxOutOceans, setCustomGameOptions, runAllActions} from '../../../TestingUtils';
+import {cast, churn, runAllActions, testRedsCosts} from '../../../TestingUtils';
+import {AquiferStandardProject} from '../../../../src/server/cards/base/standardProjects/AquiferStandardProject';
+import {maxOutOceans} from '../../../TestingUtils';
 import {TestPlayer} from '../../../TestPlayer';
-import {Game} from '../../../../src/Game';
-import {TestPlayers} from '../../../TestPlayers';
-import {PoliticalAgendas} from '../../../../src/turmoil/PoliticalAgendas';
-import {Reds} from '../../../../src/turmoil/parties/Reds';
-import {Phase} from '../../../../src/common/Phase';
-import {SelectSpace} from '../../../../src/inputs/SelectSpace';
-import {SpaceType} from '../../../../src/common/boards/SpaceType';
-import {TileType} from '../../../../src/common/TileType';
+import {IGame} from '../../../../src/server/IGame';
+import {testGame} from '../../../TestGame';
+import {assertPlaceOcean} from '../../../assertions';
 
-describe('AquiferStandardProject', function() {
+describe('AquiferStandardProject', () => {
   let card: AquiferStandardProject;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AquiferStandardProject();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
   });
 
-  it('Can act', function() {
+  it('Can act', () => {
     player.megaCredits = card.cost - 1;
     expect(card.canAct(player)).is.false;
     player.megaCredits = card.cost;
     expect(card.canAct(player)).is.true;
   });
 
-  it('action', function() {
+  it('action', () => {
     player.megaCredits = card.cost;
     player.setTerraformRating(20);
-    expect(game.board.getOceanCount()).eq(0);
+    expect(game.board.getOceanSpaces()).is.empty;
 
-    card.action(player);
+    assertPlaceOcean(player, churn(card.action(player), player));
+
+    expect(player.getTerraformRating()).eq(21);
+    expect(game.board.getOceanSpaces()).has.length(1);
+  });
+
+  it('Paying when the global parameter is at its goal is a valid stall action', () => {
+    player.megaCredits = 18;
+    expect(card.canAct(player)).eq(true);
+
+    maxOutOceans(player);
+
+    player.megaCredits = 18;
+    expect(player.getTerraformRating()).eq(23);
+    expect(card.canAct(player)).eq(true);
+
+    cast(card.action(player), undefined);
     runAllActions(game);
 
-    const selectSpace = player.getWaitingFor() as SelectSpace;
-    const availableSpace = selectSpace.availableSpaces[0];
-
-    expect(availableSpace.spaceType).eq(SpaceType.OCEAN);
-
-    selectSpace?.cb(availableSpace);
-
-    expect(availableSpace.tile!.tileType).eq(TileType.OCEAN);
-    expect(player.getTerraformRating()).eq(21);
-    expect(game.board.getOceanCount()).eq(1);
+    expect(game.board.getOceanSpaces()).has.length(9);
+    expect(player.getTerraformRating()).eq(23);
+    expect(player.megaCredits).eq(0);
   });
 
-  it('cannnot act when maximized', () => {
-    player.megaCredits = card.cost;
-    expect(card.canAct(player)).is.true;
+  it('Test reds', () => {
+    [game, player] = testGame(1, {turmoilExtension: true});
+    testRedsCosts(() => card.canAct(player), player, card.cost, 3);
     maxOutOceans(player);
-    expect(card.canAct(player)).is.false;
-  });
-
-  it('Can not act with reds', () => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player, setCustomGameOptions({turmoilExtension: true}));
-
-    player.megaCredits = card.cost;
-    player.game.phase = Phase.ACTION;
-    player.game.turmoil!.rulingParty = new Reds();
-    PoliticalAgendas.setNextAgenda(player.game.turmoil!, player.game);
-    expect(card.canAct(player)).eq(false);
-    player.megaCredits = card.cost + 2;
-    expect(card.canAct(player)).eq(false);
-    player.megaCredits = card.cost + 3;
-    expect(card.canAct(player)).eq(true);
+    testRedsCosts(() => card.canAct(player), player, card.cost, 0);
   });
 });

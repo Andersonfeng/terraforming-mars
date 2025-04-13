@@ -1,40 +1,38 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Fish} from '../../../src/cards/base/Fish';
-import {Tardigrades} from '../../../src/cards/base/Tardigrades';
-import {EcologyResearch} from '../../../src/cards/colonies/EcologyResearch';
-import {ICard} from '../../../src/cards/ICard';
-import {Luna} from '../../../src/colonies/Luna';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {setCustomGameOptions} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Fish} from '../../../src/server/cards/base/Fish';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
+import {EcologyResearch} from '../../../src/server/cards/colonies/EcologyResearch';
+import {ICard} from '../../../src/server/cards/ICard';
+import {Luna} from '../../../src/server/colonies/Luna';
+import {IGame} from '../../../src/server/IGame';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
-describe('EcologyResearch', function() {
-  let card : EcologyResearch; let player : Player; let game : Game; let colony1: Luna;
+describe('EcologyResearch', () => {
+  let card: EcologyResearch;
+  let player: TestPlayer;
+  let game: IGame;
+  let colony: Luna;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EcologyResearch();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const gameOptions = setCustomGameOptions({coloniesExtension: true});
-    game = Game.newInstance('foobar', [player, redPlayer], player, gameOptions);
-
-    colony1 = new Luna();
-    colony1.colonies.push(player.id);
-    player.game.colonies.push(colony1);
+    [game, player/* , player2 */] = testGame(2, {coloniesExtension: true});
   });
 
-  it('Should play without targets', function() {
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
-    expect(card.getVictoryPoints()).to.eq(1);
+  it('Should play without targets', () => {
+    colony = new Luna();
+    colony.colonies.push(player.id);
+    player.game.colonies.push(colony);
+    colony.colonies.push(player.id);
+    cast(card.play(player), undefined);
+    expect(player.production.plants).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 
-  it('Should play with single targets', function() {
+  it('Should play with single targets', () => {
     const tardigrades = new Tardigrades();
     const fish = new Fish();
     player.playedCards.push(tardigrades, fish);
@@ -50,10 +48,9 @@ describe('EcologyResearch', function() {
 
     expect(tardigrades.resourceCount).to.eq(2);
     expect(fish.resourceCount).to.eq(1);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
   });
 
-  it('Should play with multiple targets', function() {
+  it('Should play with multiple targets', () => {
     const tardigrades = new Tardigrades();
     const ants = new Ants();
     player.playedCards.push(tardigrades, ants);
@@ -62,10 +59,9 @@ describe('EcologyResearch', function() {
     expect(game.deferredActions).has.lengthOf(1);
 
     // add two microbes to Ants
-    const selectCard = game.deferredActions.peek()!.execute() as SelectCard<ICard>;
+    const selectCard = cast(game.deferredActions.peek()!.execute(), SelectCard<ICard>);
     selectCard.cb([ants]);
 
     expect(ants.resourceCount).to.eq(2);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
   });
 });

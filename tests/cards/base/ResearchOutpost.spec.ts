@@ -1,34 +1,35 @@
 import {expect} from 'chai';
-import {ResearchOutpost} from '../../../src/cards/base/ResearchOutpost';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {ResearchOutpost} from '../../../src/server/cards/base/ResearchOutpost';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('ResearchOutpost', function() {
-  let card : ResearchOutpost; let player : Player; let game : Game;
+describe('ResearchOutpost', () => {
+  let card: ResearchOutpost;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ResearchOutpost();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    const action = card.play(player) as SelectSpace;
-    expect(action).is.not.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
 
-    action.cb(action.availableSpaces[0]);
-    expect(game.getCitiesCount()).to.eq(1);
+
+    action.cb(action.spaces[0]);
+    expect(game.board.getCities()).has.length(1);
     expect(card.getCardDiscount()).to.eq(1);
   });
 
-  it('Can\'t play if no spaces available', function() {
+  it('Can not play if no spaces available', () => {
     const lands = game.board.getAvailableSpacesOnLand(player);
-    for (let i = 0; i < lands.length; i++) {
-      game.addGreenery(player, lands[i].id);
-    }
+    lands.forEach((land) => game.addGreenery(player, land));
 
     expect(card.canPlay(player)).is.not.true;
   });

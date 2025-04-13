@@ -1,18 +1,10 @@
 <template>
   <div class="pathfinders_cont">
-
-    <table class="track-numbers">
-      <tr>
-        <td>&nbsp;</td>
-        <td v-for="idx in range" :key="idx">{{idx}}</td>
-      </tr>
-    </table>
-
-    <div class="track track-background-venus" v-if="gameOptions.venusNextExtension">
+    <div class="track track-background-venus" v-if="tracks.venus >= 0">
       <div class="track-tag track-tag-venus"></div>
       <table class="track-venus">
-        <PlanetaryTrack type='risingPlayer' v-if="gameOptions.venusNextExtension" :val="tracks.venus" :rewards="rewards.venus" :gameOptions="gameOptions" />
-        <PlanetaryTrack type='everyone' v-if="gameOptions.venusNextExtension" :val="tracks.venus" :rewards="rewards.venus" :gameOptions="gameOptions" />
+        <PlanetaryTrack type='risingPlayer' :val="tracks.venus" :rewards="rewards.venus" :gameOptions="gameOptions" />
+        <PlanetaryTrack type='everyone' :val="tracks.venus" :rewards="rewards.venus" :gameOptions="gameOptions" />
       </table>
     </div>
 
@@ -40,11 +32,11 @@
       </table>
     </div>
 
-    <div class="track track-background-moon" v-if="gameOptions.moonExpansion">
+    <div class="track track-background-moon" v-if="tracks.moon >= 0">
       <div class="track-tag track-tag-moon"></div>
       <table class="track-moon">
-        <PlanetaryTrack type='risingPlayer' v-if="gameOptions.moonExpansion" :val="tracks.moon" :rewards="rewards.moon" :gameOptions="gameOptions" />
-        <PlanetaryTrack type='everyone' v-if="gameOptions.moonExpansion" :val="tracks.moon" :rewards="rewards.moon" :gameOptions="gameOptions" />
+        <PlanetaryTrack type='risingPlayer' :val="tracks.moon" :rewards="rewards.moon" :gameOptions="gameOptions" />
+        <PlanetaryTrack type='everyone' :val="tracks.moon" :rewards="rewards.moon" :gameOptions="gameOptions" />
       </table>
     </div>
 
@@ -56,7 +48,7 @@
 import Vue from 'vue';
 import {GameOptionsModel} from '@/common/models/GameOptionsModel';
 import {PathfindersModel} from '@/common/models/PathfindersModel';
-import {Tags} from '@/common/cards/Tags';
+import {Tag} from '@/common/cards/Tag';
 import {range} from '@/common/utils/utils';
 import PlanetaryTrack from '@/client/components/pathfinders/PlanetaryTrack.vue';
 import {PlanetaryTracks as Tracks} from '@/common/pathfinders/PlanetaryTracks';
@@ -76,11 +68,11 @@ export default Vue.extend({
   },
   data() {
     return {
-      venus: Tags.VENUS,
-      earth: Tags.EARTH,
-      mars: Tags.MARS,
-      jovian: Tags.JOVIAN,
-      moon: Tags.MOON,
+      venus: Tag.VENUS,
+      earth: Tag.EARTH,
+      mars: Tag.MARS,
+      jovian: Tag.JOVIAN,
+      moon: Tag.MOON,
       range: range(23),
       rewards: Tracks.initialize(),
     };

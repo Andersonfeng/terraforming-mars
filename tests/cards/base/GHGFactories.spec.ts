@@ -1,27 +1,28 @@
 import {expect} from 'chai';
-import {GHGFactories} from '../../../src/cards/base/GHGFactories';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {GHGFactories} from '../../../src/server/cards/base/GHGFactories';
+import {TestPlayer} from '../../TestPlayer';
+import {Resource} from '../../../src/common/Resource';
+import {testGame} from '../../TestGame';
 
-describe('GHGFactories', function() {
-  let card : GHGFactories; let player : Player;
+describe('GHGFactories', () => {
+  let card: GHGFactories;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new GHGFactories();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.ENERGY, 1);
+  it('Should play', () => {
+    player.production.add(Resource.ENERGY, 1);
     expect(card.canPlay(player)).is.true;
     card.play(player);
 
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.HEAT)).to.eq(4);
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.heat).to.eq(4);
   });
 });

@@ -1,46 +1,46 @@
-import {AICentral} from '../../../src/cards/base/AICentral';
-import {BioengineeringEnclosure} from '../../../src/cards/ares/BioengineeringEnclosure';
-import {Birds} from '../../../src/cards/base/Birds';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
+import {AICentral} from '../../../src/server/cards/base/AICentral';
+import {BioengineeringEnclosure} from '../../../src/server/cards/ares/BioengineeringEnclosure';
+import {Birds} from '../../../src/server/cards/base/Birds';
+import {IProjectCard} from '../../../src/server/cards/IProjectCard';
 import {expect} from 'chai';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
-import {Game} from '../../../src/Game';
+import {IGame} from '../../../src/server/IGame';
+import {runAllActions} from '../../TestingUtils';
 
-describe('BioengineeringEnclosure', function() {
-  let card : BioengineeringEnclosure;
+describe('BioengineeringEnclosure', () => {
+  let card: BioengineeringEnclosure;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let animalHost: IProjectCard;
 
-  beforeEach(function() {
+  beforeEach(() => {
     animalHost = new Birds();
     card = new BioengineeringEnclosure();
-    game = newTestGame(2, ARES_OPTIONS_NO_HAZARDS);
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(2, {aresExtension: true});
   });
 
-  it('Can\'t play without a science tag', () => {
-    expect(player.canPlayIgnoringCost(card)).is.false;
+  it('Can not play without a science tag', () => {
+    expect(card.canPlay(player)).is.false;
     player.playCard(new AICentral());
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Play', () => {
     expect(card.resourceCount).eq(0);
     card.play(player);
+    runAllActions(game);
     expect(card.resourceCount).eq(2);
   });
 
-  it('Can\'t move animal if it\'s empty', () => {
+  it('Can not move animal if it is empty', () => {
     card.play(player);
     player.playCard(animalHost);
     card.resourceCount = 0;
     expect(card.canAct(player)).is.false;
   });
 
-  it('Can\'t move animal if theres not another card', () => {
+  it('Can not move animal if there is no other animal card', () => {
     card.play(player);
     expect(card.canAct(player)).is.false;
   });
@@ -48,8 +48,8 @@ describe('BioengineeringEnclosure', function() {
   it('Move animal', () => {
     // Set up the cards.
     player.playCard(animalHost);
-    game.deferredActions.pop();
     player.playCard(card);
+    runAllActions(game);
 
     // Initial expectations that will change after playing the card.
     expect(card.canAct(player)).is.true;

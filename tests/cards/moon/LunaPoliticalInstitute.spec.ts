@@ -1,25 +1,22 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {LunaPoliticalInstitute} from '../../../src/cards/moon/LunaPoliticalInstitute';
 import {expect} from 'chai';
-import {SelectPartyToSendDelegate} from '../../../src/inputs/SelectPartyToSendDelegate';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {cast, fakeCard} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {LunaPoliticalInstitute} from '../../../src/server/cards/moon/LunaPoliticalInstitute';
+import {SelectParty} from '../../../src/server/inputs/SelectParty';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
-import {Turmoil} from '../../../src/turmoil/Turmoil';
-import {Tags} from '../../../src/common/cards/Tags';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {Turmoil} from '../../../src/server/turmoil/Turmoil';
+import {Tag} from '../../../src/common/cards/Tag';
 
 describe('LunaPoliticalInstitute', () => {
-  let player: Player;
-  let game: Game;
+  let player: TestPlayer;
+  let game: IGame;
   let card: LunaPoliticalInstitute;
   let turmoil: Turmoil;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {turmoilExtension: true, moonExpansion: true});
     card = new LunaPoliticalInstitute();
     turmoil = game.turmoil!;
   });
@@ -28,35 +25,37 @@ describe('LunaPoliticalInstitute', () => {
     player.cardsInHand = [card];
     player.megaCredits = card.cost;
 
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
-    player.playedCards = [TestingUtils.fakeCard({tags: [Tags.MOON]})];
-    expect(player.getPlayableCards()).does.not.include(card);
+    player.playedCards = [fakeCard({tags: [Tag.MOON]})];
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
-    player.playedCards = [TestingUtils.fakeCard({tags: [Tags.MOON, Tags.MOON]})];
-    expect(player.getPlayableCards()).includes(card);
+    player.playedCards = [fakeCard({tags: [Tag.MOON, Tag.MOON]})];
+    expect(player.getPlayableCardsForTest()).includes(card);
   });
 
   it('can act', () => {
-    turmoil.delegateReserve = [player.id];
+    turmoil.delegateReserve.clear();
+    turmoil.delegateReserve.add(player);
     expect(card.canAct(player)).is.true;
 
-    turmoil.delegateReserve = ['NEUTRAL'];
+    turmoil.delegateReserve.clear();
+    turmoil.delegateReserve.add('NEUTRAL');
     expect(card.canAct(player)).is.false;
   });
 
   it('action', () => {
-    const marsFirst = turmoil.getPartyByName(PartyName.MARS)!;
+    const marsFirst = turmoil.getPartyByName(PartyName.MARS);
 
     card.action(player);
     expect(game.deferredActions).has.lengthOf(1);
 
-    expect(marsFirst.delegates.filter((d) => d === player.id)).has.lengthOf(0);
+    expect(marsFirst.delegates.get(player)).eq(0);
 
-    const selectParty = game.deferredActions.peek()!.execute() as SelectPartyToSendDelegate;
+    const selectParty = cast(game.deferredActions.peek()!.execute(), SelectParty);
     selectParty.cb(PartyName.MARS);
 
-    expect(marsFirst.delegates.filter((d) => d === player.id)).has.lengthOf(1);
+    expect(marsFirst.delegates.get(player)).eq(1);
   });
 });
 

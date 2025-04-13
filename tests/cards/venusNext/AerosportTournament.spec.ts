@@ -1,29 +1,37 @@
 import {expect} from 'chai';
-import {AerosportTournament} from '../../../src/cards/venusNext/AerosportTournament';
-import {Celestic} from '../../../src/cards/venusNext/Celestic';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {addCity, cast} from '../../TestingUtils';
+import {AerosportTournament} from '../../../src/server/cards/venusNext/AerosportTournament';
+import {Celestic} from '../../../src/server/cards/venusNext/Celestic';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('AerosportTournament', function() {
-  it('Should play', function() {
-    const card = new AerosportTournament();
+describe('AerosportTournament', () => {
+  let player: TestPlayer;
+  let card: AerosportTournament;
+
+  beforeEach(() => {
+    [/* game */, player] = testGame(2);
+    card = new AerosportTournament();
+  });
+
+  it('Can play', () => {
     const corp = new Celestic();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, redPlayer], player);
-    player.corporationCard = corp;
-    corp.action(player);
-    corp.action(player);
-    corp.action(player);
-    corp.action(player);
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
-    corp.action(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    const [/* game */, player] = testGame(2);
+    player.corporations.push(corp);
+    corp.resourceCount = 4;
+    expect(card.canPlay(player)).is.not.true;
+    corp.resourceCount = 5;
+    expect(card.canPlay(player)).is.true;
+  });
+  it('Play', () => {
+    addCity(player, '03');
+    cast(card.play(player), undefined);
 
-    game.addCityTile(player, '03');
-
-    const play = card.play(player);
-    expect(play).is.undefined;
     expect(player.megaCredits).to.eq(1);
+
+    player.megaCredits = 0;
+    addCity(player, '05');
+    cast(card.play(player), undefined);
+    expect(player.megaCredits).to.eq(2);
   });
 });

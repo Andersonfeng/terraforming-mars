@@ -1,29 +1,26 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {DeepSpaceOperations} from '../../../src/cards/pathfinders/DeepSpaceOperations';
-import {Game} from '../../../src/Game';
+import {testGame} from '../../TestGame';
+import {DeepSpaceOperations} from '../../../src/server/cards/pathfinders/DeepSpaceOperations';
 import {Units} from '../../../src/common/Units';
-import {Tags} from '../../../src/common/cards/Tags';
+import {Tag} from '../../../src/common/cards/Tag';
 import {TestPlayer} from '../../TestPlayer';
 
-describe('DeepSpaceOperations', function() {
+describe('DeepSpaceOperations', () => {
   let card: DeepSpaceOperations;
   let player: TestPlayer;
-  let game: Game;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new DeepSpaceOperations();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [/* game */, player] = testGame(1);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
 
-    expect(player.getProductionForTest()).deep.eq(Units.EMPTY);
+    expect(player.production.asUnits()).deep.eq(Units.EMPTY);
     expect(player.titanium).eq(4);
 
     expect(player.cardsInHand).has.lengthOf(2);
-    player.cardsInHand.forEach((card) => expect(card.tags.indexOf(Tags.SPACE)).not.to.eq(-1));
+    player.cardsInHand.forEach((card) => expect(card.tags.indexOf(Tag.SPACE)).not.to.eq(-1));
   });
 });

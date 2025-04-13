@@ -1,26 +1,55 @@
+import {SelectProjectCardToPlay} from '../../../src/server/inputs/SelectProjectCardToPlay';
 import {expect} from 'chai';
-import {EccentricSponsor} from '../../../src/cards/prelude/EccentricSponsor';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {EccentricSponsor} from '../../../src/server/cards/prelude/EccentricSponsor';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {NitrogenRichAsteroid} from '../../../src/server/cards/base/NitrogenRichAsteroid';
+import {testGame} from '../../TestGame';
 
-describe('EccentricSponsor', function() {
-  let card : EccentricSponsor; let player : Player;
+describe('EccentricSponsor', () => {
+  let eccentricSponsor: EccentricSponsor;
+  let player: TestPlayer;
 
-  beforeEach(function() {
-    card = new EccentricSponsor();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+  beforeEach(() => {
+    eccentricSponsor = new EccentricSponsor();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Gets card discount', function() {
-    expect(card.getCardDiscount(player)).to.eq(0);
-    player.lastCardPlayed = card.name;
-    expect(card.getCardDiscount(player)).to.eq(25);
+  it('Gets card discount', () => {
+    expect(eccentricSponsor.getCardDiscount(player)).to.eq(0);
+    player.lastCardPlayed = eccentricSponsor.name;
+    expect(eccentricSponsor.getCardDiscount(player)).to.eq(25);
   });
 
-  it('Should play', function() {
-    const action = card.play(player);
-    expect(action).is.undefined;
+  it('Should play', () => {
+    const nitrogenRichAsteroid = new NitrogenRichAsteroid();
+    player.cardsInHand = [nitrogenRichAsteroid];
+    player.megaCredits = 6;
+
+    expect(player.getCardCost(nitrogenRichAsteroid)).eq(31);
+    expect(player.canPlay(nitrogenRichAsteroid)).is.false;
+
+    player.playCard(eccentricSponsor);
+    runAllActions(player.game);
+    const selectProjectCardToPlay = cast(player.popWaitingFor(), SelectProjectCardToPlay);
+    expect(selectProjectCardToPlay.cards).deep.eq([nitrogenRichAsteroid]);
+
+    expect(player.getCardCost(nitrogenRichAsteroid)).eq(6);
+    expect(player.canPlay(nitrogenRichAsteroid)).is.true;
+  });
+
+  it('Fizzle', () => {
+    const nitrogenRichAsteroid = new NitrogenRichAsteroid();
+    player.cardsInHand = [nitrogenRichAsteroid];
+    player.megaCredits = 0;
+
+    expect(player.getCardCost(nitrogenRichAsteroid)).eq(31);
+    expect(player.canPlay(nitrogenRichAsteroid)).is.false;
+
+    player.playCard(eccentricSponsor);
+    runAllActions(player.game);
+    cast(player.popWaitingFor(), undefined);
+    expect(player.megaCredits).eq(15);
+    expect(player.cardsInHand).deep.eq([nitrogenRichAsteroid]);
   });
 });

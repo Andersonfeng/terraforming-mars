@@ -1,27 +1,26 @@
 import {expect} from 'chai';
-import {SimpleDeferredAction} from '../../src/deferredActions/DeferredAction';
-import {DeferredActionsQueue} from '../../src/deferredActions/DeferredActionsQueue';
-import {PlayerInputTypes} from '../../src/common/input/PlayerInputTypes';
-import {TestPlayers} from '../TestPlayers';
-import {SelectOption} from '../../src/inputs/SelectOption';
+import {SimpleDeferredAction} from '../../src/server/deferredActions/DeferredAction';
+import {DeferredActionsQueue} from '../../src/server/deferredActions/DeferredActionsQueue';
+import {SelectOption} from '../../src/server/inputs/SelectOption';
+import {testGame} from '../TestGame';
 
 describe('DeferredActionsQueue', () => {
   it('runs actions for player', () => {
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const bluePlayer = TestPlayers.BLUE.newPlayer();
+    const [/* game */, player, otherPlayer] = testGame(2);
+
     const queue = new DeferredActionsQueue();
-    const expectedInput = new SelectOption('foo', 'bar', () => undefined);
-    queue.push(new SimpleDeferredAction(redPlayer, () => expectedInput));
-    queue.push(new SimpleDeferredAction(bluePlayer, () => undefined));
+    const expectedInput = new SelectOption('foo', 'bar');
+    queue.push(new SimpleDeferredAction(player, () => expectedInput));
+    queue.push(new SimpleDeferredAction(otherPlayer, () => undefined));
     let finished = false;
-    expect(queue.length).eq(2);
-    queue.runAllFor(redPlayer, () => {
+    expect(queue).has.length(2);
+    queue.runAllFor(player, () => {
       finished = true;
     });
-    expect(redPlayer.getWaitingFor()).eq(expectedInput);
-    redPlayer.process([[String(PlayerInputTypes.SELECT_OPTION)]]);
-    expect(redPlayer.getWaitingFor()).eq(undefined);
+    expect(player.getWaitingFor()).eq(expectedInput);
+    player.process({type: 'option'});
+    expect(player.getWaitingFor()).eq(undefined);
     expect(finished).eq(true);
-    expect(queue.length).eq(1);
+    expect(queue).has.length(1);
   });
 });

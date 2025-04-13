@@ -1,29 +1,29 @@
 import {expect} from 'chai';
-import {BeamFromAThoriumAsteroid} from '../../../src/cards/base/BeamFromAThoriumAsteroid';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {BeamFromAThoriumAsteroid} from '../../../src/server/cards/base/BeamFromAThoriumAsteroid';
 
-describe('BeamFromAThoriumAsteroid', function() {
-  let card : BeamFromAThoriumAsteroid; let player : TestPlayer;
+describe('BeamFromAThoriumAsteroid', () => {
+  let card: BeamFromAThoriumAsteroid;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new BeamFromAThoriumAsteroid();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Cannot play without a Jovian tag', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Cannot play without a Jovian tag', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.playedCards.push(card);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.HEAT)).to.eq(3);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(3);
+    expect(player.production.heat).to.eq(3);
+    expect(player.production.energy).to.eq(3);
 
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

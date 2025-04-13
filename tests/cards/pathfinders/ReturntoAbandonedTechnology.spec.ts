@@ -1,66 +1,69 @@
-import {SelectCard} from '../../../src/inputs/SelectCard';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
 import {expect} from 'chai';
-import {ReturntoAbandonedTechnology} from '../../../src/cards/pathfinders/ReturntoAbandonedTechnology';
-import {Game} from '../../../src/Game';
+import {ReturntoAbandonedTechnology} from '../../../src/server/cards/pathfinders/ReturntoAbandonedTechnology';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Birds} from '../../../src/cards/base/Birds';
-import {Capital} from '../../../src/cards/base/Capital';
-import {Decomposers} from '../../../src/cards/base/Decomposers';
-import {EarthOffice} from '../../../src/cards/base/EarthOffice';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Birds} from '../../../src/server/cards/base/Birds';
+import {Capital} from '../../../src/server/cards/base/Capital';
+import {Decomposers} from '../../../src/server/cards/base/Decomposers';
+import {EarthOffice} from '../../../src/server/cards/base/EarthOffice';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('ReturntoAbandonedTechnology', function() {
+describe('ReturntoAbandonedTechnology', () => {
   let card: ReturntoAbandonedTechnology;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ReturntoAbandonedTechnology();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
     player.playedCards.push(card);
   });
 
-  it('play when discard pile is empty', function() {
-    game.dealer.discarded = [];
+  it('play when discard pile is empty', () => {
+    game.projectDeck.discardPile = [];
 
-    const action = card.play(player);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectCard);
 
-    expect(action).instanceof(SelectCard);
-    expect((action as SelectCard<any>).cards).is.empty;
+    expect(action.cards).is.empty;
   });
 
-  it('play when discard pile has 1 card', function() {
+  it('play when discard pile has 1 card', () => {
     const ants = new Ants();
-    game.dealer.discarded = [];
-    game.dealer.discard(ants);
+    game.projectDeck.discardPile = [];
+    game.projectDeck.discard(ants);
 
-    const action = card.play(player);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectCard);
 
-    expect(action).instanceof(SelectCard);
-    expect((action as SelectCard<any>).cards).deep.eq([ants]);
-    expect(game.dealer.discarded).is.empty;
+    expect(action.cards).deep.eq([ants]);
+    expect(game.projectDeck.discardPile).is.empty;
   });
 
-  it('play when discard pile has 5 cards', function() {
+  it('play when discard pile has 5 cards', () => {
     const ants = new Ants();
     const birds = new Birds();
     const capital = new Capital();
     const decomposers = new Decomposers();
     const earthOffice = new EarthOffice();
 
-    game.dealer.discarded = [];
-    game.dealer.discard(ants);
-    game.dealer.discard(birds);
-    game.dealer.discard(capital);
-    game.dealer.discard(decomposers);
-    game.dealer.discard(earthOffice);
+    game.projectDeck.discardPile = [];
+    game.projectDeck.discard(ants);
+    game.projectDeck.discard(birds);
+    game.projectDeck.discard(capital);
+    game.projectDeck.discard(decomposers);
+    game.projectDeck.discard(earthOffice);
 
-    const action = card.play(player);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectCard);
 
-    expect(action).instanceof(SelectCard);
-    expect((action as SelectCard<any>).cards).to.have.members([birds, capital, decomposers, earthOffice]);
-    expect(game.dealer.discarded).deep.eq([ants]);
+    expect(action.cards).to.have.members([birds, capital, decomposers, earthOffice]);
+    expect(game.projectDeck.discardPile).deep.eq([ants]);
   });
 });

@@ -1,16 +1,39 @@
 @import "./variables.less";
 .card-corporation-expansion {
     position: absolute;
-    top: 75px;
-    right: 33px;
+    top: 38px;
+    right: -11px;
+}
+
+.card-standard-expansion {
+  position: absolute;
+  top: 90px;
+  right: 33px;
 }
 
 .card-container {
+    .project-icon-expansion-container {
+        flex-direction: row;
+        display: flex;
+        bottom: 5px;
+        left: 5px;
+        position: absolute;
+    }
+    .resource-card-icon-expansion-container {
+        flex-direction: row;
+        display: flex;
+        bottom: 38px;
+        left: 5px;
+        position: absolute;
+    }
     .project-icon:after,
     .preludeCard-icon:after {
-        bottom: 8px;
-        left: 8px;
-        margin: 0px;
+        position: relative;
+        margin: 3px;
+        display: block;
+    }
+    .card-superscript {
+      vertical-align: super;
     }
     .card-content-wrapper {
         position: relative;
@@ -282,7 +305,7 @@
             .card-astrodril-logo {
                 position: absolute;
                 text-transform: none;
-                top: 10px;
+                top: 17px;
                 left: 3px;
                 color: rgb(32, 32, 32);
                 font-family: Prototype;
@@ -627,6 +650,14 @@
                 font-size: 45px;
                 top: 20px;
             }
+            .card-mars-maths-logo {
+                position: absolute;
+                font-size: 24px;
+                box-shadow: 5px 10px 12px #d58c56;
+                font-family: "Lucida Sans", "Lucida Sans Unicode", "Lucida Grande", Arial;
+                top: 14px;
+                left: 2px;
+            }
             .card-project-workshop-logo {
                 position: absolute;
                 top: 10px;
@@ -649,6 +680,16 @@
                 letter-spacing: 1px;
                 text-shadow: 0 1px 1px sienna;
                 font-size: 28px;
+            }
+            .card-unmo-logo {
+                position: absolute;
+                top: 15px;
+                left: -3px;
+                font-size: 20px;
+                color: #01014f;
+                line-height: 24px;
+                letter-spacing: 3px;
+                font-family: Prototype;
             }
             .card-mons-logo {
                 position: absolute;
@@ -676,6 +717,93 @@
                     line-height: 18px;
                     font-size: 7px;
                 }
+            }
+            .card-eris-logo {
+              color: darkred;
+              font-family: Times, serif;
+              letter-spacing: 4px;
+              text-align: center;
+              margin: 0 0 10px -35px;
+              text-shadow: 0 0 1px black, 0 2px 2px darkred;
+              font-size: 40px;
+              position: relative;
+              top: 22px;
+            }
+            .card-athena-logo {
+                color: teal;
+                text-transform: uppercase;
+                text-shadow: 0 0 1px black, 0 2px 2px darkturquoise;
+                font-size: 28px;
+                position: relative;
+                top: 20px;
+                right: 20px;
+            }
+            .card-tycho-magnetics-logo {
+              position: absolute;
+              text-transform: none;
+              top: 11px;
+              left: 2px;
+              color: rgb(32, 32, 32);
+              font-family: monospace;
+              letter-spacing: 1px;
+              text-align: left;
+              text-shadow: yellow 0px 0px 1px, yellowgreen 0px 2px 2px;
+              font-size: 28px;
+            }
+            .card-sagitta-logo {
+              position: absolute;
+              text-transform: uppercase;
+              top: 15px;
+              left: 18px;
+              color: #87d119;
+              font-family: cursive;
+              letter-spacing: 5px;
+              font-size: 36px;
+              -webkit-text-stroke: 0.5px olivedrab;
+            }
+            .card-kuiper-logo {
+              position: absolute;
+              text-transform: uppercase;
+              top: 10px;
+              left: 3px;
+              color: black;
+              letter-spacing: 2px;
+              line-height: normal;
+              font-size: 18px;
+              -webkit-text-stroke: 0.5px darkblue;
+            }
+            .card-nirgal-enterprises-logo {
+              position: absolute;
+              text-transform: none;
+              top: 32px;
+              left: 3px;
+              color: rgb(50, 100, 50);
+              font-family: 'Times New Roman', Times, serif;
+              letter-spacing: 2px;
+              text-align: left;
+              font-size: 27px;
+            }
+            .card-ecotec-logo {
+              background-image: url(./assets/prelude2/ecotec.png);
+              height: 40px;
+              width: 140px;
+              background-size: 140px 40px;
+              margin-top: 18px;
+              filter: drop-shadow(1px 2px 4px black);
+            }
+            .card-palladin-shipping-logo {
+              background-image: url(./assets/prelude2/palladin.png);
+              height: 40px;
+              width: 160px;
+              background-size: 160px 40px;
+              margin-top: 11px;
+            }
+            .card-spire-logo {
+              background-image: url(./assets/prelude2/spire.png);
+              height: 44px;
+              width: 136px;
+              background-size: 136px 44px;
+              margin-top: 9px;
             }
             .card-nanotech-industries-logo {
                 background-image: url(./assets/moon/corp-logo-nanotech.png);
@@ -729,6 +857,13 @@
             }
             .card-intragen-sanctuary-headquarters-logo {
                 background-image: url(./assets/moon/corp-logo-intragen.png);
+                height: 45px;
+                width: 142px;
+                background-size: 142px 45px;
+                margin-top: 10px;
+            }
+            .card-luna-trade-federation-logo {
+                background-image: url(./assets/moon/corp-logo-luna-trade-federation.png);
                 height: 45px;
                 width: 142px;
                 background-size: 142px 45px;
@@ -791,6 +926,13 @@
                 background-size: 144px 45px;
                 margin-top: 10px;
             }
+            .card-mars-frontier-alliance-logo {
+                background-image: url(./assets/pathfinders/corp-logo-mars-frontier-alliance.png);
+                height: 45px;
+                width: 170px;
+                background-size: 170px 45px;
+                margin-top: 10px;
+            }
             .card-ambient-logo {
                 background-image: url(./assets/pathfinders/corp-logo-ambient.png);
                 height: 45px;
@@ -848,6 +990,12 @@
                 background-size: 125px 90px;
                 margin-top: 10px;
             }
+            .card-aurorai-logo {
+                background-image: url(./assets/pathfinders/corp-logo-aurorai.png);
+                height: 80px;
+                width: 111px;
+                background-size: 111px 80px;
+            }
         }
         .card-content-corporation {
             top: -30px;
@@ -867,6 +1015,24 @@
             line-height: 20px;
             font-weight: bold;
             text-align: center;
+
+            // Adding scrolling for cards with huge description
+            &:not(.global-event-card-content) {
+				overflow-x: hidden;
+			}
+            &::-webkit-scrollbar-track {
+                background-color: transparent;
+                border-radius: 0 0 32px 0;
+            }
+            &::-webkit-scrollbar {
+                width: 4px;
+                background-color: transparent;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #898989;
+                border-radius: 0 0 32px 0;
+            }
+
             .card-corporation-box {
                 position: absolute;
                 display: flex;
@@ -930,6 +1096,13 @@
                 flex-flow: row;
                 align-items: center;
                 margin: 0 4px;
+            }
+
+            .nextto-leftside {
+                margin: 0 -2px 0 4px;
+            }
+            .nextto-rightside {
+                margin: 0 4px 0 -2px;
             }
 
             /*requirements*/
@@ -1006,6 +1179,22 @@
                 background-size: 30px;
                 filter: drop-shadow(0px 0px 1px black);
                 vertical-align: middle;
+                &--has-secondary-tag:extend(.card-container .card-content-wrapper .card-content .card-resource) {
+                    width: 30px;
+                    height: 30px;
+                    background-size: 30px;
+                    margin-right: 10px;
+                    margin-top: 8px;
+                    margin-bottom: 8px;
+                }
+                &--superscript:extend(.card-container .card-content-wrapper .card-content .card-resource) {
+                  height: 16px;
+                  width: 16px;
+                  background-size: 16px;
+                  margin-left: 1px;
+                  margin-right: 1px;
+                  margin-bottom: 12px;
+                }
             }
             .card-resource-trade-discount {
                 background: white;
@@ -1076,7 +1265,6 @@
                 background-image: url(./assets/resources/preservation.png);
             }
             .card-resource-data {
-                color: #0000 !important;
                 background-image: url(./assets/resources/data.png);
             }
             .card-resource-syndicate-fleet {
@@ -1113,6 +1301,163 @@
             .card-resource-community {
                 background: linear-gradient(orange, orangered);
             }
+            .card-resource-cathedral {
+                background-image: url(./assets/promo/cathedral.png);
+            }
+            .card-resource-graphene {
+                background-image: url(./assets/resources/graphene.png);
+            }
+            .card-resource-nomads {
+                background: linear-gradient(to bottom right, gold, goldenrod, gold);
+                border: 1px solid black;
+            }
+            .card-resource-hydroelectric-resource {
+                background-image: url(./assets/resources/hydroelectric-resource.png);
+            }
+            .card-resource-one {
+              background-image: url(./assets/resources/one.png);
+            }
+            .card-resource-clone-trooper {
+              background-image: url(./assets/resources/clone-trooper.png);
+            }
+
+            /* Underworld Assets */
+            .card-identification {
+              background-image: url(./assets/underworld/identify.png);
+              width: 44px;
+              background-size: 44px;
+              height: 44px;
+            }
+            .card-excavation {
+              background-image: url(./assets/underworld/excavate.png);
+              width: 44px;
+              background-size: 44px;
+              height: 44px;
+              &--superscript {
+                background-image: url(./assets/underworld/excavate.png);
+                height: 22px;
+                width: 22px;
+                background-size: 22px;
+                margin-left: 0px;
+                margin-right: 0px;
+                margin-bottom: 15px;
+              }
+            }
+            .card-resource-corruption {
+              background-image: url(./assets/underworld/corruption.png);
+            }
+            // Is this even used?
+            .card-resource-tool {
+              background-image: url(./assets/underworld/card-resource-tool.png);
+            }
+            .card-resource-ware {
+              background-image: url(./assets/underworld/card-resource-ware.png);
+            }
+            .card-resource-scoop {
+              background-image: url(./assets/underworld/card-resource-scoop.png);
+            }
+            .card-resource-journalism {
+              background-image: url(./assets/underworld/card-resource-journalism.png);
+            }
+            .card-resource-activist {
+              background-image: url(./assets/underworld/card-resource-activist.png);
+            }
+            .card-resource-supply-chain {
+              background-image: url(./assets/underworld/card-resource-supply-chain.png);
+            }
+            .card-resource-director {
+              background-image: url("./assets/resources/director.png");
+            }
+
+            .card-neutral-delegate {
+              .card-delegate;
+              background-image: url(./assets/underworld/neutral-delegate.png) !important;
+            }
+
+            .card-underground-resources {
+              width: 44px;
+              background-size: 44px 44px;
+              height: 44px;
+              background-image: url("assets/underworld/underground-token-background.png");
+              .card-x {
+                color: black;
+                font-size: 69px;
+                font-weight: bold;
+                margin-top: 10px;
+              }
+            }
+
+            .card-corruption-shield {
+              width: 44px;
+              height: 44px;
+              background-size: 44px 44px;
+              background-image: url("assets/underworld/corruption-block.png");
+            }
+
+            .card-geoscan-icon {
+              width: 100px;
+              height: 87px;
+              background-size: 100px 87px;
+              background-image: url("assets/underworld/geoscan-icon.png");
+            }
+            .card-underground-shelters {
+              background-image: url(./assets/underworld/underground-shelters.png);
+              width: 44px;
+              background-size: 44px 44px;
+              height: 44px;
+            }
+            /* CEO Assets */
+            .card-arrow-opg {
+                display: inline-block;
+                background-image: url(./assets/ceos/arrow-opg.png);
+                width: 50px;
+                height: 43px;
+                background-size: 50px 43px;
+                background-repeat: no-repeat;
+            }
+            .card-reds-deactivated {
+                display: inline-block;
+                background-image: url(./assets/parties/reds.png);
+                // Increase size by 1.5 _without_ Scale; Scale blows out formatting.
+                width: 75px;
+                height: 54px;
+                background-size: 75px 54px;
+                background-repeat: no-repeat;
+                filter: grayscale(1);
+                // transform: scale(1.5);
+                // margin-right: 10px;
+            }
+            .card-reds {
+                display: inline-block;
+                background-image: url(./assets/parties/reds.png);
+                width: 50px;
+                height: 36px;
+                background-size: 50px 36px;
+                background-repeat: no-repeat;
+            }
+            .card-hazard-tile {
+                background-image: url(./assets/tiles/hazard.png);
+                width: 40px;
+                height: 40px;
+                background-size: 40px;
+                transform: scale(0.9);
+                margin: 5px 2px;
+            }
+            .card-hazard-tile--L {
+                background-image: url(./assets/tiles/hazard.png);
+                width: 48px;
+                height: 48px;
+                background-size: 48px;
+                margin: 5px -4px;
+            }
+            .card-adjacency-bonus {
+                background-image: url(./assets/tiles/adjacency_bonus.png);
+                background-size: 47px 54px;
+                width: 47px;
+                height: 54px;
+                margin: 5px;
+            }
+
             /*special*/
             .card-special {
                 font-size: @font_size_big;
@@ -1122,7 +1467,7 @@
                 top: 3px;
             }
             .card-minus {
-                background-image: url(/assets/misc/minus.png);
+                background-image: url(./assets/misc/minus.png);
                 background-size: 12px;
                 margin: 0;
                 width: 12px;
@@ -1139,7 +1484,7 @@
                 height: 6px;
             }
             .card-plus {
-                background-image: url(/assets/misc/plus.png);
+                background-image: url(./assets/misc/plus.png);
                 background-size: 12px;
                 min-height: 12px;
                 width: 12px;
@@ -1211,7 +1556,7 @@
             }
             .card-icon {
                 position: absolute;
-                right: -4px;
+                right: -9px;
                 top: -8px;
                 margin: 0;
                 width: 20px;
@@ -1250,6 +1595,14 @@
                 height: 40px;
                 width: 48px;
                 background-size: 48px;
+                .card-x {
+                  position: absolute;
+                  color: red;
+                  font-size: 44px;
+                  left: 12px;
+                  top: 13px;
+                  filter: drop-shadow(1px 0px 1px #888) drop-shadow(-1px 0px 1px #888) drop-shadow(0px 1px 1px #888) drop-shadow(0px -1px 1px #888)
+                }
             }
             .card-resource-trade--S {
                 height: 30px !important;
@@ -1291,12 +1644,11 @@
                 vertical-align: middle;
             }
             .card-influence--size-S {
-                height: 25px;
-                width: 25px;
-                background-size: 25px;
                 position: relative;
                 top: -10px;
-                left: -7px;
+                left: -10px;
+                transform: scale(0.7);
+                margin-right: -12px;
             }
             .turmoil-global-event {
                 display: inline-block;
@@ -1304,6 +1656,15 @@
                 width: 40px;
                 height: 56px;
                 background-size: 40px 56px;
+                background-repeat: no-repeat;
+                margin-right: 10px;
+            }
+            .turmoil-policy-tile {
+                display: inline-block;
+                background-image: url(./assets/resources/policy.png);
+                width: 60px;
+                height: 40px;
+                background-size: 60px 40px;
                 background-repeat: no-repeat;
                 margin-right: 10px;
             }
@@ -1318,7 +1679,7 @@
                 width: 30px;
                 height: 30px;
                 background-size: 34px 34px;
-                background-position: -2px -2px;
+                background-position: -2px;
                 line-height: 28px;
                 box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(0, 0, 0, 0.3);
                 vertical-align: middle;
@@ -1332,7 +1693,7 @@
             }
             // TODO(kberg) This set of tags looks like a duplicate of cards.less.
             .card-tag-wild {
-                background-image: url("../assets/tags/wild.png");
+                background-image: url("./assets/tags/wild.png");
             }
             .card-tag-building {
                 background-image: url("./assets/tags/building.png");
@@ -1377,16 +1738,41 @@
                 background-image: url("./assets/resources/floater.png");
                 border-radius: 0px;
             }
+            .card-tag-wild-resource {
+                background-image: url("./assets/resources/wild.png");
+                border-radius: 0px;
+            }
             .card-tag-moon {
                 background-image: url("./assets/tags/moon.png")
             }
             .card-tag-mars {
                 background-image: url("./assets/tags/mars.png");
             }
-            .card-community-services {
-                font-size: 42px;
-                vertical-align: middle;
-                background:white;
+            .card-tag-empty {
+                background-image: url("./assets/tags/empty.png");
+            }
+            .card-tag-diverse {
+                background: linear-gradient(to bottom right, green, yellow, red);
+            }
+            .card-no-tags {
+              font-size: 42px;
+              vertical-align: middle;
+              background:white;
+            }
+            .card-no-tags:after {
+              content: "X";
+              position: relative;
+              top: 1px;
+            }
+            .card-private-security {
+                .card-x {
+                    vertical-align: middle;
+                    position: absolute;
+                    color: #b51616;
+                    font-size: 72px;
+                    left: -13px;
+                    font-weight: bold;
+                }
             }
             /* secondary tags */
             .card-tag-req {
@@ -1440,6 +1826,21 @@
                 content: "\25b2";
                 transform: rotate(180deg);
             }
+            .card-tag-no_tags {
+              background:white;
+              font-size: 30px;
+              vertical-align: middle;
+              font-weight: normal
+            }
+            .card-tag-no_tags:after {
+              content: "X";
+              position: relative;
+              top: 1px;
+              left: 1px;
+            }
+            .card-tag-ares {
+              background-image: url("./assets/expansion_icons/expansion_icon_ares.png");
+            }
             /* special case Project requirements */
             .card-project-requirements {
                 position: relative;
@@ -1457,7 +1858,7 @@
                     padding: 0px 4px;
                 }
             }
-            .card-place-colony {
+            .card-colony-tile {
                 text-transform: uppercase;
                 background: #444;
                 color: #eee;
@@ -1484,6 +1885,53 @@
                     padding-right: 4px;
                     border-radius: 2px;
                 }
+            }
+            .card-ceo-container {
+                background-color: #2c2c2c;
+                background: linear-gradient(to right bottom, black, #3c3c3c, #969696, #3c3c3c, #3c3c3c, black);
+                color: black;
+                font-size: 12px;
+                padding: 4px 7px 1px;
+                border-radius: 3px;
+                box-shadow: 0 2px 2px 1px rgba(0, 0, 0, 0.8);
+                .card-ceo-icon {
+                    text-transform: uppercase;
+                    background: linear-gradient(to right, rgb(235,118,171), #e64d91);
+                    padding-left: 4px;
+                    padding-right: 4px;
+                    border-radius: 2px;
+                }
+            }
+
+            .card-corporation-icon {
+                display: inline-block;
+                background-image: url(./assets/misc/corpCard.png);
+                background-size: 56px 44px;
+                background-repeat: no-repeat;
+                width: 56px;
+                height: 44px;
+                margin-top: -20px;
+                margin-bottom: -17px;
+                border-radius: 5px;
+            }
+            .card-first-player-icon {
+                display: inline-block;
+                background-image: url(./assets/misc/first-player.png);
+                background-size: 39px 26px;
+                background-repeat: no-repeat;
+                width: 39px;
+                height: 26px;
+            }
+            .card-party-icon {
+                display: inline-block;
+                background-image: url(./assets/parties/parties.png);
+                background-size: 56px 44px;
+                background-repeat: no-repeat;
+                width: 56px;
+                height: 44px;
+                margin-top: -20px;
+                margin-bottom: -17px;
+                border-radius: 5px;
             }
             .card-award-icon {
                 text-transform: uppercase;
@@ -1624,6 +2072,9 @@
                 background: linear-gradient(90deg, #f3a10e 0%, #fdea25 45%, #fdea25 55%, #f3a10e 100%);
                 filter: drop-shadow(0px 0px 1px black);
                 box-shadow: 2px 2px 1px;
+                &--narrow {
+                  width: 110px;
+                }
             }
             .card-text-size--XS {
                 font-size: @font_size_tiny;
@@ -1833,6 +2284,7 @@
                 position: relative;
             }
             .card-tr--S {
+                background-image: url(./assets/resources/tr.png);
                 width: 42px !important;
                 height: 32px !important;
                 background-size: 42px 32px !important;
@@ -1851,6 +2303,7 @@
                 .card-tr--req();
             }
             .card-tr--req {
+                background-image: url(./assets/resources/tr.png);
                 width: 45px !important;
                 height: 34px !important;
                 background-size: 45px 34px !important;
@@ -1941,12 +2394,17 @@
                 right: 26px;
             } */
         }
+
         .card-cost-and-tags {
             display: flex;
             align-items: center;
             margin-left: -10px;
             margin-top: -10px;
             justify-content: space-between;
+            // Find a way to move this out.
+            .board-cube {
+              transform: scale(1.5);
+            }
             .card-cost, .card-old-cost {
                 float: left;
                 font-family: Prototype;
@@ -2057,6 +2515,25 @@
                 border-bottom: 2px solid rgb(137, 137, 137);
                 border-right: 2px solid rgb(137, 137, 137);
             }
+            .ceo-label {
+                position: absolute;
+                text-transform: uppercase;
+                top: 15px;
+                left: 4px;
+                margin: 0px;
+                width: 80px;
+                height: 20px;
+                line-height: 22px;
+                text-align: center;
+                font-size: 12px;
+                box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(0, 0, 0, 0.3);
+                background-color: #edbd18;
+                border-radius: 14px 2px 2px 2px;
+                border-top: 2px solid rgb(221, 221, 221);
+                border-left: 2px solid rgb(221, 221, 221);
+                border-bottom: 2px solid rgb(137, 137, 137);
+                border-right: 2px solid rgb(137, 137, 137);
+            }
         }
         .card-expansion {
             position: absolute;
@@ -2088,21 +2565,19 @@
 }
 
 .card-party {
-  display: inherit;
+  display: flex;
 }
 
 .card-party--revealed {
-  display: inherit;
+  margin: 147px 0 0 12px;
   position: absolute;
-  margin: -7px 0 0 -285px;
-  transform: scale(1.4);
+  transform: scale(1.35);
 }
 
 .card-party--current {
-  display: inherit;
+  margin: 147px 0 0 279px;
   position: absolute;
-  margin: 129px 0 0 280px;
-  transform: scale(1.4);
+  transform: scale(1.35);
 }
 
 @parties: greens, kelvinists, mars-first, reds, scientists, unity;
@@ -2144,10 +2619,18 @@ each(@parties, {
     // the stuff above wasn't contained inside card-content.
     @resource_types: microbe, animal, science, floater, fighter, camp,
       asteroid, disease, preservation, data, syndicate-fleet, cube,
-      venusian-habitat, specialized-robot, seed, orbital, agenda;
+      venusian-habitat, specialized-robot, seed, orbital, agenda, graphene, hydroelectric-resource,
+      clone-trooper, director;
     each(@resource_types, {
       .card-resource-@{value} {
         background-image: url("./assets/resources/@{value}.png");
+      }
+    })
+
+    @underworld_resource_types: tool, ware, scoop, activist, journalism, supply-chain;
+    each(@underworld_resource_types, {
+      .card-resource-@{value} {
+        background-image: url("./assets/underworld/card-resource-@{value}.png");
       }
     })
     .card-resource-cube {

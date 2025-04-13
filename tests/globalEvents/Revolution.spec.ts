@@ -1,31 +1,30 @@
 import {expect} from 'chai';
-import {Sponsors} from '../../src/cards/base/Sponsors';
-import {Game} from '../../src/Game';
-import {Player} from '../../src/Player';
-import {Revolution} from '../../src/turmoil/globalEvents/Revolution';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {Sponsors} from '../../src/server/cards/base/Sponsors';
+import {IGame} from '../../src/server/IGame';
+import {Revolution} from '../../src/server/turmoil/globalEvents/Revolution';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {Turmoil} from '../../src/server/turmoil/Turmoil';
+import {TestPlayer} from '../TestPlayer';
+import {testGame} from '../TestingUtils';
 
-describe('Revolution', function() {
-  let card : Revolution; let player : Player; let player2 : Player; let game : Game; let turmoil: Turmoil;
+describe('Revolution', () => {
+  let card: Revolution;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
+  let turmoil: Turmoil;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Revolution();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-
-    game = Game.newInstance('foobar', [player, player2], player);
-    turmoil = Turmoil.newInstance(game);
-
-    turmoil.initGlobalEvent(game);
-    turmoil.chairman = player2.id;
+    [game, player, player2] = testGame(2, {turmoilExtension: true});
+    turmoil = game.turmoil!;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
   });
 
-  it('resolve play', function() {
+  it('resolve play', () => {
     player.playedCards.push(new Sponsors());
     player2.playedCards.push(new Sponsors());
 
@@ -34,7 +33,7 @@ describe('Revolution', function() {
     expect(player2.getTerraformRating()).to.eq(18);
   });
 
-  it('doesn\'t reduce TR for players with 0 Earth tags + influence', function() {
+  it('doesn not reduce TR for players with 0 Earth tags + influence', () => {
     player2.playedCards.push(new Sponsors());
 
     card.resolve(game, turmoil);

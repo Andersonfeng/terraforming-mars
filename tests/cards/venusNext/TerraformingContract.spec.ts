@@ -1,15 +1,19 @@
 import {expect} from 'chai';
-import {TerraformingContract} from '../../../src/cards/venusNext/TerraformingContract';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {TerraformingContract} from '../../../src/server/cards/venusNext/TerraformingContract';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('TerraformingContract', function() {
-  it('Should play', function() {
+describe('TerraformingContract', () => {
+  it('Should play', () => {
     const card = new TerraformingContract();
-    const player = TestPlayers.BLUE.newPlayer();
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(4);
+    const [/* game */, player] = testGame(1);
+
+    player.setTerraformRating(24);
+    expect(card.canPlay(player)).is.not.true;
+    player.setTerraformRating(25);
+    expect(card.canPlay(player)).is.true;
+
+    cast(card.play(player), undefined);
+    expect(player.production.megacredits).to.eq(4);
   });
 });

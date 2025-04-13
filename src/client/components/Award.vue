@@ -1,12 +1,12 @@
 <template>
   <div class="ma-block">
-    <div class="ma-player" v-if="award.player_name">
-      <i :title="award.player_name" class="board-cube" :class="`board-cube--${award.player_color}`" />
+    <div class="ma-player" v-if="award.playerName">
+      <i :title="award.playerName" class="board-cube" :class="`board-cube--${award.playerColor}`" />
     </div>
 
-    <div class="ma-name ma-name--awards award-block" :class="maAwardClass" v-i18n>
-      {{ award.name }}
-      <div class="ma-scores player_home_block--milestones-and-awards-scores" v-if="showScores">
+    <div class="ma-name ma-name--awards award-block" :class="nameCss">
+      <span v-i18n>{{ award.name }}</span>
+      <div v-if="showScores" class="ma-scores player_home_block--milestones-and-awards-scores">
         <p
           v-for="score in sortedScores"
           :key="score.playerColor"
@@ -18,15 +18,16 @@
       </div>
     </div>
 
-    <div v-if="showDescription" class="ma-description" v-i18n>
-      {{ award.description }}
+    <div v-if="showDescription" class="ma-description">
+      <span v-i18n>{{ description }}</span>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import {FundedAwardModel, IAwardScore} from '@/common/models/FundedAwardModel';
+import {FundedAwardModel, AwardScore} from '@/common/models/FundedAwardModel';
+import {getAward} from '@/client/MilestoneAwardManifest';
 
 export default Vue.extend({
   name: 'Award',
@@ -37,22 +38,21 @@ export default Vue.extend({
     },
     showScores: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     showDescription: {
       type: Boolean,
     },
   },
-  data() {
-    return {
-    };
-  },
   computed: {
-    maAwardClass(): string {
-      return 'ma-name--' + this.award.name.replace(/ /g, '-').toLowerCase();
+    nameCss(): string {
+      return 'ma-name--' + this.award.name.replace(/ /g, '-').replace(/\./g, '').toLowerCase();
     },
-    sortedScores(): IAwardScore[] {
+    sortedScores(): Array<AwardScore> {
       return [...this.award.scores].sort((s1, s2) => s2.playerScore - s1.playerScore);
+    },
+    description(): string {
+      return getAward(this.award.name).description;
     },
   },
 });

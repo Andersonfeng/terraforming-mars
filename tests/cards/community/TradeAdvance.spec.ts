@@ -1,26 +1,25 @@
 import {expect} from 'chai';
-import {TradeAdvance} from '../../../src/cards/community/TradeAdvance';
+import {TradeAdvance} from '../../../src/server/cards/community/TradeAdvance';
 import {ColonyName} from '../../../src/common/colonies/ColonyName';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {setCustomGameOptions, runAllActions} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {IGame} from '../../../src/server/IGame';
+import {runAllActions} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('TradeAdvance', function() {
-  let card : TradeAdvance; let player : Player; let game : Game;
+describe('TradeAdvance', () => {
+  let card: TradeAdvance;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new TradeAdvance();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const gameOptions = setCustomGameOptions({
+    [game, player] = testGame(2, {
       coloniesExtension: true,
       customColoniesList: [ColonyName.LUNA, ColonyName.CALLISTO, ColonyName.CERES, ColonyName.IO, ColonyName.TITAN],
     });
-    game = Game.newInstance('foobar', [player, redPlayer], player, gameOptions);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
 
     runAllActions(player.game);

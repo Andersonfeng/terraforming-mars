@@ -1,16 +1,13 @@
 import {expect} from 'chai';
-import {ReleaseOfInertGases} from '../../../src/cards/base/ReleaseOfInertGases';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {ReleaseOfInertGases} from '../../../src/server/cards/base/ReleaseOfInertGases';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('ReleaseOfInertGases', function() {
-  it('Should play', function() {
+describe('ReleaseOfInertGases', () => {
+  it('Should play', () => {
     const card = new ReleaseOfInertGases();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
     expect(player.getTerraformRating()).to.eq(22);
   });
 });

@@ -1,51 +1,39 @@
 import {expect} from 'chai';
-import {GreeneryStandardProject} from '../../../../src/cards/base/standardProjects/GreeneryStandardProject';
-import {setCustomGameOptions, runAllActions} from '../../../TestingUtils';
+import {churn, setOxygenLevel} from '../../../TestingUtils';
+import {GreeneryStandardProject} from '../../../../src/server/cards/base/standardProjects/GreeneryStandardProject';
 import {TestPlayer} from '../../../TestPlayer';
-import {Game} from '../../../../src/Game';
-import {TestPlayers} from '../../../TestPlayers';
-import {PoliticalAgendas} from '../../../../src/turmoil/PoliticalAgendas';
-import {Reds} from '../../../../src/turmoil/parties/Reds';
+import {IGame} from '../../../../src/server/IGame';
+import {PoliticalAgendas} from '../../../../src/server/turmoil/PoliticalAgendas';
+import {Reds} from '../../../../src/server/turmoil/parties/Reds';
 import {Phase} from '../../../../src/common/Phase';
 import {MAX_OXYGEN_LEVEL} from '../../../../src/common/constants';
-import {SelectSpace} from '../../../../src/inputs/SelectSpace';
-import {SpaceType} from '../../../../src/common/boards/SpaceType';
 import {TileType} from '../../../../src/common/TileType';
+import {testGame} from '../../../TestGame';
+import {assertPlaceTile} from '../../../assertions';
 
-describe('GreeneryStandardProject', function() {
+describe('GreeneryStandardProject', () => {
   let card: GreeneryStandardProject;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new GreeneryStandardProject();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
   });
 
-  it('Can act', function() {
+  it('Can act', () => {
     player.megaCredits = card.cost - 1;
     expect(card.canAct(player)).is.false;
     player.megaCredits = card.cost;
     expect(card.canAct(player)).is.true;
   });
 
-  it('action', function() {
+  it('action', () => {
     player.megaCredits = card.cost;
     player.setTerraformRating(20);
     expect(game.getOxygenLevel()).eq(0);
 
-    card.action(player);
-    runAllActions(game);
-
-    const selectSpace = player.getWaitingFor() as SelectSpace;
-    const availableSpace = selectSpace.availableSpaces[0];
-
-    expect(availableSpace.spaceType).eq(SpaceType.LAND);
-
-    selectSpace?.cb(availableSpace);
-
-    expect(availableSpace.tile!.tileType).eq(TileType.GREENERY);
+    assertPlaceTile(player, churn(card.action(player), player), TileType.GREENERY);
 
     expect(player.megaCredits).eq(0);
     expect(player.getTerraformRating()).eq(21);
@@ -55,14 +43,13 @@ describe('GreeneryStandardProject', function() {
   it('can act when maximized', () => {
     player.megaCredits = card.cost;
     expect(card.canAct(player)).is.true;
-    (game as any).oxygenLevel = MAX_OXYGEN_LEVEL;
+    setOxygenLevel(game, MAX_OXYGEN_LEVEL);
     // Players can still place greeneries even if the oxygen level is maximized
     expect(card.canAct(player)).is.true;
   });
 
   it('Can not act with reds', () => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player, setCustomGameOptions({turmoilExtension: true}));
+    [game, player] = testGame(1, {turmoilExtension: true});
 
     player.megaCredits = card.cost;
     player.game.phase = Phase.ACTION;

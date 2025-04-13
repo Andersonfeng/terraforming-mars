@@ -1,53 +1,49 @@
 import {expect} from 'chai';
-import {PrivateSecurity} from '../../../src/cards/pathfinders/PrivateSecurity';
+import {PrivateSecurity} from '../../../src/server/cards/pathfinders/PrivateSecurity';
 import {TestPlayer} from '../../TestPlayer';
-import {Fish} from '../../../src/cards/base/Fish';
-import {SelectPlayer} from '../../../src/inputs/SelectPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {TestingUtils} from '../../TestingUtils';
+import {Fish} from '../../../src/server/cards/base/Fish';
+import {SelectPlayer} from '../../../src/server/inputs/SelectPlayer';
+import {testGame} from '../../TestGame';
+import {cast, runAllActions, setTemperature} from '../../TestingUtils';
 
-describe('PrivateSecurity', function() {
+describe('PrivateSecurity', () => {
   let card: PrivateSecurity;
   let player: TestPlayer;
   let opponent1: TestPlayer;
   let opponent2: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new PrivateSecurity();
-    const game = newTestGame(3, {pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
-    opponent1 = getTestPlayer(game, 1);
-    opponent2 = getTestPlayer(game, 2);
+    [/* game */, player, opponent1, opponent2] = testGame(3, {pathfindersExpansion: true});
   });
 
-  it('protects against Fish', function() {
-    opponent1.setProductionForTest({plants: 2});
-    opponent2.setProductionForTest({plants: 4});
+  it('protects against Fish', () => {
+    opponent1.production.override({plants: 2});
+    opponent2.production.override({plants: 4});
 
     const fish = new Fish();
 
     opponent2.playedCards = [];
     fish.play(player);
-    let action = player.game.deferredActions.pop()?.execute()! as SelectPlayer;
+    const action = cast(player.game.deferredActions.pop()?.execute(), SelectPlayer);
     // Options for both opponents.
     expect(action.players).has.lengthOf(2);
 
     // Opponent 2 has Private Security
     opponent2.playedCards = [card];
     fish.play(player);
-    action = player.game.deferredActions.pop()?.execute()! as SelectPlayer;
     // Options for only one opponent.
-    expect(action).is.undefined;
+    expect(player.game.deferredActions.pop()?.execute()).is.undefined;
     // And it's the one without Private Security.
-    expect(opponent1.getProduction(Resources.PLANTS)).to.eq(1);
+    expect(opponent1.production.plants).to.eq(1);
   });
 
   it('Card cannot be played if the only opponent with production has Private Security', () => {
-    opponent1.setProductionForTest({plants: 1});
-    opponent2.setProductionForTest({plants: 0});
+    opponent1.production.override({plants: 1});
+    opponent2.production.override({plants: 0});
 
     const fish = new Fish();
+    setTemperature(player.game, 2);
 
     opponent2.playedCards = [];
     expect(fish.canPlay(player)).is.true;
@@ -57,19 +53,20 @@ describe('PrivateSecurity', function() {
 
   it('Card applies to you if you have production and Private Security', () => {
     // https://github.com/terraforming-mars/terraforming-mars/issues/4318
-    player.setProductionForTest({plants: 1});
-    opponent1.setProductionForTest({plants: 1});
-    opponent2.setProductionForTest({plants: 1});
+    player.production.override({plants: 1});
+    opponent1.production.override({plants: 1});
+    opponent2.production.override({plants: 1});
 
     const fish = new Fish();
+    setTemperature(player.game, 2);
 
     player.playedCards = [card];
     expect(fish.canPlay(player)).is.true;
     expect(fish.play(player)).is.undefined;
 
-    TestingUtils.runAllActions(player.game);
+    runAllActions(player.game);
 
-    const selectPlayer = TestingUtils.cast(player.popWaitingFor(), SelectPlayer);
+    const selectPlayer = cast(player.popWaitingFor(), SelectPlayer);
     expect(selectPlayer.players).includes(player);
   });
 });

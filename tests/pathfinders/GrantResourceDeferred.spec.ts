@@ -1,22 +1,22 @@
 import {expect} from 'chai';
 import {TestPlayer} from '../TestPlayer';
-import {GrantResourceDeferred} from '../../src/pathfinders/GrantResourceDeferred';
-import {OrOptions} from '../../src/inputs/OrOptions';
-import {SelectResources} from '../../src/inputs/SelectResources';
-import {SelectCard} from '../../src/inputs/SelectCard';
-import {getTestPlayer, newTestGame} from '../TestGame';
-import {Ants} from '../../src/cards/base/Ants';
-import {Tardigrades} from '../../src/cards/base/Tardigrades';
-import {IProjectCard} from '../../src/cards/IProjectCard';
+import {GrantResourceDeferred} from '../../src/server/pathfinders/GrantResourceDeferred';
+import {OrOptions} from '../../src/server/inputs/OrOptions';
+import {GainResources} from '../../src/server/inputs/GainResources';
+import {SelectCard} from '../../src/server/inputs/SelectCard';
+import {testGame} from '../TestGame';
+import {Ants} from '../../src/server/cards/base/Ants';
+import {Tardigrades} from '../../src/server/cards/base/Tardigrades';
+import {IProjectCard} from '../../src/server/cards/IProjectCard';
+import {cast} from '../TestingUtils';
 
-describe('GrantResourceDeferred', function() {
+describe('GrantResourceDeferred', () => {
   let player: TestPlayer;
   let ants: Ants;
   let tardigrades: Tardigrades;
 
   beforeEach(() => {
-    const game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [/* game */, player] = testGame(1);
     ants = new Ants();
     tardigrades = new Tardigrades();
     player.playedCards.push(ants);
@@ -24,18 +24,17 @@ describe('GrantResourceDeferred', function() {
   });
 
   it('grant single bonus', () => {
-    const input = new GrantResourceDeferred(player, false).execute() as OrOptions;
+    const input = cast(new GrantResourceDeferred(player, false).execute(), OrOptions);
     expect(input.options).has.length(1);
-    expect(input.options[0]).instanceOf(SelectResources);
-    const selectOptions = input.options[0] as SelectResources;
-    selectOptions.options[0].cb(0);
-    selectOptions.options[1].cb(0);
-    selectOptions.options[2].cb(0);
-    selectOptions.options[3].cb(0);
-    selectOptions.options[4].cb(0);
-    selectOptions.options[5].cb(1);
+    const gainResources = cast(input.options[0], GainResources);
+    gainResources.options[0].cb(0);
+    gainResources.options[1].cb(0);
+    gainResources.options[2].cb(0);
+    gainResources.options[3].cb(0);
+    gainResources.options[4].cb(0);
+    gainResources.options[5].cb(1);
 
-    selectOptions.cb();
+    gainResources.cb(undefined);
 
     expect(player.megaCredits).eq(0);
     expect(player.steel).eq(0);
@@ -46,11 +45,10 @@ describe('GrantResourceDeferred', function() {
   });
 
   it('grant single bonus or wild bonus', () => {
-    const input = new GrantResourceDeferred(player, true).execute() as OrOptions;
+    const input = cast(new GrantResourceDeferred(player, true).execute(), OrOptions);
     expect(input.options).has.length(2);
-    expect(input.options[0]).instanceOf(SelectResources);
-    expect(input.options[1]).instanceOf(SelectCard);
-    const selectCard = input.options[1] as SelectCard<IProjectCard>;
+    expect(input.options[0]).instanceOf(GainResources);
+    const selectCard = cast(input.options[1], SelectCard<IProjectCard>);
     expect(selectCard.cards).has.members([ants, tardigrades]);
     expect(ants.resourceCount).eq(0);
 

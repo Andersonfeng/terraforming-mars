@@ -1,16 +1,15 @@
 import {expect} from 'chai';
-import {HeavyTaxation} from '../../../src/cards/colonies/HeavyTaxation';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {HeavyTaxation} from '../../../src/server/cards/colonies/HeavyTaxation';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('HeavyTaxation', function() {
-  it('Should play', function() {
+describe('HeavyTaxation', () => {
+  it('Should play', () => {
     const card = new HeavyTaxation();
-    const player = TestPlayers.BLUE.newPlayer();
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    const [/* game */, player] = testGame(1);
+    expect(card.canPlay(player)).is.not.true;
+    cast(card.play(player), undefined);
+    expect(player.production.megacredits).to.eq(2);
     expect(player.megaCredits).to.eq(4);
   });
 });

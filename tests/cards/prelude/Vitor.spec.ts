@@ -1,45 +1,44 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {LavaFlows} from '../../../src/cards/base/LavaFlows';
-import {DustSeals} from '../../../src/cards/base/DustSeals';
-import {Vitor} from '../../../src/cards/prelude/Vitor';
-import {AncientShipyards} from '../../../src/cards/moon/AncientShipyards';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {LavaFlows} from '../../../src/server/cards/base/LavaFlows';
+import {DustSeals} from '../../../src/server/cards/base/DustSeals';
+import {Vitor} from '../../../src/server/cards/prelude/Vitor';
+import {AncientShipyards} from '../../../src/server/cards/moon/AncientShipyards';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {cast} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('Vitor', function() {
-  let card : Vitor; let player : Player; let game : Game;
+describe('Vitor', () => {
+  let card: Vitor;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Vitor();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    const action = card.play(player);
-    expect(action).is.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
     expect(player.megaCredits).to.eq(0);
   });
 
-  it('Has initial action', function() {
-    const action = card.initialAction(player);
-    expect(action).instanceOf(OrOptions);
-    (action as OrOptions).options[0].cb();
+  it('Has initial action', () => {
+    const action = cast(card.initialAction(player), OrOptions);
+    action.options[0].cb();
     expect(game.hasBeenFunded(game.awards[0])).is.true;
   });
 
-  it('No initial action for solo games', function() {
-    Game.newInstance('foobar', [player], player);
-    const action = card.initialAction(player);
-    expect(action).is.undefined;
+  it('No initial action for solo games', () => {
+    testGame(1);
+    const action = player.deferInitialAction(card);
+    cast(action, undefined);
   });
 
-  it('Give megacredits when card played', function() {
-    player.corporationCard = card;
+  it('Give megacredits when card played', () => {
+    player.corporations.push(card);
 
     // Dust Seals has victory points
     card.onCardPlayed(player, new DustSeals());

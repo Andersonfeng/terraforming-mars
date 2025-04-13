@@ -1,26 +1,27 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Birds} from '../../../src/cards/base/Birds';
-import {EcologicalZone} from '../../../src/cards/base/EcologicalZone';
-import {Moss} from '../../../src/cards/base/Moss';
-import {ViralEnhancers} from '../../../src/cards/base/ViralEnhancers';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast} from '../../TestingUtils';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Birds} from '../../../src/server/cards/base/Birds';
+import {EcologicalZone} from '../../../src/server/cards/base/EcologicalZone';
+import {Moss} from '../../../src/server/cards/base/Moss';
+import {ViralEnhancers} from '../../../src/server/cards/base/ViralEnhancers';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('ViralEnhancers', function() {
-  let card : ViralEnhancers; let player : Player; let game : Game;
+describe('ViralEnhancers', () => {
+  let card: ViralEnhancers;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ViralEnhancers();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    card.play();
+  it('Should play', () => {
+    card.play(player);
 
     const ants = new Ants();
     const birds = new Birds();
@@ -30,7 +31,7 @@ describe('ViralEnhancers', function() {
     card.onCardPlayed(player, birds);
     expect(game.deferredActions).has.lengthOf(1);
 
-    const orOptions = game.deferredActions.pop()!.execute() as OrOptions;
+    const orOptions = cast(game.deferredActions.pop()!.execute(), OrOptions);
     orOptions.options[0].cb();
     expect(birds.resourceCount).to.eq(1);
     orOptions.options[1].cb();
@@ -39,26 +40,26 @@ describe('ViralEnhancers', function() {
     card.onCardPlayed(player, ants);
     expect(game.deferredActions).has.lengthOf(1);
 
-    const orOptions2 = game.deferredActions.pop()!.execute() as OrOptions;
+    const orOptions2 = cast(game.deferredActions.pop()!.execute(), OrOptions);
     orOptions2.options[0].cb();
     expect(ants.resourceCount).to.eq(1);
     orOptions2.options[1].cb();
     expect(player.plants).to.eq(2);
   });
 
-  it('Should play for each tag', function() {
-    card.play();
+  it('Should play for each tag', () => {
+    card.play(player);
 
     const ecologicalZone = new EcologicalZone();
     card.onCardPlayed(player, ecologicalZone);
     expect(game.deferredActions).has.lengthOf(2);
 
-    const orOptions = game.deferredActions.pop()!.execute() as OrOptions;
+    const orOptions = cast(game.deferredActions.pop()!.execute(), OrOptions);
     orOptions.options[0].cb();
     expect(ecologicalZone.resourceCount).to.eq(1);
     expect(game.deferredActions).has.lengthOf(1);
 
-    const orOptions2 = game.deferredActions.pop()!.execute() as OrOptions;
+    const orOptions2 = cast(game.deferredActions.pop()!.execute(), OrOptions);
     orOptions2.options[1].cb();
     expect(player.plants).to.eq(1);
     expect(game.deferredActions).has.lengthOf(0);

@@ -1,19 +1,14 @@
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {GrandLunaAcademy} from '../../../src/cards/moon/GrandLunaAcademy';
 import {expect} from 'chai';
+import {GrandLunaAcademy} from '../../../src/server/cards/moon/GrandLunaAcademy';
 import {TestPlayer} from '../../TestPlayer';
-import {Game} from '../../../src/Game';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {testGame} from '../../TestGame';
 
 describe('GrandLunaAcademy', () => {
   let player: TestPlayer;
   let card: GrandLunaAcademy;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [/* game */, player] = testGame(1, {moonExpansion: true});
     card = new GrandLunaAcademy();
   });
 

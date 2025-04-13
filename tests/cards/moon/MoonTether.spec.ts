@@ -1,20 +1,16 @@
 import {expect} from 'chai';
-import {Game} from '../../../src/Game';
-import {TestingUtils} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {fakeCard} from '../../TestingUtils';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {MoonTether} from '../../../src/cards/moon/MoonTether';
-import {Tags} from '../../../src/common/cards/Tags';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {MoonTether} from '../../../src/server/cards/moon/MoonTether';
+import {Tag} from '../../../src/common/cards/Tag';
 
 describe('MoonTether', () => {
   let player: TestPlayer;
   let card: MoonTether;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [/* game */, player] = testGame(1, {moonExpansion: true});
     card = new MoonTether();
   });
 
@@ -22,20 +18,20 @@ describe('MoonTether', () => {
     player.cardsInHand = [card];
     player.megaCredits = card.cost;
 
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
-    player.playedCards.push(TestingUtils.fakeCard({tags: [Tags.SPACE, Tags.SPACE, Tags.SPACE, Tags.SPACE, Tags.SPACE]}));
-    expect(player.getPlayableCards()).does.not.include(card);
+    player.playedCards.push(fakeCard({tags: [Tag.SPACE, Tag.SPACE, Tag.SPACE, Tag.SPACE, Tag.SPACE]}));
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
     // Pushing a sixth tag will do it.
-    player.playedCards.push(TestingUtils.fakeCard({tags: [Tags.SPACE]}));
-    expect(player.getPlayableCards()).includes(card);
+    player.playedCards.push(fakeCard({tags: [Tag.SPACE]}));
+    expect(player.getPlayableCardsForTest()).includes(card);
   });
 
   it('play', () => {
-    card.play();
+    card.play(player);
 
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
     expect(card.getCardDiscount()).to.eq(2);
   });
 });

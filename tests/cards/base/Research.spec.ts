@@ -1,17 +1,14 @@
 import {expect} from 'chai';
-import {Research} from '../../../src/cards/base/Research';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {Research} from '../../../src/server/cards/base/Research';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('Research', function() {
-  it('Should play', function() {
+describe('Research', () => {
+  it('Should play', () => {
     const card = new Research();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(card.getVictoryPoints()).to.eq(1);
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
+    expect(card.getVictoryPoints(player)).to.eq(1);
     expect(player.cardsInHand).has.lengthOf(2);
     expect(player.cardsInHand[0]).not.to.eq(player.cardsInHand[1]);
   });

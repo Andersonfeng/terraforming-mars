@@ -1,70 +1,68 @@
 import {expect} from 'chai';
-import {Steelaris} from '../../../src/cards/pathfinders/Steelaris';
-import {Game} from '../../../src/Game';
+import {Steelaris} from '../../../src/server/cards/pathfinders/Steelaris';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
 import {TileType} from '../../../src/common/TileType';
-import {TestingUtils} from '../../TestingUtils';
-import {EmptyBoard} from '../../ares/EmptyBoard';
+import {runAllActions} from '../../TestingUtils';
+import {EmptyBoard} from '../../testing/EmptyBoard';
 
-describe('Steelaris', function() {
+describe('Steelaris', () => {
   let card: Steelaris;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Steelaris();
-    game = newTestGame(2);
-    player = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 1);
-    player.corporationCard = card;
+    [game, player, player2] = testGame(2);
+    player.corporations.push(card);
     game.board = EmptyBoard.newInstance();
   });
 
-  it('when you place a city', function() {
+  it('when you place a city', () => {
     const citySpace = game.board.getAvailableSpacesForCity(player)[0];
     expect(player.plants).eq(0);
     expect(player.steel).eq(0);
 
-    game.addCityTile(player, citySpace.id);
-    TestingUtils.runAllActions(game);
+    game.addCity(player, citySpace);
+    runAllActions(game);
 
     expect(player.plants).eq(1);
     expect(player.steel).eq(1);
   });
 
-  it('when opponent places a city', function() {
+  it('when opponent places a city', () => {
     const citySpace = game.board.getAvailableSpacesForCity(player)[0];
     expect(player.plants).eq(0);
     expect(player.steel).eq(0);
 
-    game.addCityTile(player2, citySpace.id);
-    TestingUtils.runAllActions(game);
+    game.addCity(player2, citySpace);
+    runAllActions(game);
 
     expect(player.plants).eq(1);
     expect(player.steel).eq(1);
   });
 
-  it('when you place a greenery', function() {
+  it('when you place a greenery', () => {
     const greenerySpace = game.board.getAvailableSpacesForGreenery(player)[0];
     expect(player.plants).eq(0);
     expect(player.steel).eq(0);
 
-    game.addGreenery(player, greenerySpace.id);
-    TestingUtils.runAllActions(game);
+    game.addGreenery(player, greenerySpace);
+    runAllActions(game);
 
     expect(player.plants).eq(0);
     expect(player.steel).eq(0);
   });
 
-  it('when you place a special tile', function() {
+  it('when you place a special tile', () => {
     const space = game.board.getAvailableSpacesOnLand(player)[0];
     expect(player.plants).eq(0);
     expect(player.steel).eq(0);
 
-    game.addTile(player, space.spaceType, space, {tileType: TileType.NUCLEAR_ZONE});
-    TestingUtils.runAllActions(game);
+    game.addTile(player, space, {tileType: TileType.NUCLEAR_ZONE});
+    runAllActions(game);
 
     expect(player.plants).eq(1);
     expect(player.steel).eq(1);
@@ -72,13 +70,13 @@ describe('Steelaris', function() {
     expect(player2.steel).eq(0);
   });
 
-  it('when opponent places a special tile', function() {
+  it('when opponent places a special tile', () => {
     const space = game.board.getAvailableSpacesOnLand(player)[0];
     expect(player.plants).eq(0);
     expect(player.steel).eq(0);
 
-    game.addTile(player2, space.spaceType, space, {tileType: TileType.NUCLEAR_ZONE});
-    TestingUtils.runAllActions(game);
+    game.addTile(player2, space, {tileType: TileType.NUCLEAR_ZONE});
+    runAllActions(game);
 
     expect(player.plants).eq(1);
     expect(player.steel).eq(1);

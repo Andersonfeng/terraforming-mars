@@ -1,15 +1,14 @@
 import {expect} from 'chai';
-import {HousePrinting} from '../../../src/cards/prelude/HousePrinting';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {HousePrinting} from '../../../src/server/cards/prelude/HousePrinting';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('HousePrinting', function() {
-  it('Should play', function() {
+describe('HousePrinting', () => {
+  it('Should play', () => {
     const card = new HousePrinting();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(card.getVictoryPoints()).to.eq(1);
-    expect(player.getProduction(Resources.STEEL)).to.eq(1);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(card.getVictoryPoints(player)).to.eq(1);
+    expect(player.production.steel).to.eq(1);
   });
 });

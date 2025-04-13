@@ -1,36 +1,29 @@
 import {expect} from 'chai';
-import {Virus} from '../../src/cards/base/Virus';
-import {Game} from '../../src/Game';
-import {Resources} from '../../src/common/Resources';
-import {CelebrityLeaders} from '../../src/turmoil/globalEvents/CelebrityLeaders';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {Virus} from '../../src/server/cards/base/Virus';
+import {CelebrityLeaders} from '../../src/server/turmoil/globalEvents/CelebrityLeaders';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {testGame} from '../TestingUtils';
 
-describe('CelebrityLeaders', function() {
-  it('resolve play', function() {
+describe('CelebrityLeaders', () => {
+  it('resolve play', () => {
     const card = new CelebrityLeaders();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
-    const turmoil = Turmoil.newInstance(game);
-
-    turmoil.initGlobalEvent(game);
+    const [game, player, player2] = testGame(2, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
     player.playedCards.push(new Virus());
     player2.playedCards.push(new Virus());
     player2.playedCards.push(new Virus());
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     player.megaCredits = 10;
     player2.megaCredits = 10;
 
     card.resolve(game, turmoil);
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(12);
-    expect(player2.getResource(Resources.MEGACREDITS)).to.eq(20);
+    expect(player.megaCredits).to.eq(12);
+    expect(player2.megaCredits).to.eq(20);
   });
 });

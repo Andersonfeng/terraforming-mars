@@ -1,20 +1,16 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {PreliminaryDarkside} from '../../../src/cards/moon/PreliminaryDarkside';
 import {expect} from 'chai';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {PreliminaryDarkside} from '../../../src/server/cards/moon/PreliminaryDarkside';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
 
 describe('PreliminaryDarkside', () => {
-  let player: Player;
+  let player: TestPlayer;
   let card: PreliminaryDarkside;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [/* game */, player] = testGame(1, {moonExpansion: true});
     card = new PreliminaryDarkside();
   });
 
@@ -22,11 +18,11 @@ describe('PreliminaryDarkside', () => {
     player.cardsInHand = [card];
     player.megaCredits = card.cost;
 
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {
-    const action = card.play(player) as OrOptions;
+    const action = cast(card.play(player), OrOptions);
     expect(action.options).has.lengthOf(2);
 
     player.titanium = 0;

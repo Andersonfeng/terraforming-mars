@@ -1,23 +1,67 @@
 import {expect} from 'chai';
-import {Game} from '../../src/Game';
-import {Resources} from '../../src/common/Resources';
-import {MudSlides} from '../../src/turmoil/globalEvents/MudSlides';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {IGame} from '../../src/server/IGame';
+import {MudSlides} from '../../src/server/turmoil/globalEvents/MudSlides';
+import {Turmoil} from '../../src/server/turmoil/Turmoil';
+import {TestPlayer} from '../TestPlayer';
+import {testGame} from '../TestGame';
+import {Space} from '../../src/server/boards/Space';
+import {TileType} from '../../src/common/TileType';
 
-describe('MudSlides', function() {
-  it('resolve play', function() {
-    const card = new MudSlides();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
-    const turmoil = Turmoil.newInstance(game);
-    turmoil.initGlobalEvent(game);
+describe('MudSlides', () => {
+  let card: MudSlides;
+  let player: TestPlayer;
+  let game: IGame;
+  let turmoil: Turmoil;
+
+  beforeEach(() => {
+    card = new MudSlides();
+    [game, player] = testGame(2, {turmoilExtension: true, aresExtension: true});
+    turmoil = Turmoil.getTurmoil(game);
+  });
+
+  it('resolve play', () => {
     const oceanTile = game.board.getAvailableSpacesForOcean(player)[0];
-    game.addCityTile(player, game.board.getAdjacentSpaces(oceanTile)[0].id);
-    game.addOceanTile(player, oceanTile.id);
-    player.addResource(Resources.MEGACREDITS, 10);
+    game.addCity(player, game.board.getAdjacentSpaces(oceanTile)[0]);
+    game.addOcean(player, oceanTile);
+    player.megaCredits = 10;
+
     card.resolve(game, turmoil);
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(6);
+
+    expect(player.megaCredits).to.eq(6);
+  });
+
+  it('resolve play with overplaced tiles', () => {
+    [game, player] = testGame(2, {aresExtension: true, turmoilExtension: true});
+
+    // Find two adjacent ocean spaces
+    function adjacentOceans(): {first: Space, second: Space} {
+      const oceanSpaces = game.board.getAvailableSpacesForOcean(player);
+      for (const space of oceanSpaces) {
+        const adjacentSpaces = game.board.getAdjacentSpaces(space);
+        const adjacentOceans = adjacentSpaces.filter((space) => oceanSpaces.includes(space));
+        if (adjacentOceans.length > 0) {
+          return {first: space, second: adjacentOceans[0]};
+        }
+      }
+      throw new Error('Not found');
+    }
+
+    const spaces = adjacentOceans();
+
+    game.addOcean(player, spaces.first);
+    game.addOcean(player, spaces.second);
+
+    // Add an ocean city on top of the second ocean.
+    const tile = {
+      tileType: TileType.OCEAN_CITY,
+      covers: spaces.second.tile,
+    };
+    player.game.addTile(player, spaces.second, tile);
+
+    player.megaCredits = 10;
+
+    card.resolve(game, turmoil);
+
+    expect(player.megaCredits).to.eq(6);
   });
 });

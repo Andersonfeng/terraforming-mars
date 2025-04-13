@@ -1,16 +1,12 @@
-import {use, expect} from 'chai';
-import chaiAsPromised = require('chai-as-promised');
-use(chaiAsPromised);
+import {describeDatabaseSuite} from './databaseSuite';
+import {IGame} from '../../src/server/IGame';
+import {IN_MEMORY_SQLITE_PATH, SQLite} from '../../src/server/database/SQLite';
+import {GameId} from '../../src/common/Types';
+import {RunResult} from 'sqlite3';
+import {ITestDatabase, Status} from './ITestDatabase';
 
-import {Game} from '../../src/Game';
-import {TestPlayers} from '../TestPlayers';
-import {IN_MEMORY_SQLITE_PATH, SQLite} from '../../src/database/SQLite';
-import {Database} from '../../src/database/Database';
-import {restoreTestDatabase} from '../utils/setup';
-import {sleep} from '../TestingUtils';
-
-class TestSQLite extends SQLite {
-  public saveGamePromise: Promise<void> = Promise.resolve();
+class TestSQLite extends SQLite implements ITestDatabase {
+  public lastSaveGamePromise: Promise<void> = Promise.resolve();
 
   constructor() {
     super(IN_MEMORY_SQLITE_PATH, true);
@@ -20,158 +16,40 @@ class TestSQLite extends SQLite {
     return this.db;
   }
 
-  public override saveGame(game: Game): Promise<void> {
-    this.saveGamePromise = super.saveGame(game);
-    return this.saveGamePromise;
+  public override saveGame(game: IGame): Promise<void> {
+    this.lastSaveGamePromise = super.saveGame(game);
+    return this.lastSaveGamePromise;
+  }
+
+  public async status(gameId: GameId): Promise<Status> {
+    const rows = await this.asyncAll('SELECT DISTINCT status FROM games WHERE game_id = ? ORDER BY save_id DESC LIMIT 1', [gameId]);
+    const statusText = rows[0].status;
+
+    if (statusText === 'running' || statusText === 'finished') {
+      return statusText;
+    }
+    throw new Error('Invalid status for ' + gameId + ': ' + statusText);
+  }
+
+  async completedTime(gameId: GameId): Promise<number | undefined> {
+    const row = await this.asyncGet('SELECT completed_time FROM completed_game WHERE game_id = $1', [gameId]);
+    return row.completed_time;
+  }
+
+  setCompletedTime(gameId: GameId, timestampSeconds: number): Promise<RunResult> {
+    return this.asyncRun('UPDATE completed_game SET completed_time = to_timestamp(?) WHERE game_id = ?', [timestampSeconds, gameId]);
   }
 }
 
-describe('SQLite', () => {
-  let db: TestSQLite;
-  beforeEach(() => {
-    db = new TestSQLite();
-    Database.getInstance = () => db;
-    return db.initialize();
-  });
-
-  afterEach(() => {
-    restoreTestDatabase();
-  });
-
-  it('game is saved', async () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    Game.newInstance('game-id-1212', [player], player);
-    await db.saveGamePromise
-      .then(() => db.getGames())
-      .then((allGames) => expect(allGames).deep.eq(['game-id-1212']));
-  });
-
-  it('saveIds', async () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('game-id-1212', [player], player);
-    await db.saveGamePromise;
-    expect(game.lastSaveId).eq(1);
-
-    await db.saveGame(game);
-    await db.saveGame(game);
-    await db.saveGame(game);
-
-    const allSaveIds = await db.getSaveIds(game.id);
-    expect(allSaveIds).has.members([0, 1, 2, 3]);
-  });
-
-  it('purge', async () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('game-id-1212', [player], player);
-    await db.saveGamePromise;
-    expect(game.lastSaveId).eq(1);
-
-    await db.saveGame(game);
-    await db.saveGame(game);
-    await db.saveGame(game);
-
-    expect(await db.getSaveIds(game.id)).has.members([0, 1, 2, 3]);
-
-    db.cleanSaves(game.id);
-
-    await sleep(400);
-
-    const saveIds = await db.getSaveIds(game.id);
-    expect(saveIds).has.members([0, 3]);
-  });
-
-  it('gets player count', async () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('game-id-1212', [player], player);
-    await db.saveGamePromise;
-    expect(game.lastSaveId).eq(1);
-
-    db.getPlayerCount(game.id, (err, playerCount) => {
-      expect(err).to.be.undefined;
-      expect(playerCount).to.eq(1);
-    });
-  });
-
-  it('does not find player count by id', async () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('game-id-1212', [player], player);
-    await db.saveGamePromise;
-    expect(game.lastSaveId).eq(1);
-
-    db.getPlayerCount('notfound', (err, gameData) => {
-      expect(err).to.be.undefined;
-      expect(gameData).to.be.undefined;
-    });
-  });
-
-  it('purgeUnfinishedGames', async () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('game-id-1212', [player], player);
-    await db.saveGamePromise;
-    expect(game.lastSaveId).eq(1);
-
-    await db.saveGame(game);
-    await db.saveGame(game);
-    await db.saveGame(game);
-
-    expect(await db.getSaveIds(game.id)).has.members([0, 1, 2, 3]);
-
-    await db.purgeUnfinishedGames('1');
-    expect(await db.getSaveIds(game.id)).has.members([0, 1, 2, 3]);
-    // Doesn't purge until the time has passed.
-    await db.purgeUnfinishedGames('-1');
-    // await db.purgeUnfinishedGames('0'); This doesn't work! I wonder if it's just too precise a clock problem.
-    expect(await db.getSaveIds(game.id)).is.empty;
-  });
-
-  it('getGameVersion', async () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('game-id-1212', [player], player);
-    await db.saveGamePromise;
-    expect(game.lastSaveId).eq(1);
-
-    player.megaCredits = 200;
-    await db.saveGame(game);
-
-    player.megaCredits = 300;
-    await db.saveGame(game);
-
-    player.megaCredits = 400;
-    await db.saveGame(game);
-
-    const allSaveIds = await db.getSaveIds(game.id);
-    expect(allSaveIds).has.members([0, 1, 2, 3]);
-
-    const serialized0 = await db.getGameVersion(game.id, 0);
-    expect(serialized0.players[0].megaCredits).eq(0);
-
-    const serialized1 = await db.getGameVersion(game.id, 1);
-    expect(serialized1.players[0].megaCredits).eq(200);
-
-    const serialized2 = await db.getGameVersion(game.id, 2);
-    expect(serialized2.players[0].megaCredits).eq(300);
-
-    const serialized3 = await db.getGameVersion(game.id, 3);
-    expect(serialized3.players[0].megaCredits).eq(400);
-  });
-
-  it('loadCloneableGame', async () => {
-    await expect(db.loadCloneableGame('123')).to.be.rejectedWith(/Game 123 not found/);
-
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('game-id-123', [player], player);
-    await db.saveGamePromise;
-    const serialized = await db.loadCloneableGame('game-id-123');
-
-    expect(game.id).eq(serialized.id);
-  });
-
-  it('stats', async () => {
-    const stats = await db.stats();
-    expect(stats).deep.eq({
-      type: 'SQLite',
-      path: ':memory:',
-      size_bytes: -1,
-    });
-  });
+describeDatabaseSuite({
+  name: 'SQLite',
+  constructor: () => new TestSQLite(),
+  omit: {
+    markFinished: true,
+  },
+  stats: {
+    type: 'SQLite',
+    path: ':memory:',
+    size_bytes: -1,
+  },
 });

@@ -1,21 +1,16 @@
 import {expect} from 'chai';
-import {Ants} from '../../src/cards/base/Ants';
-import {Fish} from '../../src/cards/base/Fish';
-import {SecurityFleet} from '../../src/cards/base/SecurityFleet';
-import {Game} from '../../src/Game';
-import {SponsoredProjects} from '../../src/turmoil/globalEvents/SponsoredProjects';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {Ants} from '../../src/server/cards/base/Ants';
+import {Fish} from '../../src/server/cards/base/Fish';
+import {SecurityFleet} from '../../src/server/cards/base/SecurityFleet';
+import {SponsoredProjects} from '../../src/server/turmoil/globalEvents/SponsoredProjects';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {testGame} from '../TestingUtils';
 
-describe('SponsoredProjects', function() {
-  it('resolve play', function() {
+describe('SponsoredProjects', () => {
+  it('resolve play', () => {
     const card = new SponsoredProjects();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
-    const turmoil = Turmoil.newInstance(game);
-
+    const [game, player, player2] = testGame(2, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
     player.playedCards.push(new Ants());
     if (player.playedCards[0].resourceCount !== undefined) {
       player.playedCards[0].resourceCount++;
@@ -26,11 +21,11 @@ describe('SponsoredProjects', function() {
     }
     player2.playedCards.push(new Fish());
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
     expect(player.playedCards[0].resourceCount).to.eq(2);

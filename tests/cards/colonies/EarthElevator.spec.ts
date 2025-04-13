@@ -1,15 +1,14 @@
 import {expect} from 'chai';
-import {EarthElevator} from '../../../src/cards/colonies/EarthElevator';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {EarthElevator} from '../../../src/server/cards/colonies/EarthElevator';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('EarthElevator', function() {
-  it('Should play', function() {
+describe('EarthElevator', () => {
+  it('Should play', () => {
     const card = new EarthElevator();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(3);
-    expect(card.getVictoryPoints()).to.eq(4);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.titanium).to.eq(3);
+    expect(card.getVictoryPoints(player)).to.eq(4);
   });
 });

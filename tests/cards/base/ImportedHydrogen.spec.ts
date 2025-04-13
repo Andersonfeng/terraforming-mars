@@ -1,51 +1,49 @@
 import {expect} from 'chai';
-import {Decomposers} from '../../../src/cards/base/Decomposers';
-import {ImportedHydrogen} from '../../../src/cards/base/ImportedHydrogen';
-import {Pets} from '../../../src/cards/base/Pets';
-import {Tardigrades} from '../../../src/cards/base/Tardigrades';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {SelectOption} from '../../../src/inputs/SelectOption';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast} from '../../TestingUtils';
+import {Decomposers} from '../../../src/server/cards/base/Decomposers';
+import {ImportedHydrogen} from '../../../src/server/cards/base/ImportedHydrogen';
+import {Pets} from '../../../src/server/cards/base/Pets';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {SelectOption} from '../../../src/server/inputs/SelectOption';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('ImportedHydrogen', function() {
-  let card : ImportedHydrogen; let player : Player;
+describe('ImportedHydrogen', () => {
+  let card: ImportedHydrogen;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ImportedHydrogen();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     const pets = new Pets();
     const tardigrades = new Tardigrades();
     const decomposers = new Decomposers();
     player.playedCards.push(pets, tardigrades, decomposers);
 
-    const action = card.play(player);
-    expect(action).instanceOf(OrOptions);
-    expect((action as OrOptions).options).has.lengthOf(3);
+    const action = cast(card.play(player), OrOptions);
+    expect(action.options).has.lengthOf(3);
 
-    (action as OrOptions).options[0].cb();
+    action.options[0].cb();
     expect(player.plants).to.eq(3);
 
-    const selectAnimal = (action as OrOptions).options[2] as SelectOption;
-    const selectMicrobe = (action as OrOptions).options[1] as SelectCard<any>;
+    const selectAnimal = cast(action.options[2], SelectOption);
+    const selectMicrobe = cast(action.options[1], SelectCard);
 
     expect(selectMicrobe.cards).has.lengthOf(2);
     expect(selectMicrobe.cards[0]).to.eq(tardigrades);
     selectMicrobe.cb([tardigrades]);
 
     expect(tardigrades.resourceCount).to.eq(3);
-    selectAnimal.cb();
+    selectAnimal.cb(undefined);
     expect(pets.resourceCount).to.eq(2);
   });
 
-  it('Should add plants directly if no microbe or animal cards available', function() {
+  it('Should add plants directly if no microbe or animal cards available', () => {
     expect(player.plants).to.eq(0);
     card.play(player);
     expect(player.plants).to.eq(3);

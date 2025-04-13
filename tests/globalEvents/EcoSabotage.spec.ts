@@ -1,27 +1,28 @@
 import {expect} from 'chai';
-import {Game} from '../../src/Game';
-import {Resources} from '../../src/common/Resources';
-import {EcoSabotage} from '../../src/turmoil/globalEvents/EcoSabotage';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {EcoSabotage} from '../../src/server/turmoil/globalEvents/EcoSabotage';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {testGame} from '../TestingUtils';
 
-describe('EcoSabotage', function() {
-  it('resolve play', function() {
+describe('EcoSabotage', () => {
+  it('resolve play', () => {
     const card = new EcoSabotage();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
-    const turmoil = Turmoil.newInstance(game);
-    turmoil.initGlobalEvent(game);
-    turmoil.chairman = player2.id;
+    const [game, player, player2] = testGame(2, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
+
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    player.plants = 5;
-    player2.plants = 5;
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+
+    player.plants = 10;
+    player2.plants = 10;
+
+    expect(turmoil.getPlayerInfluence(player)).eq(0);
+    expect(turmoil.getPlayerInfluence(player2)).eq(2);
+
     card.resolve(game, turmoil);
-    expect(player.getResource(Resources.PLANTS)).to.eq(3);
-    expect(player2.getResource(Resources.PLANTS)).to.eq(5);
+
+    expect(player.plants).to.eq(3);
+    expect(player2.plants).to.eq(5);
   });
 });

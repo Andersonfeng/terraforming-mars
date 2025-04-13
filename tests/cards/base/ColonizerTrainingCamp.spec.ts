@@ -1,28 +1,29 @@
 import {expect} from 'chai';
-import {ColonizerTrainingCamp} from '../../../src/cards/base/ColonizerTrainingCamp';
-import {Game} from '../../../src/Game';
+import {setOxygenLevel} from '../../TestingUtils';
+import {ColonizerTrainingCamp} from '../../../src/server/cards/base/ColonizerTrainingCamp';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
 
-describe('ColonizerTrainingCamp', function() {
-  let card : ColonizerTrainingCamp; let player : TestPlayer; let game : Game;
+describe('ColonizerTrainingCamp', () => {
+  let card: ColonizerTrainingCamp;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ColonizerTrainingCamp();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    (game as any).oxygenLevel = 6;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    setOxygenLevel(game, 6);
+    expect(card.canPlay(player)).is.not.true;
   });
-  it('Should play', function() {
-    (game as any).oxygenLevel = 5;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    setOxygenLevel(game, 5);
+    expect(card.canPlay(player)).is.true;
 
-    card.play();
-    expect(card.getVictoryPoints()).to.eq(2);
+    card.play(player);
+    expect(card.getVictoryPoints(player)).to.eq(2);
   });
 });

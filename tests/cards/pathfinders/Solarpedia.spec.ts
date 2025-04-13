@@ -1,26 +1,24 @@
 import {expect} from 'chai';
-import {Solarpedia} from '../../../src/cards/pathfinders/Solarpedia';
-import {Game} from '../../../src/Game';
+import {Solarpedia} from '../../../src/server/cards/pathfinders/Solarpedia';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {LunarObservationPost} from '../../../src/cards/moon/LunarObservationPost';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {ICard, IResourceCard} from '../../../src/cards/ICard';
+import {LunarObservationPost} from '../../../src/server/cards/moon/LunarObservationPost';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {cast, testGame} from '../../TestingUtils';
 
-describe('Solarpedia', function() {
+describe('Solarpedia', () => {
   let card: Solarpedia;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let lunarObservationPost: LunarObservationPost;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Solarpedia();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
     lunarObservationPost = new LunarObservationPost();
   });
 
-  it('canPlay', function() {
+  it('canPlay', () => {
     player.megaCredits = card.cost;
     expect(player.canPlay(card)).is.false;
 
@@ -40,7 +38,7 @@ describe('Solarpedia', function() {
     expect(player.canPlay(card)).is.true;
   });
 
-  it('play', function() {
+  it('play', () => {
     const lunarObservationPost = new LunarObservationPost();
     player.playedCards = [lunarObservationPost];
 
@@ -50,7 +48,7 @@ describe('Solarpedia', function() {
     testAddResourcesToCard();
   });
 
-  it('act', function() {
+  it('act', () => {
     player.playedCards = [lunarObservationPost, card];
 
     card.action(player);
@@ -58,37 +56,35 @@ describe('Solarpedia', function() {
     testAddResourcesToCard();
   });
 
-  it('getVictoryPoints', function() {
+  it('getVictoryPoints', () => {
     card.resourceCount = 1;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 2;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 3;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 4;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 5;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 6;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 7;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 8;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 9;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 10;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 11;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 12;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
   });
 
   function testAddResourcesToCard() {
-    const action = game.deferredActions.pop()?.execute();
-    expect(action).instanceOf(SelectCard);
-    const selectCard = action as SelectCard<ICard & IResourceCard>;
+    const selectCard = cast(game.deferredActions.pop()?.execute(), SelectCard);
     expect(selectCard.cards).eql([lunarObservationPost, card]);
     selectCard.cb([lunarObservationPost]);
     expect(lunarObservationPost.resourceCount).eq(2);

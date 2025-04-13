@@ -1,48 +1,48 @@
 import {expect} from 'chai';
-import {MorningStarInc} from '../../../src/cards/venusNext/MorningStarInc';
-import {RotatorImpacts} from '../../../src/cards/venusNext/RotatorImpacts';
+import {cast, setVenusScaleLevel} from '../../TestingUtils';
+import {MorningStarInc} from '../../../src/server/cards/venusNext/MorningStarInc';
+import {RotatorImpacts} from '../../../src/server/cards/venusNext/RotatorImpacts';
 import {MAX_VENUS_SCALE} from '../../../src/common/constants';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
 describe('RotatorImpacts', () => {
-  let card : RotatorImpacts; let player : Player; let game : Game;
+  let card: RotatorImpacts;
+  let player: TestPlayer;
+  let game: IGame;
 
   beforeEach(() => {
     card = new RotatorImpacts();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
   it('Cannot play', () => {
-    (game as any).venusScaleLevel = 16;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    setVenusScaleLevel(game, 16);
+    expect(card.canPlay(player)).is.not.true;
   });
 
   it('Can play', () => {
-    (game as any).venusScaleLevel = 14;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    setVenusScaleLevel(game, 14);
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Should play', () => {
-    expect(player.canPlayIgnoringCost(card)).is.true;
-    const action = card.play();
-    expect(action).is.undefined;
+    expect(card.canPlay(player)).is.true;
+    cast(card.play(player), undefined);
   });
 
   it('Works with MSI corporation', () => {
     const corp = new MorningStarInc();
-    corp.play();
-    player.corporationCard = corp;
+    corp.play(player);
+    player.corporations.push(corp);
 
-    (game as any).venusScaleLevel = 18;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    setVenusScaleLevel(game, 18);
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('Should act', () => {
+  it('Should act - only add resource', () => {
     player.playedCards.push(card);
     player.megaCredits = 16;
     player.titanium = 2;
@@ -53,10 +53,31 @@ describe('RotatorImpacts', () => {
 
     card.action(player);
     expect(card.resourceCount).to.eq(1);
+  });
+
+  it('Should act - only spend resource', () => {
+    player.playedCards.push(card);
+    player.megaCredits = 1;
+    card.resourceCount = 1;
+
+    expect(card.canAct(player)).is.true;
+    expect(game.getVenusScaleLevel()).eq(0);
+
+    // only one possible action: spend resource
+    card.action(player);
+    expect(card.resourceCount).to.eq(0);
+    expect(game.getVenusScaleLevel()).eq(2);
+    expect(player.getTerraformRating()).eq(21);
+  });
+
+  it('Should act', () => {
+    player.playedCards.push(card);
+    player.megaCredits = 16;
+    player.titanium = 2;
+    card.resourceCount = 1;
 
     // two possible actions: add resource or spend titanium
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions instanceof OrOptions).is.true;
+    const orOptions = cast(card.action(player), OrOptions);
     orOptions.options[0].cb();
     expect(card.resourceCount).to.eq(0);
     expect(game.getVenusScaleLevel()).to.eq(2);
@@ -74,7 +95,7 @@ describe('RotatorImpacts', () => {
     expect(card.canAct(player)).is.true;
 
     const action = card.action(player);
-    expect(action).is.undefined;
+    cast(action, undefined);
     expect(card.resourceCount).to.eq(0);
     expect(game.getVenusScaleLevel()).to.eq(2);
   });
@@ -83,7 +104,8 @@ describe('RotatorImpacts', () => {
     player.playedCards.push(card);
     card.resourceCount = 1;
 
-    (game as any).venusScaleLevel = MAX_VENUS_SCALE;
-    expect(card.canAct(player)).is.not.true;
+    setVenusScaleLevel(game, MAX_VENUS_SCALE);
+    expect(card.canAct(player)).is.true;
+    expect(Array.from(card.warnings)).contains('maxvenus');
   });
 });

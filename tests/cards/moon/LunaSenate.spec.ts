@@ -1,12 +1,7 @@
-import {Game} from '../../../src/Game';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {TestPlayer} from '../../TestPlayer';
-import {LunaSenate} from '../../../src/cards/moon/LunaSenate';
 import {expect} from 'chai';
-import {Resources} from '../../../src/common/Resources';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {TestPlayer} from '../../TestPlayer';
+import {LunaSenate} from '../../../src/server/cards/moon/LunaSenate';
+import {testGame} from '../../TestingUtils';
 
 describe('LunaSenate', () => {
   let player: TestPlayer;
@@ -14,9 +9,7 @@ describe('LunaSenate', () => {
   let card: LunaSenate;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.PURPLE.newPlayer();
-    Game.newInstance('id', [player, player2], player, MOON_OPTIONS);
+    [/* game */, player, player2] = testGame(2, {moonExpansion: true});
     card = new LunaSenate();
   });
 
@@ -25,34 +18,36 @@ describe('LunaSenate', () => {
     player.megaCredits = card.cost;
 
     player.tagsForTest = {moon: 3};
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
 
     player.tagsForTest = {moon: 2};
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('play', () => {
     player.tagsForTest = {moon: 3};
     player2.tagsForTest = {moon: 4};
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
 
     card.play(player);
 
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(9);
+    expect(player.production.megacredits).eq(4);
   });
 
   it('does not count opponent wild tags', () => {
     player.tagsForTest = {moon: 3};
     player2.tagsForTest = {moon: 3, wild: 2};
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
 
     card.play(player);
 
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(8);
+    expect(player.production.megacredits).eq(3);
   });
 
   it('getVictoryPoints', () => {
+    player.playedCards.push(card);
     player.tagsForTest = {moon: 3};
+    player2.tagsForTest = {moon: 1};
     expect(card.getVictoryPoints(player)).eq(3);
 
     player.tagsForTest = {moon: 4};

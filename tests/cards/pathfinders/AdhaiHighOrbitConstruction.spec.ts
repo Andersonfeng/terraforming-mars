@@ -1,31 +1,28 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {AdhaiHighOrbitConstructions} from '../../../src/cards/pathfinders/AdhaiHighOrbitConstructions';
-import {Game} from '../../../src/Game';
+import {testGame} from '../../TestGame';
+import {AdhaiHighOrbitConstructions} from '../../../src/server/cards/pathfinders/AdhaiHighOrbitConstructions';
 import {TestPlayer} from '../../TestPlayer';
-import {SearchForLife} from '../../../src/cards/base/SearchForLife';
-import {Soletta} from '../../../src/cards/base/Soletta';
-import {GanymedeColony} from '../../../src/cards/base/GanymedeColony';
-import {PhobosSpaceHaven} from '../../../src/cards/base/PhobosSpaceHaven';
-import {SolarWindPower} from '../../../src/cards/base/SolarWindPower';
-import {BuildColonyStandardProject} from '../../../src/cards/colonies/BuildColonyStandardProject';
-import {ColoniesHandler} from '../../../src/colonies/ColoniesHandler';
-import {TestingUtils} from '../../TestingUtils';
-import {OrOptions} from '../../../src/inputs/OrOptions';
+import {SearchForLife} from '../../../src/server/cards/base/SearchForLife';
+import {Soletta} from '../../../src/server/cards/base/Soletta';
+import {GanymedeColony} from '../../../src/server/cards/base/GanymedeColony';
+import {PhobosSpaceHaven} from '../../../src/server/cards/base/PhobosSpaceHaven';
+import {SolarWindPower} from '../../../src/server/cards/base/SolarWindPower';
+import {BuildColonyStandardProject} from '../../../src/server/cards/colonies/BuildColonyStandardProject';
+import {cast, formatMessage} from '../../TestingUtils';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {AndOptions} from '../../../src/server/inputs/AndOptions';
 
-describe('AdhaiHighOrbitConstructions', function() {
-  let game: Game;
+describe('AdhaiHighOrbitConstructions', () => {
   let player: TestPlayer;
   let card: AdhaiHighOrbitConstructions;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AdhaiHighOrbitConstructions();
-    game = newTestGame(1, {coloniesExtension: true});
-    player = getTestPlayer(game, 0);
-    player.corporationCard = card;
+    [/* game */, player] = testGame(1, {coloniesExtension: true});
+    player.corporations.push(card);
   });
 
-  it('onCardPlayed', function() {
+  it('onCardPlayed', () => {
     card.onCardPlayed(player, new SearchForLife()); // Science
     expect(card.resourceCount).eq(0);
 
@@ -42,7 +39,7 @@ describe('AdhaiHighOrbitConstructions', function() {
     expect(card.resourceCount).eq(3);
   });
 
-  it('project card discount', function() {
+  it('project card discount', () => {
     card.resourceCount = 4;
     expect(card.getCardDiscount(player, new SearchForLife())).eq(0); // Science
     expect(card.getCardDiscount(player, new Soletta())).eq(2); // Space
@@ -65,7 +62,7 @@ describe('AdhaiHighOrbitConstructions', function() {
     expect(card.getCardDiscount(player, new SolarWindPower())).eq(3); // Science, Space, Power
   });
 
-  it('standard colony project', function() {
+  it('STANDARD COLONY PROJECT', () => {
     const colonyStandardProject = new BuildColonyStandardProject();
 
     player.megaCredits = 15;
@@ -79,35 +76,37 @@ describe('AdhaiHighOrbitConstructions', function() {
   });
 
 
-  it('trade discount', function() {
-    expect(ColoniesHandler.coloniesTradeAction(player)).is.undefined;
+  it('trade discount', () => {
+    expect(player.colonies.coloniesTradeAction()).is.undefined;
 
     player.megaCredits = 8;
-    expect(ColoniesHandler.coloniesTradeAction(player)).is.undefined;
+    expect(player.colonies.coloniesTradeAction()).is.undefined;
 
     card.resourceCount = 2;
-    expect(ColoniesHandler.coloniesTradeAction(player)).is.not.undefined;
-    const tradeAction = ColoniesHandler.coloniesTradeAction(player);
-    const orOptions = TestingUtils.cast(tradeAction!.options[0], OrOptions);
+    expect(player.colonies.coloniesTradeAction()).is.not.undefined;
+    const tradeAction = cast(player.colonies.coloniesTradeAction(), AndOptions);
+    const orOptions = cast(tradeAction.options[0], OrOptions);
     expect(orOptions.options).has.length(1);
-    expect(orOptions.options[0].title).eq('Pay 8 M€');
+    expect(formatMessage(orOptions.options[0].title)).eq('Pay 8 M€');
 
     card.resourceCount = 4;
-    expect((ColoniesHandler.coloniesTradeAction(player)!.options[0] as OrOptions).options[0].title).eq('Pay 7 M€');
+    const tradeAction2 = cast(player.colonies.coloniesTradeAction(), AndOptions);
+    expect(formatMessage(cast(tradeAction2.options[0], OrOptions).options[0].title)).eq('Pay 7 M€');
 
     card.resourceCount = 30;
-    expect((ColoniesHandler.coloniesTradeAction(player)!.options[0] as OrOptions).options[0].title).eq('Pay 0 M€');
+    const tradeAction3 = cast(player.colonies.coloniesTradeAction(), AndOptions);
+    expect(formatMessage(cast(tradeAction3.options[0], OrOptions).options[0].title)).eq('Pay 0 M€');
 
     // This doesn't work with titanium
     card.resourceCount = 2;
     player.megaCredits = 0;
     player.titanium = 2;
-    expect(ColoniesHandler.coloniesTradeAction(player)).is.undefined;
+    expect(player.colonies.coloniesTradeAction()).is.undefined;
 
     // This doesn't work with energy
     card.resourceCount = 2;
     player.titanium = 0;
     player.energy = 2;
-    expect(ColoniesHandler.coloniesTradeAction(player)).is.undefined;
+    expect(player.colonies.coloniesTradeAction()).is.undefined;
   });
 });

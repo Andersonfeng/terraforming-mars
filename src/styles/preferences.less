@@ -13,7 +13,7 @@
 
 .sidebar {
   .tm {
-    background: url(/assets/board/mars.png);
+    background: url(./assets/board/mars.png);
     width: 50px;
     height: 50px;
     margin-top: 3px;
@@ -102,7 +102,7 @@
     text-align: center;
     font-family: "Prototype";
     font-size: 15px;
-    .colony {
+    .habitat {
       background-color: #0e7a99;
       padding: 2px;
       border-radius: 2px;
@@ -142,6 +142,12 @@
 }
 .sidebar_item_shortcut {
     height: 60px;
+}
+
+.sidebar_item--language {
+    position: absolute;
+    bottom: 162px;
+    height: 46px;
 }
 
 .sidebar_item--info {
@@ -214,34 +220,38 @@
 
 .sidebar_icon.sidebar_icon--actions {
     margin-top: 7px;
-    background-image: url(assets/sidebar/preferences_actions.png);
+    background-image: url(./assets/sidebar/preferences_actions.png);
 }
 
 .sidebar_icon.sidebar_icon--cards {
-    background-image: url(assets/sidebar/preferences_cards.png);
+    background-image: url(./assets/sidebar/preferences_cards.png);
 }
 
 .sidebar_icon.sidebar_icon--board {
     margin-top: 7px;
-    background-image: url(assets/sidebar/preferences_board.png);
+    background-image: url(./assets/sidebar/preferences_board.png);
+}
+
+.sidebar_icon.sidebar_icon--language {
+  font-size: 15px;
 }
 
 .sidebar_icon.sidebar_icon--info {
-    background-image: url(assets/sidebar/preferences_info.png);
+    background-image: url(./assets/sidebar/preferences_info.png);
     background-size: 36px 36px;
 }
 
 .sidebar_icon.sidebar_icon--help {
-    background-image: url(assets/sidebar/preferences_help.png);
+    background-image: url(./assets/sidebar/preferences_help.png);
     background-size: 36px 36px;
 }
 
 .sidebar_icon.sidebar_icon--settings {
-    background-image: url(assets/sidebar/preferences_settings.png);
+    background-image: url(./assets/sidebar/preferences_settings.png);
 }
 
 .sidebar_icon.sidebar_icon--colonies {
-    background-image: url(assets/sidebar/preferences_colony.png);
+    background-image: url(./assets/sidebar/preferences_colony.png);
     background-size: 25px;
     width: 25px;
     height: 46px;
@@ -287,15 +297,24 @@
     margin: -0px -10px -15px -10px;
 }
 
+/*Selection check box room for smaller cards */
+.preferences_small_cards input[type="checkbox"] + .filterDiv.card-container,
+.preferences_small_cards input[type="radio"] + .filterDiv.card-container{
+    margin-top: -8px;
+}
+
+.preferences_small_cards input[type="checkbox"] + .filterDiv.card-standard-project,
+.preferences_small_cards input[type="radio"] + .filterDiv.card-standard-project{
+    margin-top: 0px;
+}
+
 .preferences_small_cards input[type="checkbox"]:checked + .filterDiv,
 .preferences_small_cards input[type="radio"]:checked + .filterDiv {
     transform: scale(0.8);
 }
 
 /* Hide blocks */
-.preferences_hide_hand .player_home_block--hand,
-.preferences_hide_awards_and_milestones
-    .player_home_block--milestones-and-awards{
+.preferences_hide_awards_and_milestones .player_home_block--milestones-and-awards {
     display: none;
 }
 
@@ -308,26 +327,35 @@
     background: #222;
 }
 
+.preferences_remove_background #spectator-home {
+    background: #222;
+}
+
 /* Card Magnification */
-.preferences_magnify_cards .filterDiv {
-    transition: transform 0.15s;
-}
-.preferences_magnify_cards .filterDiv:hover {
-    transform: scale(1.2);
-    z-index: 100;
-}
+.preferences_magnify_cards {
+    .filterDiv {
+        transition: transform 0.15s;
+    }
+    .filterDiv:hover {
+        transform: scale(1.2);
+        z-index: 100;
+    }
 
-.preferences_magnify_cards .cards-stack:hover,
-.preferences_magnify_cards .cards-stack-first:hover {
-    z-index: 2;
-    transform: scale(1);
-}
+    .dragging .filterDiv:hover {
+        transform: none;
+    }
 
-.preferences_magnify_cards .global-event:hover {
-    transform: scale(1.2);
-    z-index: 2;
-}
+    .cards-stack:hover,
+    .cards-stack-first:hover {
+        z-index: 2;
+        transform: scale(1);
+    }
 
+    .global-event:hover {
+        transform: scale(1.2);
+        z-index: 2;
+    }
+}
 /* Magnify the wee little cards in a special way, if requested */
 .preferences_small_cards.preferences_magnify_cards .filterDiv:hover {
     transform: scale(0.95);

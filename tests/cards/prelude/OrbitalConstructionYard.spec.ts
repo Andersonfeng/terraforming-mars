@@ -1,16 +1,14 @@
 import {expect} from 'chai';
-import {OrbitalConstructionYard} from '../../../src/cards/prelude/OrbitalConstructionYard';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {OrbitalConstructionYard} from '../../../src/server/cards/prelude/OrbitalConstructionYard';
+import {cast} from '../../TestingUtils';
 
-
-describe('OrbitalConstructionYard', function() {
-  it('Should play', function() {
+describe('OrbitalConstructionYard', () => {
+  it('Should play', () => {
     const card = new OrbitalConstructionYard();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(1);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.titanium).to.eq(1);
     expect(player.titanium).to.eq(4);
   });
 });

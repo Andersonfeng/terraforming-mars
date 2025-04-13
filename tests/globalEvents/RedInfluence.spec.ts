@@ -1,46 +1,41 @@
 import {expect} from 'chai';
-import {Game} from '../../src/Game';
-import {Resources} from '../../src/common/Resources';
-import {RedInfluence} from '../../src/turmoil/globalEvents/RedInfluence';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {RedInfluence} from '../../src/server/turmoil/globalEvents/RedInfluence';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {testGame} from '../TestingUtils';
 
-describe('RedInfluence', function() {
-  it('resolve play', function() {
+describe('RedInfluence', () => {
+  it('resolve play', () => {
     const card = new RedInfluence();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
-    const turmoil = Turmoil.newInstance(game);
+    const [game, player, player2] = testGame(2, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
 
     player.setTerraformRating(23);
     player.megaCredits = 10;
     player2.megaCredits = 10;
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(4);
-    expect(player2.getResource(Resources.MEGACREDITS)).to.eq(4);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(0);
-    expect(player2.getProduction(Resources.MEGACREDITS)).to.eq(3);
+
+    expect(player.megaCredits).to.eq(4);
+    expect(player2.megaCredits).to.eq(4);
+    expect(player.production.megacredits).to.eq(0);
+    expect(player2.production.megacredits).to.eq(3);
   });
 
-  it('Max 5', function() {
+  it('Max 5', () => {
     const card = new RedInfluence();
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance('foobar', [player], player);
-    const turmoil = Turmoil.newInstance(game);
+    const [game, player] = testGame(1, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
 
     player.setTerraformRating(59);
     player.megaCredits = 20;
 
     card.resolve(game, turmoil);
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(5);
+    expect(player.megaCredits).to.eq(5);
   });
 });

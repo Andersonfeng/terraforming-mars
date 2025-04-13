@@ -1,31 +1,32 @@
 import {expect} from 'chai';
-import {ArcticAlgae} from '../../../src/cards/base/ArcticAlgae';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {runNextAction} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {ArcticAlgae} from '../../../src/server/cards/base/ArcticAlgae';
+import {IGame} from '../../../src/server/IGame';
+import {addOcean, runNextAction, setTemperature} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('ArcticAlgae', function() {
-  let card : ArcticAlgae; let player : Player; let player2 : Player; let game : Game;
+describe('ArcticAlgae', () => {
+  let card: ArcticAlgae;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ArcticAlgae();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    (game as any).temperature = -10;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    setTemperature(game, -10);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
     expect(player.plants).to.eq(1);
     player.playedCards.push(card);
 
-    game.addOceanTile(player2, game.board.getAvailableSpacesForOcean(player2)[0].id);
+    addOcean(player2);
     runNextAction(game);
     expect(player.plants).to.eq(3);
   });

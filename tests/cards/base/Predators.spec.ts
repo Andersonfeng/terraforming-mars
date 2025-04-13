@@ -1,41 +1,43 @@
 import {expect} from 'chai';
-import {BioengineeringEnclosure} from '../../../src/cards/ares/BioengineeringEnclosure';
-import {Fish} from '../../../src/cards/base/Fish';
-import {Pets} from '../../../src/cards/base/Pets';
-import {Predators} from '../../../src/cards/base/Predators';
-import {ProtectedHabitats} from '../../../src/cards/base/ProtectedHabitats';
-import {SmallAnimals} from '../../../src/cards/base/SmallAnimals';
-import {ICard} from '../../../src/cards/ICard';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, setOxygenLevel} from '../../TestingUtils';
+import {BioengineeringEnclosure} from '../../../src/server/cards/ares/BioengineeringEnclosure';
+import {Fish} from '../../../src/server/cards/base/Fish';
+import {Pets} from '../../../src/server/cards/base/Pets';
+import {Predators} from '../../../src/server/cards/base/Predators';
+import {ProtectedHabitats} from '../../../src/server/cards/base/ProtectedHabitats';
+import {SmallAnimals} from '../../../src/server/cards/base/SmallAnimals';
+import {ICard} from '../../../src/server/cards/ICard';
+import {IGame} from '../../../src/server/IGame';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('Predators', function() {
-  let card : Predators; let player : Player; let player2 : Player; let game : Game;
+describe('Predators', () => {
+  let card: Predators;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Predators();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    (game as any).oxygenLevel = 11;
+  it('Should play', () => {
+    setOxygenLevel(game, 11);
     expect(card.canPlay(player)).is.true;
     player.playedCards.push(card);
-    card.play();
+    card.play(player);
 
     player.addResourceTo(card, 5);
-    expect(card.getVictoryPoints()).to.eq(5);
+    expect(card.getVictoryPoints(player)).to.eq(5);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     const fish = new Fish();
     const smallAnimals = new SmallAnimals();
     player.playedCards.push(card, fish, smallAnimals);
@@ -43,16 +45,16 @@ describe('Predators', function() {
     player.addResourceTo(smallAnimals);
 
     card.action(player);
-    const selectCard = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
+    const selectCard = cast(game.deferredActions.pop()!.execute(), SelectCard<ICard>);
     expect(selectCard.cards).has.lengthOf(2);
     selectCard.cb([selectCard.cards[0]]);
-        game.deferredActions.pop()!.execute(); // Add animal to predators
+    game.deferredActions.pop()!.execute(); // Add animal to predators
 
-        expect(card.resourceCount).to.eq(1);
-        expect(fish.resourceCount).to.eq(0);
+    expect(card.resourceCount).to.eq(1);
+    expect(fish.resourceCount).to.eq(0);
   });
 
-  it('Respects pets', function() {
+  it('Respects pets', () => {
     player.playedCards.push(card);
     const fish = new Fish();
     const pets = new Pets();
@@ -64,16 +66,15 @@ describe('Predators', function() {
     expect(card.canAct(player)).is.true;
 
     card.action(player);
-    const selectCard = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
-    expect(selectCard).is.undefined; // Only one option: Fish
-        game.deferredActions.pop()!.execute(); // Add animal to predators
+    expect(game.deferredActions.pop()!.execute()).is.undefined; // Only one option: Fish
+    game.deferredActions.pop()!.execute(); // Add animal to predators
 
-        expect(card.resourceCount).to.eq(1);
-        expect(fish.resourceCount).to.eq(0);
-        expect(pets.resourceCount).to.eq(1);
+    expect(card.resourceCount).to.eq(1);
+    expect(fish.resourceCount).to.eq(0);
+    expect(pets.resourceCount).to.eq(1);
   });
 
-  it('Respects Bioengineering Enclosure', function() {
+  it('Respects Bioengineering Enclosure', () => {
     player.playedCards.push(card);
     const fish = new Fish();
     const bioengineeringEnclosure = new BioengineeringEnclosure();
@@ -85,16 +86,15 @@ describe('Predators', function() {
     expect(card.canAct(player)).is.true;
 
     card.action(player);
-    const selectCard = game.deferredActions.pop()!.execute() as SelectCard<ICard>;
-    expect(selectCard).is.undefined; // Only one option: Fish
-        game.deferredActions.pop()!.execute(); // Add animal to predators
+    expect(game.deferredActions.pop()!.execute()).is.undefined; // Only one option: Fish
+    game.deferredActions.pop()!.execute(); // Add animal to predators
 
-        expect(card.resourceCount).to.eq(1);
-        expect(fish.resourceCount).to.eq(0);
-        expect(bioengineeringEnclosure.resourceCount).to.eq(1);
+    expect(card.resourceCount).to.eq(1);
+    expect(fish.resourceCount).to.eq(0);
+    expect(bioengineeringEnclosure.resourceCount).to.eq(1);
   });
 
-  it('Respects protected habitats', function() {
+  it('Respects protected habitats', () => {
     player.playedCards.push(card);
     const fish = new Fish();
     const animals = new SmallAnimals();

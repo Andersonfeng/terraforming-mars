@@ -1,37 +1,36 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {CrewTraining} from '../../../src/cards/pathfinders/CrewTraining';
-import {Game} from '../../../src/Game';
-import {Tags} from '../../../src/common/cards/Tags';
+import {testGame} from '../../TestGame';
+import {CrewTraining} from '../../../src/server/cards/pathfinders/CrewTraining';
+import {IGame} from '../../../src/server/IGame';
+import {Tag} from '../../../src/common/cards/Tag';
 import {TestPlayer} from '../../TestPlayer';
-import {DeclareCloneTag} from '../../../src/pathfinders/DeclareCloneTag';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {TestingUtils} from '../../TestingUtils';
+import {DeclareCloneTag} from '../../../src/server/pathfinders/DeclareCloneTag';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {cast} from '../../TestingUtils';
 
-describe('CrewTraining', function() {
+describe('CrewTraining', () => {
   let card: CrewTraining;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CrewTraining();
-    game = newTestGame(1, {pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {pathfindersExpansion: true});
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     expect(player.getTerraformRating()).eq(14);
-    expect(card.tags).deep.eq([Tags.CLONE, Tags.CLONE]);
+    expect(card.tags).deep.eq([Tag.CLONE, Tag.CLONE]);
 
     card.play(player);
 
     expect(player.getTerraformRating()).eq(16);
 
-    expect(game.deferredActions.length).eq(1);
-    const action = TestingUtils.cast(game.deferredActions.pop(), DeclareCloneTag);
-    const options = TestingUtils.cast(action!.execute(), OrOptions);
+    expect(game.deferredActions).has.length(1);
+    const action = cast(game.deferredActions.pop(), DeclareCloneTag);
+    const options = cast(action.execute(), OrOptions);
 
-    expect(options.options[0].title).to.match(/earth/);
+    expect(options.options[1].title).to.match(/earth/);
     expect(game.pathfindersData).deep.eq({
       venus: 0,
       earth: 0,
@@ -41,7 +40,7 @@ describe('CrewTraining', function() {
       vps: [],
     });
 
-    options.options[0].cb();
+    options.options[1].cb();
 
     expect(game.pathfindersData).deep.eq({
       venus: 0,
@@ -51,6 +50,6 @@ describe('CrewTraining', function() {
       moon: -1,
       vps: [],
     });
-    expect(card.tags).deep.eq([Tags.EARTH, Tags.EARTH]);
+    expect(card.tags).deep.eq([Tag.EARTH, Tag.EARTH]);
   });
 });

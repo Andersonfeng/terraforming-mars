@@ -1,17 +1,13 @@
 import {expect} from 'chai';
-import {ImportOfAdvancedGHG} from '../../../src/cards/base/ImportOfAdvancedGHG';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {ImportOfAdvancedGHG} from '../../../src/server/cards/base/ImportOfAdvancedGHG';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('ImportOfAdvancedGHG', function() {
-  it('Should play', function() {
+describe('ImportOfAdvancedGHG', () => {
+  it('Should play', () => {
     const card = new ImportOfAdvancedGHG();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.HEAT)).to.eq(2);
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
+    expect(player.production.heat).to.eq(2);
   });
 });

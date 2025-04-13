@@ -1,18 +1,14 @@
 
 import {expect} from 'chai';
-import {Soletta} from '../../../src/cards/base/Soletta';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Soletta} from '../../../src/server/cards/base/Soletta';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('Soletta', function() {
-  it('Should play', function() {
+describe('Soletta', () => {
+  it('Should play', () => {
     const card = new Soletta();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.HEAT)).to.eq(7);
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
+    expect(player.production.heat).to.eq(7);
   });
 });

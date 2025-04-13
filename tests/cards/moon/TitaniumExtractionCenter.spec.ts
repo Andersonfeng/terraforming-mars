@@ -1,24 +1,19 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {TitaniumExtractionCenter} from '../../../src/cards/moon/TitaniumExtractionCenter';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {TestPlayer} from '../../TestPlayer';
+import {TitaniumExtractionCenter} from '../../../src/server/cards/moon/TitaniumExtractionCenter';
 import {expect} from 'chai';
-import {Resources} from '../../../src/common/Resources';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
 
 describe('TitaniumExtractionCenter', () => {
-  let game: Game;
-  let player: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player: TestPlayer;
+  let moonData: MoonData;
   let card: TitaniumExtractionCenter;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
     card = new TitaniumExtractionCenter();
   });
@@ -27,28 +22,27 @@ describe('TitaniumExtractionCenter', () => {
     player.cardsInHand = [card];
     player.titanium = 1;
     player.megaCredits = card.cost;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
     player.titanium = 2;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {
-    expect(player.getProduction(Resources.TITANIUM)).eq(0);
+    expect(player.production.titanium).eq(0);
 
     player.titanium = 4;
     moonData.miningRate = 3;
+
     card.play(player);
 
     expect(player.titanium).eq(2);
-    expect(player.getProduction(Resources.TITANIUM)).eq(1);
+    expect(player.production.titanium).eq(1);
 
-
-    // Play a second time. Steel rate will go up by 2.
+    // Play a second time. steel rate will go up by 2.
     moonData.miningRate = 4;
     card.play(player);
 
     expect(player.titanium).eq(0);
-    expect(player.getProduction(Resources.TITANIUM)).eq(3);
+    expect(player.production.titanium).eq(3);
   });
 });
-

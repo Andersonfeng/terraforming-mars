@@ -1,15 +1,12 @@
 
 import {expect} from 'chai';
-import {TowingAComet} from '../../../src/cards/base/TowingAComet';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {TowingAComet} from '../../../src/server/cards/base/TowingAComet';
+import {testGame} from '../../TestGame';
 
-describe('TowingAComet', function() {
-  it('Should play', function() {
+describe('TowingAComet', () => {
+  it('Should play', () => {
     const card = new TowingAComet();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, redPlayer], player);
+    const [game, player] = testGame(2);
     card.play(player);
     expect(player.plants).to.eq(2);
     expect(game.getOxygenLevel()).to.eq(1);

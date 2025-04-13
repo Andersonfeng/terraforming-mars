@@ -1,65 +1,64 @@
 import {expect} from 'chai';
-import {ArtificialLake} from '../../../src/cards/base/ArtificialLake';
+import {ArtificialLake} from '../../../src/server/cards/base/ArtificialLake';
 import * as constants from '../../../src/common/constants';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TestPlayer} from '../../TestPlayer';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
 import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
-import {maxOutOceans} from '../../TestingUtils';
+import {cast, maxOutOceans, runAllActions, setTemperature, testRedsCosts} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {assertPlaceOcean} from '../../assertions';
 
-describe('ArtificialLake', function() {
-  let card : ArtificialLake; let player : TestPlayer; let game : Game;
+describe('ArtificialLake', () => {
+  let card: ArtificialLake;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ArtificialLake();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
+  it('Should play', () => {
+    cast(card.play(player), undefined);
+    runAllActions(game);
 
-        action!.availableSpaces.forEach((space) => {
-          expect(space.spaceType).to.eq(SpaceType.LAND);
-        });
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    selectSpace.spaces.forEach((space) => {
+      expect(space.spaceType).to.eq(SpaceType.LAND);
+    });
 
-        action!.cb(action!.availableSpaces[0]);
-        const placedTile = action!.availableSpaces[0].tile;
-        expect(placedTile!.tileType).to.eq(TileType.OCEAN);
+    assertPlaceOcean(player, selectSpace);
 
-        expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 
-  it('Cannot place ocean if all oceans are already placed', function() {
+  it('Cannot place ocean if all oceans are already placed', () => {
     // Set temperature level to fit requirements
-    (game as any).temperature = -6;
+    setTemperature(game, -6);
 
     // Set oceans count to the max value
     for (const space of game.board.getSpaces(SpaceType.OCEAN, player)) {
-      if (game.board.getOceanCount() < constants.MAX_OCEAN_TILES) {
-        game.addOceanTile(player, space.id);
+      if (game.board.getOceanSpaces().length < constants.MAX_OCEAN_TILES) {
+        game.addOcean(player, space);
       }
     }
 
     // Card is still playable to get VPs...
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     // ...but an action to place ocean is not unavailable
-    const action = card.play(player);
-    expect(action).is.undefined;
+    cast(card.play(player), undefined);
   });
 
-  it('Cannot place ocean if all land spaces are occupied', function() {
+  it('Cannot place ocean if all land spaces are occupied', () => {
     // Set temperature level to fit requirements
-    (game as any).temperature = -6;
+    setTemperature(game, -6);
 
     // Take all but one space.
     const spaces = game.board.getAvailableSpacesOnLand(player);
@@ -70,18 +69,18 @@ describe('ArtificialLake', function() {
     expect(game.board.getAvailableSpacesOnLand(player)).has.length(1);
 
     // Card is still playable.
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     // No spaces left?
     game.simpleAddTile(player, spaces[0], {tileType: TileType.GREENERY});
     expect(game.board.getAvailableSpacesOnLand(player)).has.length(0);
 
     // Cannot play.
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
   });
 
-  it('Can still play if oceans are maxed but no land spaces are available', function() {
-    (game as any).temperature = -6;
+  it('Can still play if oceans are maxed but no land spaces are available', () => {
+    setTemperature(game, -6);
     maxOutOceans(player);
 
     // Take all land spaces
@@ -90,6 +89,17 @@ describe('ArtificialLake', function() {
       game.simpleAddTile(player, space, {tileType: TileType.GREENERY});
     });
 
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
+  });
+
+  it('Works with reds', () => {
+    const [game, player, player2] = testGame(2, {turmoilExtension: true});
+
+    // Card requirements
+    setTemperature(game, -6);
+
+    testRedsCosts(() => player.canPlay(card), player, card.cost, 3);
+    maxOutOceans(player2);
+    testRedsCosts(() => player.canPlay(card), player, card.cost, 0);
   });
 });

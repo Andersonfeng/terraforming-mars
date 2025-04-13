@@ -1,73 +1,93 @@
 import {expect} from 'chai';
-import {CommunicationCenter} from '../../../src/cards/pathfinders/CommunicationCenter';
-import {Game} from '../../../src/Game';
+import {CommunicationCenter} from '../../../src/server/cards/pathfinders/CommunicationCenter';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestingUtils} from '../../TestingUtils';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {Resources} from '../../../src/common/Resources';
+import {cast, fakeCard, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {Resource} from '../../../src/common/Resource';
 import {CardType} from '../../../src/common/cards/CardType';
+import {CEOsFavoriteProject} from '../../../src/server/cards/base/CEOsFavoriteProject';
 
-describe('CommunicationCenter', function() {
+describe('CommunicationCenter', () => {
   let card: CommunicationCenter;
   let player: TestPlayer;
-  let otherPlayer: TestPlayer;
-  let game: Game;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CommunicationCenter();
-    game = newTestGame(2, {pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
-    otherPlayer = getTestPlayer(game, 1);
+    [game, player, player2] = testGame(2, {pathfindersExpansion: true});
     player.playedCards = [card];
   });
 
   it('canPlay', () => {
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
-    player.addProduction(Resources.ENERGY, 1);
+    player.production.add(Resource.ENERGY, 1);
 
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
   it('play', () => {
     card.resourceCount = 0;
-    player.addProduction(Resources.ENERGY, 2);
+    player.production.add(Resource.ENERGY, 2);
 
     expect(card.play(player));
 
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
     expect(card.resourceCount).eq(2);
-    expect(player.getProduction(Resources.ENERGY)).eq(1);
+    expect(player.production.energy).eq(1);
   });
 
   it('onCardPlayed', () => {
     player.playedCards = [card];
     expect(card.resourceCount).eq(0);
 
-    player.onCardPlayed(TestingUtils.fakeCard({cardType: CardType.ACTIVE}));
+    player.onCardPlayed(fakeCard({type: CardType.ACTIVE}));
+    runAllActions(game);
     expect(card.resourceCount).eq(0);
-    player.onCardPlayed(TestingUtils.fakeCard({cardType: CardType.AUTOMATED}));
+    player.onCardPlayed(fakeCard({type: CardType.AUTOMATED}));
+    runAllActions(game);
     expect(card.resourceCount).eq(0);
-    player.onCardPlayed(TestingUtils.fakeCard({cardType: CardType.CORPORATION}));
+    player.onCardPlayed(fakeCard({type: CardType.CORPORATION}));
+    runAllActions(game);
     expect(card.resourceCount).eq(0);
-    player.onCardPlayed(TestingUtils.fakeCard({cardType: CardType.PRELUDE}));
+    player.onCardPlayed(fakeCard({type: CardType.PRELUDE}));
+    runAllActions(game);
     expect(card.resourceCount).eq(0);
 
-    player.onCardPlayed(TestingUtils.fakeCard({cardType: CardType.EVENT}));
+    player.onCardPlayed(fakeCard({type: CardType.EVENT}));
+    runAllActions(game);
     expect(card.resourceCount).eq(1);
 
-    otherPlayer.onCardPlayed(TestingUtils.fakeCard({cardType: CardType.EVENT}));
+    player2.onCardPlayed(fakeCard({type: CardType.EVENT}));
+    runAllActions(game);
     expect(card.resourceCount).eq(2);
 
     expect(player.cardsInHand).is.length(0);
-    expect(otherPlayer.cardsInHand).is.length(0);
+    expect(player2.cardsInHand).is.length(0);
 
-    otherPlayer.onCardPlayed(TestingUtils.fakeCard({cardType: CardType.EVENT}));
+    player2.onCardPlayed(fakeCard({type: CardType.EVENT}));
+    runAllActions(game);
 
     expect(card.resourceCount).eq(0);
     expect(player.cardsInHand).is.length(1);
-    expect(otherPlayer.cardsInHand).is.length(0);
+    expect(player2.cardsInHand).is.length(0);
+  });
+
+  it('Work with CEOs favorite project', () => {
+    card.resourceCount = 2;
+    player.playedCards = [card];
+
+    const ceosFavoriteProject = new CEOsFavoriteProject();
+    player.playCard(ceosFavoriteProject);
+
+    runAllActions(game);
+    cast(player.popWaitingFor(), undefined);
+
+    expect(player.cardsInHand).has.length(1);
+    expect(card.resourceCount).eq(1);
   });
 
   it('card.addResourceTo', () => {

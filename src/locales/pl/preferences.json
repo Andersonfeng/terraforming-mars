@@ -16,8 +16,16 @@
     "Hide Milestones / Awards scores": "Ukryj wynik punktowy tytułów/nagród",
     "Enable sounds": "Odtwarzaj dźwięki",
     "Hide tile confirmation": "Ukryj potwierdzenie obszaru",
+    "Hide discount on cards": "Ukryj zniżki na kartach",
+    "Show discount on cards": "Pokaż zniżki na kartach",
+    "Hide sidebar notification": "Ukryj pasek notyfikacji",
+    "Show sidebar notification": "Pokaż pasek notyfikacji",
+    "Learner Mode (req. refresh)": "Tryb nauki (wymaga odświeżenia)",
+    "Experimental UI": "Eksperymentalny interfejs",
     "Tutorial Mode (req. refresh)": "Tryb dla początkujących (wymaga odświeżenia)",
     "Language": "Język",
     "refresh page": "odśwież stronę",
-    "to see changes": "aby zobaczyć zmiany"
+    "to see changes": "aby zobaczyć zmiany",
+    "Ok": "Ok",
+    "Report a bug": "Zgłoś błąd"
 }

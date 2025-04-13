@@ -1,27 +1,27 @@
 import {expect} from 'chai';
-import {ArchaeBacteria} from '../../../src/cards/base/ArchaeBacteria';
-import {Player} from '../../../src/Player';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {ArchaeBacteria} from '../../../src/server/cards/base/ArchaeBacteria';
+import {TestPlayer} from '../../TestPlayer';
+import {IGame} from '../../../src/server/IGame';
+import {setTemperature} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('ArchaeBacteria', function() {
-  let card : ArchaeBacteria; let player : Player; let game : Game;
+describe('ArchaeBacteria', () => {
+  let card: ArchaeBacteria;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ArchaeBacteria();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    (game as any).temperature = -12;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    setTemperature(game, -12);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    expect(player.production.plants).to.eq(1);
   });
 });

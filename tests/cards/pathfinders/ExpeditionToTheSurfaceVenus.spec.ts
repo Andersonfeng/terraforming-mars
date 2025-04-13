@@ -1,28 +1,27 @@
 import {expect} from 'chai';
-import {ExpeditionToTheSurfaceVenus} from '../../../src/cards/pathfinders/ExpeditionToTheSurfaceVenus';
-import {Game} from '../../../src/Game';
+import {ExpeditionToTheSurfaceVenus} from '../../../src/server/cards/pathfinders/ExpeditionToTheSurfaceVenus';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
 
-describe('ExpeditiontotheSurfaceVenus', function() {
+describe('ExpeditiontotheSurfaceVenus', () => {
   let card: ExpeditionToTheSurfaceVenus;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ExpeditionToTheSurfaceVenus();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1);
   });
 
-  it('play', function() {
+  it('play', () => {
     player.cardsInHand = [];
     expect(player.getTerraformRating()).eq(14);
 
     card.play(player);
 
     expect(player.cardsInHand).has.lengthOf(2);
-    player.setProductionForTest({energy: 1});
+    player.production.override({energy: 1});
     expect(player.getTerraformRating()).eq(15);
     expect(game.getVenusScaleLevel()).eq(2);
     expect(player.megaCredits).eq(1);

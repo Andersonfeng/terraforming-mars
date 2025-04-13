@@ -1,54 +1,57 @@
 import {expect} from 'chai';
-import {SmallAnimals} from '../../../src/cards/base/SmallAnimals';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {SmallAnimals} from '../../../src/server/cards/base/SmallAnimals';
+import {IGame} from '../../../src/server/IGame';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {runAllActions, setOxygenLevel} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('SmallAnimals', function() {
-  let card : SmallAnimals; let player : Player; let player2 : Player; let game : Game;
+describe('SmallAnimals', () => {
+  let card: SmallAnimals;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new SmallAnimals();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('Can\'t play if oxygen level too low', function() {
-    player2.addProduction(Resources.PLANTS, 1);
-    (game as any).oxygenLevel = 5;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play if oxygen level too low', () => {
+    player2.production.add(Resource.PLANTS, 1);
+    setOxygenLevel(game, 5);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can\'t play if no one has plant production', function() {
-    (game as any).oxygenLevel = 6;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play if no one has plant production', () => {
+    setOxygenLevel(game, 6);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.playedCards.push(card);
     card.action(player);
+    runAllActions(game);
     expect(card.resourceCount).to.eq(1);
   });
 
-  it('Should play', function() {
-    (game as any).oxygenLevel = 6;
-    player2.addProduction(Resources.PLANTS, 1);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    setOxygenLevel(game, 6);
+    player2.production.add(Resource.PLANTS, 1);
+    expect(card.canPlay(player)).is.true;
 
     player.playedCards.push(card);
     card.play(player);
     const input = game.deferredActions.peek()!.execute();
     expect(input).is.undefined;
-    expect(player2.getProduction(Resources.PLANTS)).to.eq(0);
+    expect(player2.production.plants).to.eq(0);
   });
 
-  it('Gives victory points', function() {
+  it('Gives victory points', () => {
     player.addResourceTo(card, 3);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
 
     player.addResourceTo(card);
-    expect(card.getVictoryPoints()).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(2);
   });
 });

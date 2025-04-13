@@ -1,34 +1,38 @@
 import {expect} from 'chai';
-import {SearchForLife} from '../../../src/cards/base/SearchForLife';
-import {Tags} from '../../../src/common/cards/Tags';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {SearchForLife} from '../../../src/server/cards/base/SearchForLife';
+import {Tag} from '../../../src/common/cards/Tag';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {fakeCard, runAllActions, setOxygenLevel} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('SearchForLife', function() {
-  let card : SearchForLife; let player : Player; let game : Game;
+describe('SearchForLife', () => {
+  let card: SearchForLife;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new SearchForLife();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t act if no MC', function() {
+  it('Can not act if no MC', () => {
+    player.megaCredits = 0;
     expect(card.canAct(player)).is.not.true;
+    player.megaCredits = 1;
+    expect(card.canAct(player)).is.true;
   });
 
-  it('Can\'t play if oxygen level too high', function() {
-    (game as any).oxygenLevel = 7;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play if oxygen level too high', () => {
+    setOxygenLevel(game, 7);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    (game as any).oxygenLevel = 6;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    setOxygenLevel(game, 6);
+    expect(card.canPlay(player)).is.true;
     player.playedCards.push(card);
-    card.play();
+    card.play(player);
 
     expect(card.getVictoryPoints()).to.eq(0);
     player.addResourceTo(card);
@@ -36,17 +40,66 @@ describe('SearchForLife', function() {
   });
 
 
-  it('Should act', function() {
+  it('action fails, no tags', () => {
     player.playedCards.push(card);
 
-    while (game.dealer.discarded.find((c) => c.tags.length === 1 && c.tags[0] === Tags.MICROBE) === undefined ||
-               game.dealer.discarded.find((c) => c.tags.length === 1 && c.tags[0] !== Tags.MICROBE) === undefined) {
-      player.megaCredits = 1;
-      card.action(player);
-      game.deferredActions.runNext();
-      expect(player.megaCredits).to.eq(0);
-    }
+    player.megaCredits = 1;
 
-    expect(card.resourceCount >= 1).is.true;
+    game.projectDeck.drawPile.push(fakeCard());
+
+    card.action(player);
+    runAllActions(game); // pays for card.
+    expect(player.megaCredits).to.eq(0);
+    expect(card.resourceCount).eq(0);
+  });
+
+  it('action fails, wrong tag', () => {
+    player.playedCards.push(card);
+
+    player.megaCredits = 1;
+
+    game.projectDeck.drawPile.push(fakeCard({tags: [Tag.SCIENCE]}));
+
+    card.action(player);
+    runAllActions(game); // pays for card.
+    expect(player.megaCredits).to.eq(0);
+    expect(card.resourceCount).eq(0);
+  });
+
+  it('action fails, wild tag', () => {
+    player.playedCards.push(card);
+
+    player.megaCredits = 1;
+
+    game.projectDeck.drawPile.push(fakeCard({tags: [Tag.WILD]}));
+
+    card.action(player);
+    runAllActions(game); // pays for card.
+    expect(player.megaCredits).to.eq(0);
+    expect(card.resourceCount).eq(0);
+  });
+
+  it('action succeeds', () => {
+    player.playedCards.push(card);
+
+    player.megaCredits = 1;
+
+    game.projectDeck.drawPile.push(fakeCard({tags: [Tag.WILD, Tag.MICROBE]}));
+
+    card.action(player);
+    runAllActions(game); // pays for card.
+    expect(player.megaCredits).to.eq(0);
+    expect(card.resourceCount).eq(1);
+  });
+
+  it('Cannot act when the deck is empty', () => {
+    player.megaCredits = 1;
+    game.projectDeck.drawPile.length = 1;
+
+    expect(card.canAct(player)).is.true;
+
+    game.projectDeck.drawPile.length = 0;
+
+    expect(card.canAct(player)).is.false;
   });
 });

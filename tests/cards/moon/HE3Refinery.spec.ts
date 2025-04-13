@@ -1,22 +1,19 @@
-import {Game} from '../../../src/Game';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {TestPlayer} from '../../TestPlayer';
-import {HE3Refinery} from '../../../src/cards/moon/HE3Refinery';
 import {expect} from 'chai';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {HE3Refinery} from '../../../src/server/cards/moon/HE3Refinery';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
 
 describe('HE3Refinery', () => {
+  let game: IGame;
   let player: TestPlayer;
   let card: HE3Refinery;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new HE3Refinery();
     moonData = MoonExpansion.moonData(game);
   });
@@ -24,7 +21,7 @@ describe('HE3Refinery', () => {
   it('can play', () => {
     player.cardsInHand = [card];
     player.megaCredits = card.cost;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('act', () => {

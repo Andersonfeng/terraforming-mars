@@ -1,35 +1,32 @@
 import {expect} from 'chai';
-import {MartianDustProcessingPlant} from '../../../src/cards/pathfinders/MartianDustProcessingPlant';
-import {Game} from '../../../src/Game';
+import {MartianDustProcessingPlant} from '../../../src/server/cards/pathfinders/MartianDustProcessingPlant';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
 import {Units} from '../../../src/common/Units';
 
-describe('MartianDustProcessingPlant', function() {
+describe('MartianDustProcessingPlant', () => {
   let card: MartianDustProcessingPlant;
   let player: TestPlayer;
-  let game: Game;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new MartianDustProcessingPlant();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [/* game */, player] = testGame(1);
   });
 
-  it('canPlay', function() {
-    player.setProductionForTest({energy: 0});
-    expect(player.canPlayIgnoringCost(card)).is.false;
-    player.setProductionForTest({energy: 1});
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('canPlay', () => {
+    player.production.override({energy: 0});
+    expect(card.canPlay(player)).is.false;
+    player.production.override({energy: 1});
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('play', function() {
-    player.setProductionForTest({energy: 1});
+  it('play', () => {
+    player.production.override({energy: 1});
     expect(player.getTerraformRating()).eq(14);
 
     card.play(player);
 
-    expect(player.getProductionForTest()).deep.eq(Units.of({steel: 2}));
+    expect(player.production.asUnits()).deep.eq(Units.of({steel: 2}));
     expect(player.getTerraformRating()).eq(15);
   });
 });

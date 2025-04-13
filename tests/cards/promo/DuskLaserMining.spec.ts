@@ -1,36 +1,37 @@
 import {expect} from 'chai';
-import {Research} from '../../../src/cards/base/Research';
-import {DuskLaserMining} from '../../../src/cards/promo/DuskLaserMining';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Research} from '../../../src/server/cards/base/Research';
+import {DuskLaserMining} from '../../../src/server/cards/promo/DuskLaserMining';
+import {TestPlayer} from '../../TestPlayer';
+import {Resource} from '../../../src/common/Resource';
+import {testGame} from '../../TestGame';
 
-describe('DuskLaserMining', function() {
-  let card : DuskLaserMining; let player : Player;
+describe('DuskLaserMining', () => {
+  let card: DuskLaserMining;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new DuskLaserMining();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t play if not enough science tags', function() {
-    player.addProduction(Resources.ENERGY, 1);
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play if not enough science tags', () => {
+    player.production.add(Resource.ENERGY, 1);
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can\'t play if no energy production', function() {
+  it('Can not play if no energy production', () => {
     player.playedCards.push(new Research());
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.playedCards.push(new Research());
-    player.addProduction(Resources.ENERGY, 1);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    player.production.add(Resource.ENERGY, 1);
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(1);
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.titanium).to.eq(1);
     expect(player.titanium).to.eq(4);
   });
 });

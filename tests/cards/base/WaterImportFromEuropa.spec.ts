@@ -1,47 +1,47 @@
 import {expect} from 'chai';
-import {WaterImportFromEuropa} from '../../../src/cards/base/WaterImportFromEuropa';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Player} from '../../../src/Player';
-import {maxOutOceans} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {WaterImportFromEuropa} from '../../../src/server/cards/base/WaterImportFromEuropa';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {cast, maxOutOceans} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('WaterImportFromEuropa', function() {
-  let card : WaterImportFromEuropa; let player : Player; let game : Game;
+describe('WaterImportFromEuropa', () => {
+  let card: WaterImportFromEuropa;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new WaterImportFromEuropa();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t act', function() {
+  it('Can not act', () => {
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    card.play();
+  it('Should play', () => {
+    card.play(player);
     player.playedCards.push(card);
     expect(card.getVictoryPoints(player)).to.eq(1);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.megaCredits = 13;
 
     const action = card.action(player);
-    expect(action).is.undefined;
+    cast(action, undefined);
 
-    game.deferredActions.runNext(); // HowToPay
+    game.deferredActions.runNext(); // Payment
     expect(player.megaCredits).to.eq(1);
 
     expect(game.deferredActions).has.lengthOf(1);
-    const selectOcean = game.deferredActions.peek()!.execute() as SelectSpace;
-    selectOcean.cb(selectOcean.availableSpaces[0]);
+    const selectOcean = cast(game.deferredActions.peek()!.execute(), SelectSpace);
+    selectOcean.cb(selectOcean.spaces[0]);
     expect(player.getTerraformRating()).to.eq(21);
   });
 
-  it('Can act if can pay even after oceans are maxed', function() {
+  it('Can act if can pay even after oceans are maxed', () => {
     maxOutOceans(player);
     player.megaCredits = 12;
 

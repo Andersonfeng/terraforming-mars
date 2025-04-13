@@ -98,25 +98,35 @@
     box-shadow: 0 0 2px 1px black;
 }
 
+input[type="checkbox"] + .filterDiv.card-container,
+input[type="radio"] + .filterDiv.card-container {
+    margin-top: 22px;
+}
+
 input[type="checkbox"]:checked + .filterDiv,
 input[type="radio"]:checked + .filterDiv {
-    box-shadow: 0 0 0 2px #303030, 0 0 0px 6px #c97e23;
+    box-shadow: 0 0 0 1px #303030, 0 0 7px 10px #c97e23;
 }
 
 input[type="checkbox"]:checked + .filterDiv::after,
 input[type="radio"]:checked + .filterDiv::after {
     content: "✓";
     position: absolute;
-    width: calc(100% + 12px);
-    height: 50px;
-    line-height: 50px;
-    top: 50%;
-    left: -6px;
+    width: 90px;
+    height: 21px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    top: -30px;
+    left: calc(50% - 45px);
     text-align: center;
     font-weight: bold;
-    font-size: 36px;
-    background: linear-gradient(to right, #c97e23bb, #e28c22bb, #c97e23bb);
+    font-size: 13px;
+    background: #c97e23;
     color: black;
+    z-index: 1;
 }
 
 .filterDiv3 {
@@ -288,6 +298,23 @@ input[type="radio"]:checked + .filterDiv::after {
     transform: rotate(-90deg);
 }
 
+.prelude2-icon:after {
+  position: absolute;
+  border: 1px solid black;
+  font-family: Prototype;
+  background-color: rgb(235, 118, 171);
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 16px;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  color: white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  content: "2";
+}
+
 .venus-icon:after {
     position: absolute;
     border: 1px solid black;
@@ -427,6 +454,49 @@ input[type="radio"]:checked + .filterDiv::after {
     content: "🪐";
 }
 
+.ceo-icon:after {
+    position: absolute;
+    color:#000;
+    border: 1px solid #222;
+    background: #edbd18;
+    font-family: Prototype;
+    // font-weight: bold;
+    font-size: 9px;
+    line-height: 17px;
+    width: 16px;
+    height:16px;
+    text-align: center;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+    content: "💼";
+}
+
+.starwars-icon:after {
+    position: absolute;
+    color:#DDD;
+    border: 1px solid #222;
+    background: #999;
+    font-family: Prototype;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 17px;
+    width: 16px;
+    height:16px;
+    text-align: center;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+    content: "W";
+}
+
+.underworld-icon:after {
+  position: absolute;
+  background-image: url(./assets/expansion_icons/expansion_icon_underworld.png);
+  width: 26px;
+  height: 26px;
+  background-size: 26px;
+  content: "";
+}
+
 .button-icon:after {
     margin-top: -9px;
     margin-left: -9px;
@@ -517,6 +587,10 @@ input[type="radio"]:checked + .filterDiv::after {
     background: linear-gradient(-60deg, #089108 10%, #0ac20a, #089108 90%);
 }
 
+.background-color-ceo {
+    background: linear-gradient(-60deg, #F8C61B 10%, #EED240, #CD872A 90%);
+}
+
 .background-color-active {
     background: linear-gradient(-60deg, #208cdf 10%, #4da3e6, #208cdf 90%);
 }
@@ -558,7 +632,7 @@ input[type="radio"]:checked + .filterDiv::after {
 /*********** Style the tags ************/
 
 .tag-wild {
-    background-image: url("../assets/tags/wild.png");
+    background-image: url("./assets/tags/wild.png");
 }
 .tag-building {
     background-image: url("./assets/tags/building.png");
@@ -610,7 +684,9 @@ input[type="radio"]:checked + .filterDiv::after {
 .tag-none {
     background-image: url("./assets/tags/tag-none.png");
 }
-
+.tag-asterisk {
+  background-image: url("./assets/underworld/asterisk-tag.png");
+}
 /************** Style the Content ************/
 .content {
     color: black;
@@ -894,9 +970,9 @@ input[type="radio"]:checked + .filterDiv::after {
 
 .special-tile {
     background-image: url(./assets/tiles/special.png);
-    width: 47px;
-    height: 51px;
-    background-size: 47px 51px;
+    width: 40px;
+    height: 47px;
+    background-size: 40px;
 }
 
 .special-tile--S {
@@ -918,6 +994,13 @@ input[type="radio"]:checked + .filterDiv::after {
     height: 40px;
     background-size: 60px 40px;
     color: #0000;
+}
+
+.city-or-special-tile {
+    background-image: url(./assets/promo/city-or-special-tile.png);
+    width: 40px;
+    height: 47px;
+    background-size: 40px;
 }
 
 .rating {
@@ -1004,6 +1087,10 @@ input[type="radio"]:checked + .filterDiv::after {
     filter: brightness(0.9);
 }
 
+.megacredits {
+    // TODO(kberg): replace money with megacredits as the resource type is 'megacredits'
+  &:extend(.money);
+}
 .money {
     font-family: Prototype;
     color: black;
@@ -1026,6 +1113,7 @@ input[type="radio"]:checked + .filterDiv::after {
     background-image: url(./assets/resources/titanium.png);
 }
 
+/* TODO(kberg): Remove plant, as the resource type in the game is the string "plants" */
 .plant {
     background-image: url(./assets/resources/plant.png);
 }
@@ -1077,6 +1165,9 @@ input[type="radio"]:checked + .filterDiv::after {
 }
 .pristar {
     background-image: url(./assets/resources/preservation.png);
+}
+.data {
+    background-image: url(./assets/resources/data.png);
 }
 
 .card {
@@ -1314,7 +1405,7 @@ input[type="radio"]:checked + .filterDiv::after {
 }
 
 .plus {
-    background-image: url(/assets/misc/plus.png);
+    background-image: url(./assets/misc/plus.png);
     background-size: 15px;
     min-height: 15px;
     vertical-align: middle;
@@ -1324,7 +1415,7 @@ input[type="radio"]:checked + .filterDiv::after {
 }
 
 .minus {
-    background-image: url(/assets/misc/minus.png);
+    background-image: url(./assets/misc/minus.png);
     background-size: 15px;
     vertical-align: middle;
     display: inline-block;
@@ -1408,6 +1499,7 @@ input[type="radio"]:checked + .filterDiv::after {
     );
     border-radius: 7px 7px 2px 2px;
     text-transform: uppercase;
+    z-index: 2;
 }
 
 .corporationEffectBox {
@@ -2162,7 +2254,7 @@ input[type="radio"]:checked + .filterDiv::after {
 
 .little-green-men {
     position: absolute;
-    z-index: 1000;
+    z-index: 100;
     top: 100px;
     left: 70px;
     background: url(./assets/martian.png);
@@ -2600,6 +2692,10 @@ input[type="radio"]:checked + .filterDiv::after {
     background-image: url(./assets/expansion_icons/expansion_icon_prelude.png);
 }
 
+.expansion-icon-prelude2 {
+    background-image: url(./assets/expansion_icons/expansion_icon_prelude2.png);
+}
+
 .expansion-icon-colony {
     background-image: url(./assets/expansion_icons/expansion_icon_colonies.png);
 }
@@ -2635,14 +2731,20 @@ input[type="radio"]:checked + .filterDiv::after {
     background-image: url(./assets/expansion_icons/expansion_icon_pathfinders.png);
 }
 
+.expansion-icon-ceo {
+    background-image: url(./assets/expansion_icons/expansion_icon_ceo.png);
+}
+
+.expansion-icon-starwars {
+    background-image: url(./assets/expansion_icons/expansion_icon_starwars.png);
+}
+
+.expansion-icon-underworld {
+  background-image: url(./assets/expansion_icons/expansion_icon_underworld.png);
+}
+
 /* refactored */
 .card-container {
-    .project-icon:after,
-    .preludeCard-icon:after {
-        bottom: 8px;
-        left: 8px;
-        margin: 0px;
-    }
     .card-content-wrapper {
         position: relative;
         .temporary-content-wrapper {
@@ -2676,19 +2778,20 @@ input[type="radio"]:checked + .filterDiv::after {
             .card-help {
                 float: left;
                 font-family: Prototype;
-                font-size: 26px;
-                width: 30px;
-                height: 50px;
+                font-size: 20px;
+                width: 24px;
+                height: 24px;
                 margin-left: -20px;
-                line-height: 48px;
-                border-radius: 20px;
-
-                background-color: black;
-                color: white;
+                line-height: 24px;
+                border-radius: 24px;
+                background-color: #444;
                 text-align: center;
-            }
-            .card-help-inner a:visited {
-                color: #FFF;
+                a {
+                  color: #C33;
+                  text-decoration: none;
+                }
+                position: static;
+                z-index: 1;
             }
             .card-tags {
                 display: flex;
@@ -2712,6 +2815,7 @@ input[type="radio"]:checked + .filterDiv::after {
                     background-color: white;
                     /* margin-top: -6px; */
                     filter: brightness(0.9);
+                    z-index: 2;
                 }
             }
         }
@@ -2858,4 +2962,17 @@ input[type="radio"]:checked + .filterDiv::after {
     position: absolute;
     top: 48px;
     left: 8px;
+}
+
+.sortable-cards {
+  > div {
+    display: inline-block;
+    vertical-align: top;
+  }
+  .drop-target {
+    width: 10px;
+    height: 350px;
+    display: inline-block;
+    vertical-align: top
+  }
 }

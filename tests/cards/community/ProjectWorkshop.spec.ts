@@ -1,62 +1,70 @@
 import {expect} from 'chai';
-import {AdvancedAlloys} from '../../../src/cards/base/AdvancedAlloys';
-import {SmallAnimals} from '../../../src/cards/base/SmallAnimals';
+import {AdvancedAlloys} from '../../../src/server/cards/base/AdvancedAlloys';
+import {SmallAnimals} from '../../../src/server/cards/base/SmallAnimals';
 import {CardType} from '../../../src/common/cards/CardType';
-import {ProjectWorkshop} from '../../../src/cards/community/ProjectWorkshop';
-import {ICard} from '../../../src/cards/ICard';
-import {Extremophiles} from '../../../src/cards/venusNext/Extremophiles';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {SelectOption} from '../../../src/inputs/SelectOption';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
-import {AncientShipyards} from '../../../src/cards/moon/AncientShipyards';
-import {cast, runAllActions} from '../../TestingUtils';
+import {ProjectWorkshop} from '../../../src/server/cards/community/ProjectWorkshop';
+import {ICard} from '../../../src/server/cards/ICard';
+import {Extremophiles} from '../../../src/server/cards/venusNext/Extremophiles';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {SelectOption} from '../../../src/server/inputs/SelectOption';
+import {TestPlayer} from '../../TestPlayer';
+import {AncientShipyards} from '../../../src/server/cards/moon/AncientShipyards';
+import {cast, churn, runAllActions} from '../../TestingUtils';
 import {Phase} from '../../../src/common/Phase';
-import {Reds} from '../../../src/turmoil/parties/Reds';
-import {PoliticalAgendas} from '../../../src/turmoil/PoliticalAgendas';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {Birds} from '../../../src/cards/base/Birds';
+import {Reds} from '../../../src/server/turmoil/parties/Reds';
+import {PoliticalAgendas} from '../../../src/server/turmoil/PoliticalAgendas';
+import {testGame} from '../../TestGame';
+import {Birds} from '../../../src/server/cards/base/Birds';
+import {Helion} from '../../../src/server/cards/corporation/Helion';
+import {SelectPayment} from '../../../src/server/inputs/SelectPayment';
+import {Payment} from '../../../src/common/inputs/Payment';
+import {WaterImportFromEuropa} from '../../../src/server/cards/base/WaterImportFromEuropa';
+import {JovianEmbassy} from '../../../src/server/cards/promo/JovianEmbassy';
+import {ResearchCoordination} from '../../../src/server/cards/prelude/ResearchCoordination';
 
-describe('ProjectWorkshop', function() {
-  let card : ProjectWorkshop; let player : Player; let game : Game; let advancedAlloys : AdvancedAlloys;
+describe('ProjectWorkshop', () => {
+  let card: ProjectWorkshop;
+  let player: TestPlayer;
+  let game: IGame;
+  let advancedAlloys : AdvancedAlloys;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ProjectWorkshop();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
     advancedAlloys = new AdvancedAlloys();
+    [game, player] = testGame(1);
 
     card.play(player);
-    player.corporationCard = card;
+    player.corporations.push(card);
   });
 
-  it('Starts with correct resources', function() {
+  it('Starts with correct resources', () => {
     expect(player.steel).to.eq(1);
     expect(player.titanium).to.eq(1);
 
-    card.initialAction(player);
+    player.deferInitialAction(card);
+    runAllActions(game);
     expect(player.cardsInHand).has.lengthOf(1);
-    expect(player.cardsInHand[0].cardType).to.eq(CardType.ACTIVE);
+    expect(player.cardsInHand[0].type).to.eq(CardType.ACTIVE);
   });
 
-  it('Can\'t act', function() {
+  it('Can not act', () => {
     player.megaCredits = 2;
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Can spend 3 M€ to draw a blue card', function() {
+  it('Can spend 3 M€ to draw a blue card', () => {
     player.megaCredits = 3;
 
     expect(card.canAct(player)).is.true;
-    card.action(player).cb();
+    const selectOption = cast(churn(card.action(player), player), SelectOption);
+    expect(churn(() => selectOption.cb(undefined), player)).is.undefined;
     expect(player.cardsInHand).has.lengthOf(1);
-    expect(player.cardsInHand[0].cardType).to.eq(CardType.ACTIVE);
+    expect(player.cardsInHand[0].type).to.eq(CardType.ACTIVE);
   });
 
-  it('Can flip a played blue card and remove its ongoing effects', function() {
+  it('Can flip a played blue card and remove its ongoing effects', () => {
     player.playedCards.push(advancedAlloys);
     advancedAlloys.play(player);
     player.megaCredits = 0;
@@ -64,15 +72,15 @@ describe('ProjectWorkshop', function() {
     expect(player.getSteelValue()).to.eq(3);
     expect(player.getTitaniumValue()).to.eq(4);
 
-    card.action(player).cb();
+    card.action(player).cb(undefined);
     expect(player.playedCards).has.lengthOf(0);
-    expect(game.dealer.discarded.includes(advancedAlloys)).is.true;
+    expect(game.projectDeck.discardPile.includes(advancedAlloys)).is.true;
     expect(player.cardsInHand).has.lengthOf(2);
     expect(player.getSteelValue()).to.eq(2);
     expect(player.getTitaniumValue()).to.eq(3);
   });
 
-  it('Converts VP to TR correctly', function() {
+  it('Converts VP to TR correctly', () => {
     const smallAnimals = new SmallAnimals();
     player.addResourceTo(smallAnimals, 5);
 
@@ -83,8 +91,7 @@ describe('ProjectWorkshop', function() {
     player.playedCards.push(smallAnimals, extremophiles);
 
     const selectOption = cast(card.action(player), SelectOption);
-
-    const selectCard = selectOption.cb() as SelectCard<ICard>;
+    const selectCard = cast(selectOption.cb(undefined), SelectCard<ICard>);
 
     selectCard.cb([smallAnimals]);
     expect(player.getTerraformRating()).to.eq(originalTR + 2);
@@ -95,7 +102,39 @@ describe('ProjectWorkshop', function() {
     expect(player.cardsInHand).has.lengthOf(4);
   });
 
-  it('Can select option if able to do both actions', function() {
+  it('Converts VP to TR correctly when counting tags', () => {
+    const waterImportFromEuropa = new WaterImportFromEuropa();
+    const originalTR = player.getTerraformRating();
+
+    player.playedCards.push(waterImportFromEuropa);
+    player.actionsThisGeneration.add(waterImportFromEuropa.name);
+    player.playedCards.push(new JovianEmbassy());
+
+    const selectOption = cast(card.action(player), SelectOption);
+    cast(selectOption.cb(undefined), undefined);
+
+    expect(player.getTerraformRating()).to.eq(originalTR + 2);
+    expect(player.playedCards).does.not.include(waterImportFromEuropa);
+  });
+
+
+  it('Converts VP to TR correctly when counting wild tags', () => {
+    const waterImportFromEuropa = new WaterImportFromEuropa();
+    const originalTR = player.getTerraformRating();
+
+    player.playedCards.push(waterImportFromEuropa);
+    player.actionsThisGeneration.add(waterImportFromEuropa.name);
+    player.playedCards.push(new JovianEmbassy());
+    player.playedCards.push(new ResearchCoordination());
+
+    const selectOption = cast(card.action(player), SelectOption);
+    cast(selectOption.cb(undefined), undefined);
+
+    expect(player.getTerraformRating()).to.eq(originalTR + 3);
+    expect(player.playedCards).does.not.include(waterImportFromEuropa);
+  });
+
+  it('Can select option if able to do both actions', () => {
     player.playedCards.push(advancedAlloys);
     player.megaCredits = 3;
     // That the response is OrOptions is the test.
@@ -111,7 +150,7 @@ describe('ProjectWorkshop', function() {
 
     const selectOption = cast(card.action(player), SelectOption);
 
-    expect(selectOption.cb()).is.undefined;
+    expect(selectOption.cb(undefined)).is.undefined;
     expect(player.playedCards).is.empty;
 
     expect(player.getTerraformRating()).to.eq(originalTR - 5);
@@ -120,10 +159,9 @@ describe('ProjectWorkshop', function() {
 
 
   it('Project Workshop and Reds taxes', () => {
-    game = newTestGame(1, {turmoilExtension: true});
-    const player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {turmoilExtension: true});
     card.play(player);
-    player.corporationCard = card;
+    player.corporations.push(card);
     player.game.phase = Phase.ACTION;
 
     const turmoil = game.turmoil!;
@@ -140,11 +178,11 @@ describe('ProjectWorkshop', function() {
 
     const birds = new Birds();
     birds.resourceCount = 1;
-    expect(birds.getVictoryPoints()).eq(1);
+    expect(birds.getVictoryPoints(player)).eq(1);
 
     player.playedCards.push(smallAnimals, extremophiles, birds);
 
-    const selectCard = function() {
+    const selectCard = () => {
       const orOptions = cast(card.action(player), OrOptions);
       return cast(orOptions.options[1].cb(), SelectCard);
     };
@@ -166,8 +204,30 @@ describe('ProjectWorkshop', function() {
     runAllActions(game);
 
     expect(player.playedCards).has.members([smallAnimals, extremophiles]);
-    expect(game.dealer.discarded).contains(birds);
+    expect(game.projectDeck.discardPile).contains(birds);
     expect(player.getTerraformRating()).to.eq(originalTR + 1);
     expect(player.megaCredits).eq(2); // Spent 3MC for the reds tax.
+  });
+
+  it('Project Workshop + Helion', () => {
+    const helion = new Helion();
+    helion.play(player);
+    player.corporations.push(helion);
+
+    player.megaCredits = 2;
+    expect(card.canAct(player)).is.false;
+    player.heat = 1;
+    expect(card.canAct(player)).is.true;
+
+    // Setting a larger amount of heat just to make the test results more interesting
+    player.heat = 5;
+
+    const selectOption = cast(churn(card.action(player), player), SelectOption);
+    const selectPayment = cast(churn(() => selectOption.cb(undefined), player), SelectPayment);
+    selectPayment.cb({...Payment.EMPTY, megaCredits: 1, heat: 2});
+    expect(player.megaCredits).to.eq(1);
+    expect(player.heat).to.eq(3);
+    expect(player.cardsInHand).has.lengthOf(1);
+    expect(player.cardsInHand[0].type).to.eq(CardType.ACTIVE);
   });
 });

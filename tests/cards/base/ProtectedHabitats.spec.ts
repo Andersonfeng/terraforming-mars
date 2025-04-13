@@ -1,14 +1,13 @@
-import {expect} from 'chai';
-import {ProtectedHabitats} from '../../../src/cards/base/ProtectedHabitats';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {ProtectedHabitats} from '../../../src/server/cards/base/ProtectedHabitats';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('ProtectedHabitats', function() {
-  it('Should play', function() {
+describe('ProtectedHabitats', () => {
+  it('Should play', () => {
     const card = new ProtectedHabitats();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    expect(card.play(player)).is.undefined;
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
+
+    // TODO(kberg): Add a useful test.
   });
 });

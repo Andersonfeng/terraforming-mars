@@ -1,32 +1,29 @@
 import {expect} from 'chai';
-import {PowerPlantStandardProject} from '../../../../src/cards/base/standardProjects/PowerPlantStandardProject';
-import {Player} from '../../../../src/Player';
-import {setCustomGameOptions} from '../../../TestingUtils';
-import {TestPlayers} from '../../../TestPlayers';
-import {Game} from '../../../../src/Game';
-import {StandardTechnology} from '../../../../src/cards/base/StandardTechnology';
-import {Resources} from '../../../../src/common/Resources';
+import {PowerPlantStandardProject} from '../../../../src/server/cards/base/standardProjects/PowerPlantStandardProject';
+import {TestPlayer} from '../../../TestPlayer';
+import {IGame} from '../../../../src/server/IGame';
+import {StandardTechnology} from '../../../../src/server/cards/base/StandardTechnology';
+import {testGame} from '../../../TestingUtils';
 
-describe('PowerPlantStandardProjects', function() {
-  let card: PowerPlantStandardProject; let player: Player;
-  let game: Game;
+describe('PowerPlantStandardProjects', () => {
+  let card: PowerPlantStandardProject;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new PowerPlantStandardProject();
-    player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player, setCustomGameOptions());
+    [game, player/* , player2 */] = testGame(2);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.megaCredits = 11;
     player.playedCards.push(new StandardTechnology());
-    expect(game.deferredActions.length).eq(0);
+    expect(game.deferredActions).has.length(0);
     card.action(player);
-    expect(game.deferredActions.length).eq(1);
+    expect(game.deferredActions).has.length(1);
     expect(player.megaCredits).eq(11);
     game.deferredActions.runNext();
-    expect(player.getProduction(Resources.ENERGY)).eq(1);
+    expect(player.production.energy).eq(1);
     expect(player.megaCredits).eq(3);
   });
 });

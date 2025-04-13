@@ -1,44 +1,67 @@
 import {expect} from 'chai';
-import {AdvancedAlloys} from '../../../src/cards/base/AdvancedAlloys';
-import {Research} from '../../../src/cards/base/Research';
-import {ResearchCoordination} from '../../../src/cards/prelude/ResearchCoordination';
-import {OrbitalCleanup} from '../../../src/cards/promo/OrbitalCleanup';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {AdvancedAlloys} from '../../../src/server/cards/base/AdvancedAlloys';
+import {Research} from '../../../src/server/cards/base/Research';
+import {ResearchCoordination} from '../../../src/server/cards/prelude/ResearchCoordination';
+import {OrbitalCleanup} from '../../../src/server/cards/promo/OrbitalCleanup';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
+import {setRulingParty} from '../../TestingUtils';
+import {BioengineeringEnclosure} from '../../../src/server/cards/ares/BioengineeringEnclosure';
+import {PartyName} from '../../../src/common/turmoil/PartyName';
+import {SCIENTISTS_POLICY_4} from '../../../src/server/turmoil/parties/Scientists';
 
-describe('OrbitalCleanup', function() {
-  let card : OrbitalCleanup; let player : Player;
+describe('OrbitalCleanup', () => {
+  let card: OrbitalCleanup;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new OrbitalCleanup();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('id', [player], player);
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t play if cannot decrease MC production', function() {
-    player.addProduction(Resources.MEGACREDITS, -4);
+  it('Can not play if cannot decrease MC production', () => {
+    player.production.add(Resource.MEGACREDITS, -4);
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     expect(card.canPlay(player)).is.true;
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(-2);
+    expect(player.production.megacredits).to.eq(-2);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.playedCards.push(new Research());
     player.playedCards.push(new AdvancedAlloys());
     player.playedCards.push(new ResearchCoordination());
 
     card.action(player);
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(4);
+    expect(player.megaCredits).to.eq(4);
   });
 
-  it('Should give victory points', function() {
+  it('Should give victory points', () => {
     card.play(player);
-    expect(card.getVictoryPoints()).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(2);
+  });
+
+  it('Turmoil Science Tag Requirements doesnt increase Income', () => {
+    const [game, player] = testGame(2, {ceoExtension: true, turmoilExtension: true});
+
+    // Sanity check that Science Ruling Policy is working as intended:
+    const bioengineeringEnclosure = new BioengineeringEnclosure(); // Requires 1 science tag
+    expect(bioengineeringEnclosure.canPlay(player)).is.false;
+    setRulingParty(game, PartyName.SCIENTISTS, SCIENTISTS_POLICY_4.id); // Reduce science tag requirements by 1
+    SCIENTISTS_POLICY_4.onPolicyStart(game);
+    expect(bioengineeringEnclosure.canPlay(player)).is.true;
+
+    // Make sure that we do not get 1MC for the Science Ruling Policy
+    player.playedCards.push(new Research());
+    player.playedCards.push(new AdvancedAlloys());
+    player.playedCards.push(new ResearchCoordination());
+
+    expect(player.megaCredits).to.eq(0);
+    card.action(player);
+    expect(player.megaCredits).to.eq(4);
   });
 });

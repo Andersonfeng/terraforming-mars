@@ -1,32 +1,30 @@
 import {expect} from 'chai';
-import {Player} from '../../src/Player';
-import {Game} from '../../src/Game';
-import {TestPlayers} from '../TestPlayers';
-import {GrantVenusAltTrackBonusDeferred} from '../../src/venusNext/GrantVenusAltTrackBonusDeferred';
-import {AndOptions} from '../../src/inputs/AndOptions';
-import {TestingUtils} from '../TestingUtils';
-import {Tardigrades} from '../../src/cards/base/Tardigrades';
-import {OrOptions} from '../../src/inputs/OrOptions';
-import {SelectCard} from '../../src/inputs/SelectCard';
-import {Birds} from '../../src/cards/base/Birds';
+import {TestPlayer} from '../TestPlayer';
+import {GrantVenusAltTrackBonusDeferred} from '../../src/server/venusNext/GrantVenusAltTrackBonusDeferred';
+import {AndOptions} from '../../src/server/inputs/AndOptions';
+import {cast, formatMessage} from '../TestingUtils';
+import {Tardigrades} from '../../src/server/cards/base/Tardigrades';
+import {OrOptions} from '../../src/server/inputs/OrOptions';
+import {SelectCard} from '../../src/server/inputs/SelectCard';
+import {Birds} from '../../src/server/cards/base/Birds';
+import {testGame} from '../TestGame';
 
-describe('GrantVenusAltTrackBonusDeferred', function() {
-  let player: Player;
+describe('GrantVenusAltTrackBonusDeferred', () => {
+  let player: TestPlayer;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('x', [player], player);
+    [/* game */, player] = testGame(1);
   });
 
   it('grant single bonus', () => {
-    const input = TestingUtils.cast(new GrantVenusAltTrackBonusDeferred(player, 1, false).execute(), AndOptions);
+    const input = cast(new GrantVenusAltTrackBonusDeferred(player, 1, false).execute(), AndOptions);
     input.options[0].cb(0);
     input.options[1].cb(0);
     input.options[2].cb(0);
     input.options[3].cb(0);
     input.options[4].cb(0);
     input.options[5].cb(1);
-    input.cb();
+    input.cb(undefined);
     expect(player.megaCredits).eq(0);
     expect(player.steel).eq(0);
     expect(player.titanium).eq(0);
@@ -36,7 +34,8 @@ describe('GrantVenusAltTrackBonusDeferred', function() {
   });
 
   it('reject too many bonuses', () => {
-    const input = TestingUtils.cast(new GrantVenusAltTrackBonusDeferred(player, 2, false).execute(), AndOptions);
+    const input = cast(new GrantVenusAltTrackBonusDeferred(player, 2, false).execute(), AndOptions);
+    expect(formatMessage(input.title)).to.contain('Gain 2 resource(s) for your');
     input.options[0].cb(0);
     input.options[0].cb(0);
     input.options[0].cb(0);
@@ -44,24 +43,24 @@ describe('GrantVenusAltTrackBonusDeferred', function() {
     input.options[0].cb(0);
     input.options[5].cb(3);
 
-    expect(() => input.cb()).to.throw('Select 2 resources.');
+    expect(() => input.cb(undefined)).to.throw('Select 2 resource(s)');
 
     player.heat = 0;
     input.options[5].cb(2);
-    input.cb();
+    input.cb(undefined);
     expect(player.heat).eq(2);
   });
 
   it('grants wild resource', () => {
     // If the player had a resource card, the deferred action would return OrOption
-    TestingUtils.cast(new GrantVenusAltTrackBonusDeferred(player, 0, true).execute(), AndOptions);
+    cast(new GrantVenusAltTrackBonusDeferred(player, 0, true).execute(), AndOptions);
 
     const card = new Tardigrades();
     const otherCard = new Birds();
     player.playedCards.push(otherCard, card);
 
-    const input = TestingUtils.cast(new GrantVenusAltTrackBonusDeferred(player, 0, true).execute(), OrOptions);
-    const selectCard = TestingUtils.cast(input.options[0], SelectCard);
+    const input = cast(new GrantVenusAltTrackBonusDeferred(player, 0, true).execute(), OrOptions);
+    const selectCard = cast(input.options[0], SelectCard);
     expect(selectCard.cards).has.length(2);
     expect(card.resourceCount).eq(0);
     selectCard.cb([card]);

@@ -1,35 +1,54 @@
 import {expect} from 'chai';
-import {EnergyTapping} from '../../../src/cards/base/EnergyTapping';
-import {Game} from '../../../src/Game';
-import {SelectPlayer} from '../../../src/inputs/SelectPlayer';
+import {EnergyTapping} from '../../../src/server/cards/base/EnergyTapping';
+import {IGame} from '../../../src/server/IGame';
+import {SelectPlayer} from '../../../src/server/inputs/SelectPlayer';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Resource} from '../../../src/common/Resource';
 import {runAllActions, cast} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('EnergyTapping', function() {
-  let card : EnergyTapping; let player : TestPlayer; let player2 : TestPlayer; let game : Game;
+describe('EnergyTapping', () => {
+  let card: EnergyTapping;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EnergyTapping();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
-    player.popWaitingFor();
+    [game, player, player2] = testGame(2);
   });
 
-  it('Should play - auto select if single target', function() {
+  it('play - no targets', () => {
+    player.playedCards.push(card, card);
+    expect(card.canPlay(player)).is.true;
+
     card.play(player);
-    player2.setProductionForTest({energy: 1});
     runAllActions(game);
-    expect(player.popWaitingFor()).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(player2.getProduction(Resources.ENERGY)).to.eq(0);
+
+    expect(player.production.energy).to.eq(1);
+
+    const selectPlayer = cast(player.popWaitingFor(), SelectPlayer);
+    expect(selectPlayer.players).deep.eq([player]);
+    selectPlayer.cb(player);
+    runAllActions(game);
+    expect(player.production.energy).to.eq(0);
+    expect(player2.production.energy).to.eq(0);
   });
 
-  it('Should play - multiple targets', function() {
-    player.addProduction(Resources.ENERGY, 2);
-    player2.addProduction(Resources.ENERGY, 3);
+  it('play - auto select if single target', () => {
+    player2.production.override({energy: 1});
+
+    card.play(player);
+
+    runAllActions(game);
+    cast(player.popWaitingFor(), undefined);
+    expect(player.production.energy).to.eq(1);
+    expect(player2.production.energy).to.eq(0);
+  });
+
+  it('play - multiple targets', () => {
+    player.production.add(Resource.ENERGY, 2);
+    player2.production.add(Resource.ENERGY, 3);
 
     card.play(player);
 
@@ -39,19 +58,18 @@ describe('EnergyTapping', function() {
 
     runAllActions(game);
 
-    expect(player.getProduction(Resources.ENERGY)).to.eq(3);
-    expect(player2.getProduction(Resources.ENERGY)).to.eq(2);
+    expect(player.production.energy).to.eq(3);
+    expect(player2.production.energy).to.eq(2);
   });
 
-  it('Playable in solo mode', function() {
-    const game = Game.newInstance('foobar', [player], player);
-    player.popWaitingFor(); // Eliminate SelectInitialCards
+  it('Playable in solo mode', () => {
+    [game, player] = testGame(1);
     card.play(player);
 
     runAllActions(game);
-    expect(player.popWaitingFor()).is.undefined;
+    cast(player.popWaitingFor(), undefined);
 
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(card.getVictoryPoints()).to.eq(-1);
+    expect(player.production.energy).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(-1);
   });
 });

@@ -1,15 +1,14 @@
 import {expect} from 'chai';
-import {PeroxidePower} from '../../../src/cards/base/PeroxidePower';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {PeroxidePower} from '../../../src/server/cards/base/PeroxidePower';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('PeroxidePower', function() {
-  it('Should play', function() {
+describe('PeroxidePower', () => {
+  it('Should play', () => {
     const card = new PeroxidePower();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(-1);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(2);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.megacredits).to.eq(-1);
+    expect(player.production.energy).to.eq(2);
   });
 });

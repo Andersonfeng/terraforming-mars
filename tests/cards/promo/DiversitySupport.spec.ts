@@ -1,27 +1,25 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Fish} from '../../../src/cards/base/Fish';
-import {DiversitySupport} from '../../../src/cards/promo/DiversitySupport';
-import {Dirigibles} from '../../../src/cards/venusNext/Dirigibles';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Fish} from '../../../src/server/cards/base/Fish';
+import {DiversitySupport} from '../../../src/server/cards/promo/DiversitySupport';
+import {Dirigibles} from '../../../src/server/cards/venusNext/Dirigibles';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('DiversitySupport', function() {
-  let card : DiversitySupport; let player : Player;
+describe('DiversitySupport', () => {
+  let card: DiversitySupport;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new DiversitySupport();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can play', function() {
+  it('Can play', () => {
     // 3 non-standard resources
     const ants = new Ants();
     const fish = new Fish();
@@ -30,7 +28,7 @@ describe('DiversitySupport', function() {
     dirigibles.resourceCount = 4;
     fish.resourceCount = 3;
     ants.resourceCount = 2;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
 
     // 6 standard resources
     player.megaCredits = 10;
@@ -40,7 +38,7 @@ describe('DiversitySupport', function() {
     player.energy = 1;
     player.heat = 3;
 
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
     card.play(player);
     expect(player.getTerraformRating()).to.eq(21);
   });

@@ -1,64 +1,62 @@
 import {expect} from 'chai';
-import {MartianRepository} from '../../../src/cards/pathfinders/MartianRepository';
-import {Game} from '../../../src/Game';
+import {MartianRepository} from '../../../src/server/cards/pathfinders/MartianRepository';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
 import {Units} from '../../../src/common/Units';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
-import {Tags} from '../../../src/common/cards/Tags';
+import {IProjectCard} from '../../../src/server/cards/IProjectCard';
+import {Tag} from '../../../src/common/cards/Tag';
+import {testGame} from '../../TestingUtils';
 
-describe('MartianRepository', function() {
+describe('MartianRepository', () => {
   let card: MartianRepository;
   let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new MartianRepository();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    [/* game */, player] = testGame(1);
   });
 
-  it('can play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.false;
-    player.setProductionForTest({energy: 1});
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('can play', () => {
+    expect(card.canPlay(player)).is.false;
+    player.production.override({energy: 1});
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('play', function() {
-    player.setProductionForTest({energy: 1});
+  it('play', () => {
+    player.production.override({energy: 1});
     card.play(player);
-    expect(player.getProductionForTest()).deep.eq(Units.EMPTY);
+    expect(player.production.asUnits()).deep.eq(Units.EMPTY);
   });
 
-  it('effect', function() {
-    card.onCardPlayed(player, {tags: [Tags.VENUS]} as IProjectCard);
+  it('effect', () => {
+    card.onCardPlayed(player, {tags: [Tag.VENUS]} as IProjectCard);
     expect(card.resourceCount).eq(0);
-    card.onCardPlayed(player, {tags: [Tags.EARTH]} as IProjectCard);
+    card.onCardPlayed(player, {tags: [Tag.EARTH]} as IProjectCard);
     expect(card.resourceCount).eq(0);
-    card.onCardPlayed(player, {tags: [Tags.MARS]} as IProjectCard);
+    card.onCardPlayed(player, {tags: [Tag.MARS]} as IProjectCard);
     expect(card.resourceCount).eq(1);
-    card.onCardPlayed(player, {tags: [Tags.SCIENCE]} as IProjectCard);
+    card.onCardPlayed(player, {tags: [Tag.SCIENCE]} as IProjectCard);
     expect(card.resourceCount).eq(2);
 
     // Should increment twice. ("For every science or Mars tag")
-    card.onCardPlayed(player, {tags: [Tags.MARS, Tags.SCIENCE]} as IProjectCard);
+    card.onCardPlayed(player, {tags: [Tag.MARS, Tag.SCIENCE]} as IProjectCard);
     expect(card.resourceCount).eq(4);
 
     // Should increment twice. ("For every science or Mars tag")
-    card.onCardPlayed(player, {tags: [Tags.SCIENCE, Tags.SCIENCE]} as IProjectCard);
+    card.onCardPlayed(player, {tags: [Tag.SCIENCE, Tag.SCIENCE]} as IProjectCard);
     expect(card.resourceCount).eq(6);
   });
 
 
-  it('victoryPoints', function() {
+  it('victoryPoints', () => {
     card.resourceCount = 2;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 3;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 4;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 5;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 6;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
   });
 });

@@ -1,22 +1,23 @@
 import {expect} from 'chai';
-import {Meltworks} from '../../../src/cards/promo/Meltworks';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {Meltworks} from '../../../src/server/cards/promo/Meltworks';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('Meltworks', function() {
-  let card : Meltworks; let player : Player;
+describe('Meltworks', () => {
+  let card: Meltworks;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Meltworks();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t act', function() {
+  it('Can not act', () => {
     player.heat = 4;
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.heat = 5;
     expect(card.canAct(player)).is.true;
 

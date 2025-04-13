@@ -1,23 +1,19 @@
 import {expect} from 'chai';
-import {Pristar} from '../../../src/cards/turmoil/Pristar';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {Pristar} from '../../../src/server/cards/turmoil/Pristar';
+import {testGame} from '../../TestGame';
 
-describe('Pristar', function() {
-  it('Should play', function() {
+describe('Pristar', () => {
+  it('Should play', () => {
     const card = new Pristar();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, redPlayer], player);
+    const [game, player] = testGame(2);
+
     const play = card.play(player);
-    player.corporationCard = card;
+    player.corporations.push(card);
     expect(play).is.undefined;
     player.megaCredits = 10;
     game.increaseTemperature(player, 1);
-    if (player.corporationCard.onProductionPhase !== undefined) {
-      player.corporationCard.onProductionPhase(player);
-      expect(player.megaCredits).to.eq(10);
-      expect(card.resourceCount).to.eq(0);
-    }
+    card.onProductionPhase(player);
+    expect(player.megaCredits).to.eq(10);
+    expect(card.resourceCount).to.eq(0);
   });
 });

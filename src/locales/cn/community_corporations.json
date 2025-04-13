@@ -1,6 +1,6 @@
 {
     "Agricola Inc": "阿格里科拉公司",
-    "You start with 1 plant production, 1 M€ production and 40 M€.": "起始1点植物产量、1 M€产量和40 M€。",
+    "You start with 1 plant production, 1 M€ production, 1 heat production and 40 M€.": "起始1点植物产量、1点热能产量、1 M€产量和40 M€。",
     "Effect: At game end, score -2 / 0 / 1 / 2 VP PER TAG TYPE for 0 / 1-2 / 3-4 / 5+ tags.": "效果：终局计分时，若你拥有每种标志0/1-2/3-4/5+个，得到-2/0/1/2 VP。",
 
     "Curiosity II": "求知II型公司",
@@ -15,7 +15,7 @@
     "You start with 120 M€. Lower your TR 7 steps.": "起始获得120 M€，降低7点改造度。",
 
     "Playwrights": "剧作家",
-    "You start with 38 M€ and 1 Energy production.": "起始拥有38 M€和1点电力产量。",
+    "You start with 38 M€ and 1 energy production.": "起始拥有38 M€和1点电力产量。",
     "Action: Replay a played event from any player by paying its cost ONLY in M€ (discounts and rebates apply), then REMOVE IT FROM PLAY.": "行动：仅适用M€支付费用来重复一个任意玩家已经打出的事件效果（适用减费与回钱），然后将其从游戏中移除。",
 
    "Project Workshop": "项目探讨公司",

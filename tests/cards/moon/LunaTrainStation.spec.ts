@@ -1,26 +1,22 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {LunaTrainStation} from '../../../src/cards/moon/LunaTrainStation';
 import {expect} from 'chai';
-import {Resources} from '../../../src/common/Resources';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {LunaTrainStation} from '../../../src/server/cards/moon/LunaTrainStation';
 import {TileType} from '../../../src/common/TileType';
-import {PlaceSpecialMoonTile} from '../../../src/moon/PlaceSpecialMoonTile';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {PlaceSpecialMoonTile} from '../../../src/server/moon/PlaceSpecialMoonTile';
 
 describe('LunaTrainStation', () => {
-  let game: Game;
-  let player: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player: TestPlayer;
+  let moonData: MoonData;
   let card: LunaTrainStation;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
     card = new LunaTrainStation();
   });
@@ -31,33 +27,33 @@ describe('LunaTrainStation', () => {
 
     player.steel = 2;
     moonData.logisticRate = 5;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
 
     player.steel = 2;
     moonData.logisticRate = 4;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
     player.steel = 1;
     moonData.logisticRate = 5;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('play', () => {
     player.steel = 3;
-    expect(player.getProduction(Resources.STEEL)).eq(0);
+    expect(player.production.steel).eq(0);
     expect(player.getTerraformRating()).eq(14);
     expect(moonData.miningRate).eq(0);
 
     card.play(player);
 
     expect(player.steel).eq(1);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(4);
+    expect(player.production.megacredits).eq(4);
     expect(player.getTerraformRating()).eq(15);
     expect(moonData.logisticRate).eq(1);
 
     const space = moonData.moon.spaces[2];
-    const placeTileAction = game.deferredActions.peek() as PlaceSpecialMoonTile;
-    placeTileAction!.execute()!.cb(space);
+    const placeTileAction = cast(game.deferredActions.peek(), PlaceSpecialMoonTile);
+    placeTileAction.execute()!.cb(space);
 
     expect(space.player).eq(player);
     expect(space.tile!.tileType).eq(TileType.LUNA_TRAIN_STATION);
@@ -66,7 +62,7 @@ describe('LunaTrainStation', () => {
 
   it('getVictoryPoints', () => {
     // This space has room to surround it with roads.
-    const space = moonData.moon.getSpace('m15');
+    const space = moonData.moon.getSpaceOrThrow('m15');
     space.tile = {tileType: TileType.LUNA_TRAIN_STATION, card: card.name};
 
     expect(card.getVictoryPoints(player)).eq(0);

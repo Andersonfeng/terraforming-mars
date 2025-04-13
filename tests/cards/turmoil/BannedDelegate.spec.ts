@@ -1,51 +1,69 @@
 import {expect} from 'chai';
-import {BannedDelegate} from '../../../src/cards/turmoil/BannedDelegate';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectDelegate} from '../../../src/inputs/SelectDelegate';
-import {Player} from '../../../src/Player';
+import {BannedDelegate} from '../../../src/server/cards/turmoil/BannedDelegate';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectDelegate} from '../../../src/server/inputs/SelectDelegate';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
-import {Turmoil} from '../../../src/turmoil/Turmoil';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {Turmoil} from '../../../src/server/turmoil/Turmoil';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
-describe('Banned Delegate', function() {
-  let card : BannedDelegate; let player : Player; let player2 : Player; let game : Game; let turmoil: Turmoil;
+describe('Banned Delegate', () => {
+  let card: BannedDelegate;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
+  let turmoil: Turmoil;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new BannedDelegate();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-
-    const gameOptions = TestingUtils.setCustomGameOptions();
-    game = Game.newInstance('foobar', [player, player2], player, gameOptions);
+    [game, player, player2] = testGame(2, {turmoilExtension: true});
     turmoil = game.turmoil!;
   });
 
-  it('Can\'t play', function() {
-    turmoil.chairman = player2.id;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Cannot play', () => {
+    turmoil.chairman = player2;
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    turmoil.chairman = player.id;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    turmoil.chairman = player;
+    expect(card.canPlay(player)).is.true;
 
-    const greens = turmoil.getPartyByName(PartyName.GREENS)!;
-    turmoil.sendDelegateToParty(player.id, PartyName.GREENS, game);
-    turmoil.sendDelegateToParty(player2.id, PartyName.GREENS, game);
-    const initialDelegatesCount = greens.delegates.length;
+    const greens = turmoil.getPartyByName(PartyName.GREENS);
+    turmoil.sendDelegateToParty(player, PartyName.GREENS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.GREENS, game);
 
-    const result = card.play(player);
+    // This card returns OrOptions, or SelectDelegate. It's
+    // By putting 2 delegates in the Reds party, Reds is a second option.
+    turmoil.sendDelegateToParty('NEUTRAL', PartyName.REDS, game);
+    turmoil.sendDelegateToParty('NEUTRAL', PartyName.REDS, game);
 
-    if (result instanceof SelectDelegate) {
-      const selectDelegate = result as SelectDelegate;
-      selectDelegate.cb(result.players[0]);
-    } else {
-      const orOptions = result as OrOptions;
-      orOptions.options.forEach((option) => option.cb((option as SelectDelegate).players[0]));
-    }
+    const initialDelegatesCount = greens.delegates.size;
 
-    expect(greens.delegates).has.lengthOf(initialDelegatesCount - 1);
+    const orOptions = cast(card.play(player), OrOptions);
+    orOptions.options.forEach((option) => option.cb(cast(option, SelectDelegate).players[0]));
+
+    expect(greens.delegates.size).eq(initialDelegatesCount - 1);
+  });
+
+  it('Removes duplicates', () => {
+    turmoil.chairman = player;
+    expect(card.canPlay(player)).is.true;
+
+    turmoil.sendDelegateToParty(player, PartyName.GREENS, game);
+    turmoil.sendDelegateToParty(player, PartyName.GREENS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.GREENS, game);
+    turmoil.sendDelegateToParty(player2, PartyName.GREENS, game);
+    turmoil.sendDelegateToParty('NEUTRAL', PartyName.GREENS, game);
+    turmoil.sendDelegateToParty('NEUTRAL', PartyName.GREENS, game);
+
+    turmoil.sendDelegateToParty('NEUTRAL', PartyName.REDS, game);
+    turmoil.sendDelegateToParty('NEUTRAL', PartyName.REDS, game);
+
+    const orOptions = cast(card.play(player), OrOptions);
+    const selectDelegate = cast(orOptions.options[0], SelectDelegate);
+    expect(selectDelegate.players).has.members([player, player2, 'NEUTRAL']);
   });
 });

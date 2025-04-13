@@ -1,48 +1,45 @@
 import {expect} from 'chai';
-import {CrashSiteCleanup} from '../../../src/cards/promo/CrashSiteCleanup';
-import {SmallAsteroid} from '../../../src/cards/promo/SmallAsteroid';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast} from '../../TestingUtils';
+import {CrashSiteCleanup} from '../../../src/server/cards/promo/CrashSiteCleanup';
+import {SmallAsteroid} from '../../../src/server/cards/promo/SmallAsteroid';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('CrashSiteCleanup', function() {
-  let card : CrashSiteCleanup; let player : Player;
+describe('CrashSiteCleanup', () => {
+  let card: CrashSiteCleanup;
+  let player: TestPlayer;
+  let player2: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CrashSiteCleanup();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player, player2] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can play if removed plants from another player this generation', function() {
-    const player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player);
+  it('Can play if removed plants from another player this generation', () => {
     player2.plants = 1;
-
     const smallAsteroid = new SmallAsteroid();
     smallAsteroid.play(player);
     // Choose Remove 1 plant option
-    const orOptions = player.game.deferredActions.peek()!.execute() as OrOptions;
+    const orOptions = cast(player.game.deferredActions.peek()!.execute(), OrOptions);
     orOptions.options[0].cb([player2]);
 
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
     expect(player.game.someoneHasRemovedOtherPlayersPlants).is.true;
 
-    const action = card.play(player) as OrOptions;
+    const action = cast(card.play(player), OrOptions);
     action.options[0].cb();
     expect(player.titanium).to.eq(1);
     action.options[1].cb();
     expect(player.steel).to.eq(2);
   });
 
-  it('Can play if removed plants from neutral player in solo mode', function() {
-    Game.newInstance('foobar', [player], player);
+  it('Can play if removed plants from neutral player in solo mode', () => {
+    [/* game */, player] = testGame(1);
     const smallAsteroid = new SmallAsteroid();
     smallAsteroid.play(player);
 
@@ -50,7 +47,7 @@ describe('CrashSiteCleanup', function() {
     expect(player.game.deferredActions).has.lengthOf(1);
     player.game.deferredActions.peek()!.execute();
 
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
     expect(player.game.someoneHasRemovedOtherPlayersPlants).is.true;
   });
 });

@@ -1,23 +1,27 @@
 <template>
       <div id="game-home" class="game-home-container">
-        <h1><span v-i18n>Terraforming Mars</span> [game id: <span>{{getGameId()}}</span>]</h1>
-        <h4 v-i18n>Instructions: To start the game, separately copy and share the links with all players, and then click on your name. <br/>Save this page in case you or one of your opponents loses a link.</h4>
+        <h1><span v-i18n>Terraforming Mars</span> [<span v-i18n>game id:</span> <span>{{getGameId()}}</span>]</h1>
+        <h4><span v-i18n>Instructions: To start the game, separately copy and share the links with all players, and then click on your name.</span><br/><span v-i18n>Save this page in case you or one of your opponents loses a link.</span></h4>
         <ul>
           <li v-for="(player, index) in (game === undefined ? [] : game.players)" :key="player.color">
             <span class="turn-order" v-i18n>{{getTurnOrder(index)}}</span>
             <span :class="'color-square ' + getPlayerCubeColorClass(player.color)"></span>
             <span class="player-name"><a :href="getHref(player.id)">{{player.name}}</a></span>
-            <Button title="copy" size="tiny" @click="copyUrl(player.id)"/>
-            <span v-if="isPlayerUrlCopied(player.id)" class="copied-notice">Playable link for {{player.name}} copied to clipboard <span class="dismissed" @click="setCopiedIdToDefault" >dismiss</span></span>
+            <AppButton title="copy" size="tiny" @click="copyUrl(player.id)"/>
+            <span v-if="isPlayerUrlCopied(player.id)" class="copied-notice"><span v-i18n>Copied!</span></span>
           </li>
           <li v-if="game !== undefined && game.spectatorId">
             <p/>
             <span class="turn-order"></span>
             <span class="color-square"></span>
             <span class="player-name"><a :href="getHref(game.spectatorId)" v-i18n>Spectator</a></span>
-            <Button title="copy" size="tiny" @click="copyUrl(game.spectatorId || 'unreachable')"/>
+            <AppButton title="copy" size="tiny" @click="copyUrl(game.spectatorId)"/>
           </li>
         </ul>
+
+        <div class="spacing-setup"></div>
+
+        <purge-warning :expectedPurgeTimeMs="game.expectedPurgeTimeMs"></purge-warning>
 
         <div class="spacing-setup"></div>
         <div v-if="game !== undefined">
@@ -31,10 +35,12 @@
 
 import Vue from 'vue';
 import {SimpleGameModel} from '@/common/models/SimpleGameModel';
-import Button from '@/client/components/common/Button.vue';
+import AppButton from '@/client/components/common/AppButton.vue';
+import PurgeWarning from '@/client/components/common/PurgeWarning.vue';
 import {playerColorClass} from '@/common/utils/utils';
 import GameSetupDetail from '@/client/components/GameSetupDetail.vue';
-import {SpectatorId, PlayerId} from '@/common/Types';
+import {ParticipantId} from '@/common/Types';
+import {Color} from '@/common/Color';
 
 // taken from https://stackoverflow.com/a/46215202/83336
 // The solution to copying to the clipboard in this case is
@@ -61,13 +67,14 @@ export default Vue.extend({
     },
   },
   components: {
-    Button,
+    AppButton,
     'game-setup-detail': GameSetupDetail,
+    PurgeWarning,
   },
   data() {
     return {
       // Variable to keep the state for the current copied player id. Used to display message of which button and which player playable link is currently in the clipboard
-      urlCopiedPlayerId: DEFAULT_COPIED_PLAYER_ID as string,
+      urlCopiedPlayerId: DEFAULT_COPIED_PLAYER_ID,
     };
   },
   methods: {
@@ -90,17 +97,20 @@ export default Vue.extend({
     setCopiedIdToDefault() {
       this.urlCopiedPlayerId = DEFAULT_COPIED_PLAYER_ID;
     },
-    getPlayerCubeColorClass(color: string): string {
-      return playerColorClass(color.toLowerCase(), 'bg');
+    getPlayerCubeColorClass(color: Color): string {
+      return playerColorClass(color, 'bg');
     },
-    getHref(playerId: PlayerId | SpectatorId): string {
+    getHref(playerId: ParticipantId): string {
       if (playerId === this.game.spectatorId) {
-        return `/spectator?id=${playerId}`;
+        return `spectator?id=${playerId}`;
       }
-      return `/player?id=${playerId}`;
+      return `player?id=${playerId}`;
     },
-    copyUrl(playerId: PlayerId | SpectatorId): void {
-      copyToClipboard(window.location.origin + this.getHref(playerId));
+    copyUrl(playerId: ParticipantId | undefined): void {
+      if (playerId === undefined) return;
+      // Get current location path without game?id=xxxxxxx
+      const path = window.location.href.replace(/game\?id=.*/, '');
+      copyToClipboard(path + this.getHref(playerId));
       this.urlCopiedPlayerId = playerId;
     },
     isPlayerUrlCopied(playerId: string): boolean {

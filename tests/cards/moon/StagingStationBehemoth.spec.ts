@@ -1,22 +1,19 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {StagingStationBehemoth} from '../../../src/cards/moon/StagingStationBehemoth';
 import {expect} from 'chai';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {IMoonData} from '../../../src/moon/IMoonData';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {testGame} from '../../TestGame';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {StagingStationBehemoth} from '../../../src/server/cards/moon/StagingStationBehemoth';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {MoonData} from '../../../src/server/moon/MoonData';
 
 describe('StagingStationBehemoth', () => {
-  let player: Player;
+  let game: IGame;
+  let player: TestPlayer;
   let card: StagingStationBehemoth;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new StagingStationBehemoth();
     moonData = MoonExpansion.moonData(game);
   });
@@ -25,17 +22,17 @@ describe('StagingStationBehemoth', () => {
     player.cardsInHand = [card];
     player.megaCredits = card.cost;
 
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {
     moonData.logisticRate = 0;
-    expect(player.getFleetSize()).to.eq(1);
+    expect(player.colonies.getFleetSize()).to.eq(1);
 
     card.play(player);
 
     expect(moonData.logisticRate).eq(1);
-    expect(player.getFleetSize()).to.eq(3);
+    expect(player.colonies.getFleetSize()).to.eq(3);
     expect(player.getTerraformRating()).eq(15);
   });
 });

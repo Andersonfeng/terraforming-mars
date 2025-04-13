@@ -1,49 +1,47 @@
 import {expect} from 'chai';
-import {InventorsGuild} from '../../../src/cards/base/InventorsGuild';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {churn, cast} from '../../TestingUtils';
+import {InventorsGuild} from '../../../src/server/cards/base/InventorsGuild';
+import {IGame} from '../../../src/server/IGame';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('InventorsGuild', function() {
-  let card : InventorsGuild; let player : Player; let game : Game;
+describe('InventorsGuild', () => {
+  let card: InventorsGuild;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new InventorsGuild();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    const action = card.play(player);
-    expect(action).is.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.megaCredits = 3;
-    const action = card.action(player);
-    expect(action).instanceOf(SelectCard);
-    (action! as SelectCard<IProjectCard>).cb([]);
+    const selectCard = cast(churn(card.action(player), player), SelectCard);
+    selectCard.cb([]);
 
-    expect(game.dealer.discarded).has.lengthOf(1);
+    expect(game.projectDeck.discardPile).has.lengthOf(1);
     expect(player.megaCredits).to.eq(3);
     player.megaCredits = 3;
 
-    (action as SelectCard<IProjectCard>).cb([(action as SelectCard<IProjectCard>).cards[0]]);
+    selectCard.cb([selectCard.cards[0]]);
     game.deferredActions.runNext();
     expect(player.megaCredits).to.eq(0);
     expect(player.cardsInHand).has.lengthOf(1);
   });
 
-  it('Cannot buy card if cannot pay', function() {
+  it('Cannot buy card if cannot pay', () => {
     player.megaCredits = 2;
-    const selectCard = card.action(player) as SelectCard<IProjectCard>;
+    const selectCard = cast(churn(card.action(player), player), SelectCard);
     expect(selectCard.config.max).to.eq(0);
     selectCard.cb([]);
     expect(game.deferredActions).has.lengthOf(0);
-    expect(game.dealer.discarded).has.lengthOf(1);
+    expect(game.projectDeck.discardPile).has.lengthOf(1);
     expect(player.cardsInHand).has.lengthOf(0);
     expect(player.megaCredits).to.eq(2);
   });

@@ -1,4 +1,6 @@
-export interface LoadGameFormModel {
-  game_id: string;
+import {GameId} from '../Types';
+
+export type LoadGameFormModel = {
+  gameId: GameId;
   rollbackCount: number;
 }

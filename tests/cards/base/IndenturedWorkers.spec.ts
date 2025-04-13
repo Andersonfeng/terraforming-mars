@@ -1,24 +1,21 @@
 import {expect} from 'chai';
-import {IndenturedWorkers} from '../../../src/cards/base/IndenturedWorkers';
-import {MicroMills} from '../../../src/cards/base/MicroMills';
-import {Game} from '../../../src/Game';
+import {IndenturedWorkers} from '../../../src/server/cards/base/IndenturedWorkers';
+import {MicroMills} from '../../../src/server/cards/base/MicroMills';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, testGame} from '../../TestingUtils';
 
-describe('IndenturedWorkers', function() {
+describe('IndenturedWorkers', () => {
   let card: IndenturedWorkers;
   let player: TestPlayer;
 
   beforeEach(() => {
     card = new IndenturedWorkers();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player, TestPlayers.RED.newPlayer()], player);
+    [/* game */, player] = testGame(1);
   });
 
   it('play', () => {
-    const action = card.play();
-    expect(action).is.undefined;
-    expect(card.getVictoryPoints()).to.eq(-1);
+    cast(card.play(player), undefined);
+    expect(card.getVictoryPoints(player)).to.eq(-1);
     expect(card.getCardDiscount(player)).to.eq(0);
   });
 

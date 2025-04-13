@@ -1,38 +1,38 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Sabotage} from '../../../src/cards/base/Sabotage';
-import {Tardigrades} from '../../../src/cards/base/Tardigrades';
-import {AirRaid} from '../../../src/cards/colonies/AirRaid';
-import {Birds} from '../../../src/cards/base/Birds';
-import {MonsInsurance} from '../../../src/cards/promo/MonsInsurance';
-import {DeimosDown} from '../../../src/cards/base/DeimosDown';
-import {Predators} from '../../../src/cards/base/Predators';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Resources} from '../../../src/common/Resources';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Sabotage} from '../../../src/server/cards/base/Sabotage';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
+import {AirRaid} from '../../../src/server/cards/colonies/AirRaid';
+import {Birds} from '../../../src/server/cards/base/Birds';
+import {MonsInsurance} from '../../../src/server/cards/promo/MonsInsurance';
+import {DeimosDown} from '../../../src/server/cards/base/DeimosDown';
+import {Predators} from '../../../src/server/cards/base/Predators';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {Resource} from '../../../src/common/Resource';
 import {GlobalEventName} from '../../../src/common/turmoil/globalEvents/GlobalEventName';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {TestingUtils} from '../../TestingUtils';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {IGame} from '../../../src/server/IGame';
 
 describe('MonsInsurance', () => {
-  let card: MonsInsurance; let player: TestPlayer; let player2: TestPlayer; let player3: TestPlayer;
+  let card: MonsInsurance;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let player3: TestPlayer;
 
   beforeEach(() => {
     card = new MonsInsurance();
 
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    player3 = TestPlayers.GREEN.newPlayer();
-    Game.newInstance('foobar', [player, player2, player3], player);
+    [/* game */, player, player2, player3] = testGame(3);
     card.play(player);
-    player.corporationCard = card;
+    player.corporations.push(card);
   });
 
   it('Should play', () => {
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(4);
-    expect(player2.getProduction(Resources.MEGACREDITS)).to.eq(-2);
-    expect(player3.getProduction(Resources.MEGACREDITS)).to.eq(-2);
+    expect(player.production.megacredits).to.eq(4);
+    expect(player2.production.megacredits).to.eq(-2);
+    expect(player3.production.megacredits).to.eq(-2);
   });
 
   it('Triggers effect when resources are removed', () => {
@@ -40,9 +40,9 @@ describe('MonsInsurance', () => {
     player2.titanium = 3;
 
     const card2 = new Sabotage();
-    const action = card2.play(player3) as OrOptions;
+    const orOptions = cast(card2.play(player3), OrOptions);
 
-    action.options[1].cb();
+    orOptions.options[1].cb();
     expect(player2.titanium).to.eq(0);
     expect(player2.megaCredits).to.eq(2);
     expect(player.megaCredits).to.eq(0);
@@ -81,7 +81,7 @@ describe('MonsInsurance', () => {
     player2.megaCredits = 10;
     player2.steel = 1;
 
-    player2.addResource(Resources.STEEL, -1, {log: false, from: player3});
+    player2.stock.add(Resource.STEEL, -1, {log: false, from: player3});
 
     expect(player2.megaCredits).to.eq(13);
     expect(player.megaCredits).to.eq(7);
@@ -92,29 +92,29 @@ describe('MonsInsurance', () => {
     player2.megaCredits = 10;
     player2.steel = 1;
 
-    player2.addResource(Resources.STEEL, -1, {log: false, from: GlobalEventName.ECO_SABOTAGE});
+    player2.stock.add(Resource.STEEL, -1, {log: false, from: GlobalEventName.ECO_SABOTAGE});
 
     expect(player2.megaCredits).to.eq(10);
     expect(player.megaCredits).to.eq(10);
   });
 
   it('Effect triggers direct calls to addProduction', () => {
-    player.setProductionForTest({megacredits: 1});
+    player.production.override({megacredits: 1});
     player.megaCredits = 10;
     player2.megaCredits = 10;
 
-    player2.addProduction(Resources.MEGACREDITS, -1, {log: false, from: player3});
+    player2.production.add(Resource.MEGACREDITS, -1, {log: false, from: player3});
 
     expect(player2.megaCredits).to.eq(13);
     expect(player.megaCredits).to.eq(7);
   });
 
   it('Effect does not trigger direct calls to addProduction for Global Event', () => {
-    player.setProductionForTest({megacredits: 1});
+    player.production.override({megacredits: 1});
     player.megaCredits = 10;
     player2.megaCredits = 10;
 
-    player2.addProduction(Resources.MEGACREDITS, -1, {log: false, from: GlobalEventName.ECO_SABOTAGE});
+    player2.production.add(Resource.MEGACREDITS, -1, {log: false, from: GlobalEventName.ECO_SABOTAGE});
 
     expect(player2.megaCredits).to.eq(10);
     expect(player.megaCredits).to.eq(10);
@@ -123,22 +123,19 @@ describe('MonsInsurance', () => {
 
 describe('MonsInsurance - Solo', () => {
   let card: MonsInsurance;
+  let game: IGame;
   let player: TestPlayer;
 
   beforeEach(() => {
     card = new MonsInsurance();
 
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1, {preludeExtension: true});
     card.play(player);
-    player.corporationCard = card;
-
-    // Get rid of selectInitialCards
-    player.popWaitingFor();
+    player.corporations.push(card);
   });
 
   it('Should play', () => {
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(4);
+    expect(player.production.megacredits).to.eq(4);
   });
 
   it('Triggers on StealResources', () => {
@@ -147,8 +144,8 @@ describe('MonsInsurance - Solo', () => {
     // AirRaid steals 5 resources from any player.
     const airRaid = new AirRaid();
     airRaid.play(player);
-    TestingUtils.runAllActions(player.game);
-    expect(player.getWaitingFor()).is.undefined;
+    runAllActions(game);
+    cast(player.getWaitingFor(), undefined);
 
     // 10 + 5 - 3 = 12
     expect(player.megaCredits).eq(12);
@@ -160,8 +157,8 @@ describe('MonsInsurance - Solo', () => {
     // Birds removes 2 plant production
     const birds = new Birds();
     birds.play(player);
-    TestingUtils.runAllActions(player.game);
-    expect(player.getWaitingFor()).is.undefined;
+    runAllActions(game);
+    cast(player.getWaitingFor(), undefined);
 
     expect(player.megaCredits).eq(7);
   });
@@ -173,8 +170,10 @@ describe('MonsInsurance - Solo', () => {
     const comet = new DeimosDown();
 
     comet.play(player);
-    TestingUtils.runAllActions(player.game);
-    expect(player.getWaitingFor()).is.undefined;
+    runAllActions(game);
+    const orOptions = cast(player.getWaitingFor(), OrOptions);
+    orOptions.options[0].cb();
+    runAllActions(game);
 
     expect(player.megaCredits).eq(7);
   });
@@ -188,8 +187,8 @@ describe('MonsInsurance - Solo', () => {
     expect(predators.resourceCount).eq(0);
 
     predators.action(player);
-    TestingUtils.runAllActions(player.game);
-    expect(player.getWaitingFor()).is.undefined;
+    runAllActions(game);
+    cast(player.getWaitingFor(), undefined);
 
     expect(predators.resourceCount).eq(1);
     expect(player.megaCredits).eq(7);

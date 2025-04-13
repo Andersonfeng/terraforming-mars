@@ -1,34 +1,30 @@
 import {expect} from 'chai';
-import {SpaceRelay} from '../../../src/cards/pathfinders/SpaceRelay';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
-import {Tags} from '../../../src/common/cards/Tags';
-import {Resources} from '../../../src/common/Resources';
-import {Game} from '../../../src/Game';
+import {SpaceRelay} from '../../../src/server/cards/pathfinders/SpaceRelay';
+import {IProjectCard} from '../../../src/server/cards/IProjectCard';
+import {Tag} from '../../../src/common/cards/Tag';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestingUtils';
 
-describe('SpaceRelay', function() {
+describe('SpaceRelay', () => {
   let card: SpaceRelay;
   let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new SpaceRelay();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
-    player.playedCards.push(card);
+    [/* game */, player] = testGame(1);
   });
 
-  it('play', function() {
+  it('play', () => {
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(1);
+    expect(player.production.megacredits).eq(1);
   });
 
-  it('onCardPlayed', function() {
-    card.onCardPlayed(player, {tags: [Tags.VENUS]} as IProjectCard);
+  it('onCardPlayed', () => {
+    card.onCardPlayed(player, {tags: [Tag.VENUS]} as IProjectCard);
     expect(player.cardsInHand).has.length(0);
-    card.onCardPlayed(player, {tags: [Tags.JOVIAN]} as IProjectCard);
+    card.onCardPlayed(player, {tags: [Tag.JOVIAN]} as IProjectCard);
     expect(player.cardsInHand).has.length(1);
-    card.onCardPlayed(player, {tags: [Tags.WILD]} as IProjectCard);
+    card.onCardPlayed(player, {tags: [Tag.WILD]} as IProjectCard);
     expect(player.cardsInHand).has.length(1);
   });
 });

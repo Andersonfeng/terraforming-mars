@@ -43,6 +43,9 @@
   <div v-else-if="metadata.buildType === ColonyBenefit.PLACE_OCEAN_TILE">
     <div class="tile ocean-tile ocean-tile-colony"></div>
   </div>
+  <div v-else-if="metadata.buildType === ColonyBenefit.PLACE_HAZARD_TILE">
+    <div class="tile hazard-tile"></div>
+  </div>
 </template>
 <script lang="ts">
 
@@ -71,7 +74,7 @@ export default Vue.extend({
       return this.metadata.buildQuantity[this.idx] > 1 ? String(this.metadata.buildQuantity[this.idx]) : '';
     },
     resource(): string | undefined {
-      return (this.metadata.buildResource ?? this.metadata.resourceType)?.toLowerCase();
+      return (this.metadata.buildResource ?? this.metadata.cardResource)?.toLowerCase();
     },
   },
 });

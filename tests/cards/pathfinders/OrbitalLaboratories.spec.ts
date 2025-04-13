@@ -1,27 +1,24 @@
 import {expect} from 'chai';
-import {OrbitalLaboratories} from '../../../src/cards/pathfinders/OrbitalLaboratories';
-import {Game} from '../../../src/Game';
+import {OrbitalLaboratories} from '../../../src/server/cards/pathfinders/OrbitalLaboratories';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {Resources} from '../../../src/common/Resources';
+import {testGame} from '../../TestingUtils';
 
-describe('OrbitalLaboratories', function() {
+describe('OrbitalLaboratories', () => {
   let card: OrbitalLaboratories;
   let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new OrbitalLaboratories();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    [/* game */, player] = testGame(1);
   });
 
-  it('play', function() {
+  it('play', () => {
     player.plants = 0;
-    player.setProductionForTest({plants: 0});
+    player.production.override({plants: 0});
 
     card.play(player);
 
     expect(player.plants).eq(1);
-    expect(player.getProduction(Resources.PLANTS)).eq(2);
+    expect(player.production.plants).eq(2);
   });
 });

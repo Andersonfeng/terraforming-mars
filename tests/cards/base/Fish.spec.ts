@@ -1,58 +1,61 @@
 import {expect} from 'chai';
-import {Fish} from '../../../src/cards/base/Fish';
-import {Game} from '../../../src/Game';
-import {SelectPlayer} from '../../../src/inputs/SelectPlayer';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Fish} from '../../../src/server/cards/base/Fish';
+import {IGame} from '../../../src/server/IGame';
+import {SelectPlayer} from '../../../src/server/inputs/SelectPlayer';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions, setTemperature} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('Fish', function() {
-  let card : Fish; let player : Player; let player2 : Player; let game : Game;
+describe('Fish', () => {
+  let card: Fish;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Fish();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     card.action(player);
+    runAllActions(game);
     expect(card.resourceCount).to.eq(1);
   });
 
-  it('Should play - auto select if single target', function() {
-    (game as any).temperature = 2;
-    player2.addProduction(Resources.PLANTS, 1);
+  it('Should play - auto select if single target', () => {
+    setTemperature(game, 2);
+    player2.production.add(Resource.PLANTS, 1);
 
     expect(card.canPlay(player)).is.true;
     card.play(player);
 
     const input = game.deferredActions.peek()!.execute();
     expect(input).is.undefined;
-    expect(player2.getProduction(Resources.PLANTS)).to.eq(0);
+    expect(player2.production.plants).to.eq(0);
   });
 
-  it('Should play - multiple targets', function() {
-    (game as any).temperature = 2;
-    player.addProduction(Resources.PLANTS, 1);
-    player2.addProduction(Resources.PLANTS, 1);
+  it('Should play - multiple targets', () => {
+    setTemperature(game, 2);
+    player.production.add(Resource.PLANTS, 1);
+    player2.production.add(Resource.PLANTS, 1);
 
     expect(card.canPlay(player)).is.true;
     card.play(player);
 
     expect(game.deferredActions).has.lengthOf(1);
-    const selectPlayer = game.deferredActions.peek()!.execute() as SelectPlayer;
+    const selectPlayer = cast(game.deferredActions.peek()!.execute(), SelectPlayer);
     selectPlayer.cb(player2);
-    expect(player2.getProduction(Resources.PLANTS)).to.eq(0);
+    expect(player2.production.plants).to.eq(0);
   });
 
-  it('Should give victory points', function() {
+  it('Should give victory points', () => {
     player.addResourceTo(card, 5);
-    expect(card.getVictoryPoints()).to.eq(card.resourceCount);
+    expect(card.getVictoryPoints(player)).to.eq(card.resourceCount);
   });
 });

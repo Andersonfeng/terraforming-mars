@@ -1,38 +1,40 @@
 import {expect} from 'chai';
-import {Player} from '../../../src/Player';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TileType} from '../../../src/common/TileType';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
-import {EcologicalZoneAres} from '../../../src/cards/ares/EcologicalZoneAres';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
+import {EcologicalZoneAres} from '../../../src/server/cards/ares/EcologicalZoneAres';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('EcologicalZoneAres', function() {
-  let card : EcologicalZoneAres; let player : Player; let game : Game;
+describe('EcologicalZoneAres', () => {
+  let card: EcologicalZoneAres;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EcologicalZoneAres();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+    [game, player] = testGame(2, {aresExtension: true});
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
+    expect(card.canPlay(player)).is.false;
     const landSpace = game.board.getAvailableSpacesOnLand(player)[0];
-    game.addGreenery(player, landSpace.id);
+    game.addGreenery(player, landSpace);
     expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
 
-    const adjacentSpace = action.availableSpaces[0];
-    action.cb(adjacentSpace);
-    expect(adjacentSpace.tile && adjacentSpace.tile.tileType).to.eq(TileType.ECOLOGICAL_ZONE);
+    const adjacentSpace = selectSpace.spaces[0];
+    selectSpace.cb(adjacentSpace);
+    expect(adjacentSpace.tile?.tileType).to.eq(TileType.ECOLOGICAL_ZONE);
 
     card.onCardPlayed(player, card);
     expect(card.resourceCount).to.eq(2);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
     expect(adjacentSpace.adjacency).to.deep.eq({bonus: [SpaceBonus.ANIMAL]});
   });
 });

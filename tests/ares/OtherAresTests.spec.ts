@@ -1,25 +1,20 @@
 import {expect} from 'chai';
-import {DesertSettler} from '../../src/awards/DesertSettler';
-import {Game} from '../../src/Game';
-import {Player} from '../../src/Player';
-import {SpaceType} from '../../src/common/boards/SpaceType';
+import {DesertSettler} from '../../src/server/awards/DesertSettler';
+import {IGame} from '../../src/server/IGame';
 import {TileType} from '../../src/common/TileType';
-import {TestPlayers} from '../TestPlayers';
-import {ARES_OPTIONS_NO_HAZARDS} from './AresTestHelper';
+import {TestPlayer} from '../TestPlayer';
 import {addOcean} from '../TestingUtils';
+import {testGame} from '../TestGame';
 
-describe('OtherAresTests', function() {
-  let player : Player;
-  let otherPlayer: Player;
-  let game : Game;
+describe('OtherAresTests', () => {
+  let player: TestPlayer;
+  let game: IGame;
 
-  it('Desert settler counts upgraded oceans', function() {
-    player = TestPlayers.BLUE.newPlayer();
-    otherPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, otherPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+  it('Desert settler counts upgraded oceans', () => {
+    [game, player] = testGame(2, {aresExtension: true});
 
     const oceanSpace = game.board.getAvailableSpacesForOcean(player).filter((s) => s.y >= 5)[0];
-    game.addOceanTile(player, oceanSpace.id);
+    game.addOcean(player, oceanSpace);
     for (let n = 0; n < 8; n++) {
       addOcean(player);
     }
@@ -27,7 +22,7 @@ describe('OtherAresTests', function() {
     const award = new DesertSettler();
     expect(award.getScore(player)).eq(0);
 
-    game.addTile(player, SpaceType.OCEAN, oceanSpace, {tileType: TileType.OCEAN_CITY});
+    game.addTile(player, oceanSpace, {tileType: TileType.OCEAN_CITY});
 
     expect(award.getScore(player)).eq(1);
   });

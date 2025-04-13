@@ -1,41 +1,35 @@
 import {expect} from 'chai';
-import {ISpace} from '../../src/boards/ISpace';
-import {SpecialDesign} from '../../src/cards/base/SpecialDesign';
-import {EcologicalSurvey} from '../../src/cards/ares/EcologicalSurvey';
-import {GeologicalSurvey} from '../../src/cards/ares/GeologicalSurvey';
-import {LunaMiningHub} from '../../src/cards/moon/LunaMiningHub';
-import {Philares} from '../../src/cards/promo/Philares';
-import {Game} from '../../src/Game';
-import {IMoonData} from '../../src/moon/IMoonData';
-import {MoonExpansion} from '../../src/moon/MoonExpansion';
-import {MoonSpaces} from '../../src/moon/MoonSpaces';
-import {Resources} from '../../src/common/Resources';
-import {SpaceName} from '../../src/SpaceName';
+import {Space} from '../../src/server/boards/Space';
+import {SpecialDesign} from '../../src/server/cards/base/SpecialDesign';
+import {EcologicalSurvey} from '../../src/server/cards/ares/EcologicalSurvey';
+import {GeologicalSurvey} from '../../src/server/cards/ares/GeologicalSurvey';
+import {LunaMiningHub} from '../../src/server/cards/moon/LunaMiningHub';
+import {Philares} from '../../src/server/cards/promo/Philares';
+import {IGame} from '../../src/server/IGame';
+import {MoonData} from '../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../src/server/moon/MoonExpansion';
+import {NamedMoonSpaces} from '../../src/common/moon/NamedMoonSpaces';
+import {SpaceName} from '../../src/common/boards/SpaceName';
 import {TileType} from '../../src/common/TileType';
-import {TestingUtils} from '../TestingUtils';
 import {TestPlayer} from '../TestPlayer';
-import {TestPlayers} from '../TestPlayers';
 import {Phase} from '../../src/common/Phase';
-import {VictoryPointsBreakdown} from '../../src/VictoryPointsBreakdown';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {VictoryPointsBreakdownBuilder} from '../../src/server/game/VictoryPointsBreakdownBuilder';
+import {testGame} from '../TestingUtils';
 
 describe('MoonExpansion', () => {
-  let game: Game;
+  let game: IGame;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.PINK.newPlayer();
-    game = Game.newInstance('id', [player, player2], player, MOON_OPTIONS);
+    [game, player, player2] = testGame(2, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
   });
 
   it('addTile', () => {
-    MoonExpansion.addTile(player, MoonSpaces.MARE_IMBRIUM, {tileType: TileType.LUNA_TRADE_STATION});
-    const space: ISpace = moonData.moon.getSpace(MoonSpaces.MARE_IMBRIUM);
+    MoonExpansion.addTile(player, NamedMoonSpaces.MARE_IMBRIUM, {tileType: TileType.LUNA_TRADE_STATION});
+    const space: Space = moonData.moon.getSpaceOrThrow(NamedMoonSpaces.MARE_IMBRIUM);
     expect(space.player).eq(player);
     expect(space.tile).deep.eq({tileType: TileType.LUNA_TRADE_STATION});
   });
@@ -50,9 +44,9 @@ describe('MoonExpansion', () => {
   });
 
   it('addTile fails occupied space', () => {
-    const space: ISpace = moonData.moon.getSpace(MoonSpaces.MARE_IMBRIUM);
+    const space: Space = moonData.moon.getSpaceOrThrow(NamedMoonSpaces.MARE_IMBRIUM);
     space.tile = {tileType: TileType.MOON_MINE};
-    expect(() => MoonExpansion.addTile(player, MoonSpaces.MARE_IMBRIUM, {tileType: TileType.LUNA_TRADE_STATION})).to.throw(/occupied/);
+    expect(() => MoonExpansion.addTile(player, NamedMoonSpaces.MARE_IMBRIUM, {tileType: TileType.LUNA_TRADE_STATION})).to.throw(/occupied/);
   });
 
   it('addTile throws with Mars space', () => {
@@ -63,7 +57,7 @@ describe('MoonExpansion', () => {
   // changing these tests, but I would be surprised if that were the case.
   it('Adding a tile while someone has cards with onTilePlaced behavior does not trigger them.', () => {
     player.cardsInHand = [new EcologicalSurvey(), new GeologicalSurvey()];
-    player.corporationCard = new Philares();
+    player.corporations.push(new Philares());
     player.steel = 0;
     MoonExpansion.addTile(player, 'm03', {tileType: TileType.MOON_ROAD});
     expect(player.steel).eq(1);
@@ -77,11 +71,11 @@ describe('MoonExpansion', () => {
     expect(player.getTerraformRating()).eq(21);
   });
 
-  it('raiseColonyRate', () => {
-    expect(moonData.colonyRate).to.eq(0);
+  it('raiseHabitatRate', () => {
+    expect(moonData.habitatRate).to.eq(0);
     expect(player.getTerraformRating()).eq(20);
-    MoonExpansion.raiseColonyRate(player);
-    expect(moonData.colonyRate).to.eq(1);
+    MoonExpansion.raiseHabitatRate(player);
+    expect(moonData.habitatRate).to.eq(1);
     expect(player.getTerraformRating()).eq(21);
   });
 
@@ -94,35 +88,32 @@ describe('MoonExpansion', () => {
   });
 
   it('computeVictoryPoints', () => {
-    const vps = new VictoryPointsBreakdown();
     function computeVps() {
-      vps.points.moonColonies = 0;
-      vps.points.moonMines = 0;
-      vps.points.moonRoads = 0;
-      MoonExpansion.calculateVictoryPoints(player, vps);
+      const builder = new VictoryPointsBreakdownBuilder();
+      MoonExpansion.calculateVictoryPoints(player, builder);
+      const vps = builder.build();
       return {
-        colonies: vps.points.moonColonies,
-        mines: vps.points.moonMines,
-        roads: vps.points.moonRoads,
+        colonies: vps.moonHabitats,
+        mines: vps.moonMines,
+        roads: vps.moonRoads,
       };
     }
 
     expect(computeVps()).eql({colonies: 0, mines: 0, roads: 0});
     MoonExpansion.addTile(player, 'm02', {tileType: TileType.MOON_ROAD});
-    MoonExpansion.calculateVictoryPoints(player, vps);
     expect(computeVps()).eql({colonies: 0, mines: 0, roads: 1});
-    MoonExpansion.addTile(player, 'm03', {tileType: TileType.MOON_COLONY});
+    MoonExpansion.addTile(player, 'm03', {tileType: TileType.MOON_HABITAT});
 
     // Reassign that road to the other player, and our player still gets credit for the colony;
-    moonData.moon.getSpace('m02').player = player2;
+    moonData.moon.getSpaceOrThrow('m02').player = player2;
     expect(computeVps()).eql({colonies: 1, mines: 0, roads: 0});
 
     // Put a mine in the adjacent space, and the score appropriately follows
-    moonData.moon.getSpace('m03').tile = {tileType: TileType.MOON_MINE};
+    moonData.moon.getSpaceOrThrow('m03').tile = {tileType: TileType.MOON_MINE};
     expect(computeVps()).eql({colonies: 0, mines: 1, roads: 0});
 
     // Remove the road, and the mine is worth nothing.
-    moonData.moon.getSpace('m03').tile = undefined;
+    moonData.moon.getSpaceOrThrow('m03').tile = undefined;
     expect(computeVps()).eql({colonies: 0, mines: 0, roads: 0});
   });
 
@@ -142,9 +133,9 @@ describe('MoonExpansion', () => {
 
   it('Raise mining rate bonus 5-6', () => {
     moonData.miningRate = 5;
-    player.setProductionForTest({titanium: 0});
+    player.production.override({titanium: 0});
     MoonExpansion.raiseMiningRate(player, 1);
-    expect(player.getProduction(Resources.TITANIUM)).eq(1);
+    expect(player.production.titanium).eq(1);
   });
 
   it('Raise logistic rate bonus 2-3', () => {
@@ -156,23 +147,23 @@ describe('MoonExpansion', () => {
 
   it('Raise logistic rate bonus 5-6', () => {
     moonData.logisticRate = 5;
-    player.setProductionForTest({steel: 0});
+    player.production.override({steel: 0});
     MoonExpansion.raiseLogisticRate(player, 1);
-    expect(player.getProduction(Resources.STEEL)).eq(1);
+    expect(player.production.steel).eq(1);
   });
 
-  it('Raise colony rate bonus 2-3', () => {
-    moonData.colonyRate = 2;
+  it('Raise habitat rate bonus 2-3', () => {
+    moonData.habitatRate = 2;
     player.cardsInHand = [];
-    MoonExpansion.raiseColonyRate(player, 1);
+    MoonExpansion.raiseHabitatRate(player, 1);
     expect(player.cardsInHand).has.length(1);
   });
 
-  it('Raise colony rate bonus 5-6', () => {
-    moonData.colonyRate = 5;
-    player.setProductionForTest({energy: 0});
-    MoonExpansion.raiseColonyRate(player, 1);
-    expect(player.getProduction(Resources.ENERGY)).eq(1);
+  it('Raise habitat rate bonus 5-6', () => {
+    moonData.habitatRate = 5;
+    player.production.override({energy: 0});
+    MoonExpansion.raiseHabitatRate(player, 1);
+    expect(player.production.energy).eq(1);
   });
 
   it('Moon parameters are global parameters', () => {
@@ -185,13 +176,13 @@ describe('MoonExpansion', () => {
     player.titanium = 1;
     player.steel = 1;
     moonData.miningRate = 3;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
     // Gives a +2/-2 on the next action
     player.playedCards = [specialDesign];
     player.lastCardPlayed = specialDesign.name;
 
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('raiseMiningRate during WGT', () => {
@@ -203,12 +194,12 @@ describe('MoonExpansion', () => {
     expect(player.getTerraformRating()).eq(20);
   });
 
-  it('raiseColonyRate during WGT', () => {
+  it('raiseHabitatRate during WGT', () => {
     game.phase = Phase.SOLAR;
-    expect(moonData.colonyRate).to.eq(0);
+    expect(moonData.habitatRate).to.eq(0);
     expect(player.getTerraformRating()).eq(20);
-    MoonExpansion.raiseColonyRate(player);
-    expect(moonData.colonyRate).to.eq(1);
+    MoonExpansion.raiseHabitatRate(player);
+    expect(moonData.habitatRate).to.eq(1);
     expect(player.getTerraformRating()).eq(20);
   });
 

@@ -1,13 +1,13 @@
 import {expect} from 'chai';
-import {PowerPlant} from '../../../src/cards/base/PowerPlant';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {PowerPlant} from '../../../src/server/cards/base/PowerPlant';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('PowerPlant', function() {
-  it('Should play', function() {
+describe('PowerPlant', () => {
+  it('Should play', () => {
     const card = new PowerPlant();
-    const player = TestPlayers.BLUE.newPlayer();
-    expect(card.play(player)).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.energy).to.eq(1);
   });
 });

@@ -1,11 +1,45 @@
 <template>
   <div class="resource_items_cont">
-    <player-resource :type="resources.MEGACREDITS" :count="player.megaCredits" :production="player.megaCreditProduction"></player-resource>
-    <player-resource :type="resources.STEEL" :count="player.steel" :production="player.steelProduction" :steelValue="player.steelValue"></player-resource>
-    <player-resource :type="resources.TITANIUM" :count="player.titanium" :production="player.titaniumProduction" :titaniumValue="player.titaniumValue"></player-resource>
-    <player-resource :type="resources.PLANTS" :count="player.plants" :production="player.plantProduction" :plantsAreProtected="player.plantsAreProtected"></player-resource>
-    <player-resource :type="resources.ENERGY" :count="player.energy" :production="player.energyProduction"></player-resource>
-    <player-resource :type="resources.HEAT" :count="player.heat" :production="player.heatProduction" :canUseHeatAsMegaCredits="canUseHeatAsMegaCredits()"></player-resource>
+    <player-resource
+      :type="Resource.MEGACREDITS"
+      :count="player.megaCredits"
+      :production="player.megaCreditProduction"
+      :resourceProtection="player.protectedResources.megacredits"
+      :productionProtection="player.protectedProduction.megacredits"/>
+    <player-resource
+      :type="Resource.STEEL"
+      :count="player.steel"
+      :production="player.steelProduction"
+      :value="player.steelValue"
+      :resourceProtection="player.protectedResources.steel"
+      :productionProtection="player.protectedProduction.steel"/>
+    <!-- TODO LUNA TRADE FEDERATION -->
+    <player-resource
+      :type="Resource.TITANIUM"
+      :count="player.titanium"
+      :production="player.titaniumProduction"
+      :value="player.titaniumValue"
+      :resourceProtection="player.protectedResources.titanium"
+      :productionProtection="player.protectedProduction.titanium"/>
+    <player-resource
+      :type="Resource.PLANTS"
+      :count="player.plants"
+      :production="player.plantProduction"
+      :resourceProtection="player.protectedResources.plants"
+      :productionProtection="player.protectedProduction.plants"/>
+    <player-resource
+      :type="Resource.ENERGY"
+      :count="player.energy"
+      :production="player.energyProduction"
+      :resourceProtection="player.protectedResources.energy"
+      :productionProtection="player.protectedProduction.energy"/>
+    <player-resource
+      :type="Resource.HEAT"
+      :count="player.heat"
+      :production="player.heatProduction"
+      :value="canUseHeatAsMegaCredits ? 1 : 0"
+      :resourceProtection="player.protectedResources.heat"
+      :productionProtection="player.protectedProduction.heat"/>
   </div>
 </template>
 
@@ -14,7 +48,7 @@ import Vue from 'vue';
 import {CardName} from '@/common/cards/CardName';
 import {PublicPlayerModel} from '@/common/models/PlayerModel';
 import PlayerResource from '@/client/components/overview/PlayerResource.vue';
-import {Resources} from '@/common/Resources';
+import {Resource} from '@/common/Resource';
 
 export default Vue.extend({
   name: 'PlayerResources',
@@ -23,14 +57,13 @@ export default Vue.extend({
       type: Object as () => PublicPlayerModel,
     },
   },
-  data() {
-    return {
-      resources: Resources,
-    };
-  },
-  methods: {
+  computed: {
+    Resource(): typeof Resource {
+      return Resource;
+    },
+    // TODO LUNA TRADE FEDERATION
     canUseHeatAsMegaCredits(): boolean {
-      return this.player.corporationCard?.name === CardName.HELION;
+      return this.player.tableau.some((card) => card.name === CardName.HELION);
     },
   },
   components: {

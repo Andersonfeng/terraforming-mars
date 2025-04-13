@@ -1,59 +1,75 @@
 import {expect} from 'chai';
-import {RareEarthElements} from '../../../src/cards/pathfinders/RareEarthElements';
-import {Game} from '../../../src/Game';
+import {RareEarthElements} from '../../../src/server/cards/pathfinders/RareEarthElements';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {Resources} from '../../../src/common/Resources';
 import {TileType} from '../../../src/common/TileType';
+import {testGame} from '../../TestGame';
+import {LandClaim} from '../../../src/server/cards/base/LandClaim';
+import {AresHandler} from '../../../src/server/ares/AresHandler';
+import {cast, runAllActions} from '../../TestingUtils';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 
-describe('RareEarthElements', function() {
+describe('RareEarthElements', () => {
   let card: RareEarthElements;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new RareEarthElements();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('play', function() {
+  it('play', () => {
     const spaces = player.game.board.getAvailableSpacesOnLand(player);
 
     game.simpleAddTile(player, spaces[0], {tileType: TileType.COMMERCIAL_DISTRICT});
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(1);
+    expect(player.production.megacredits).eq(1);
 
     // Cities won't doesn't change this card's reward.
     game.simpleAddTile(player, spaces[1], {tileType: TileType.CITY});
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(1);
+    expect(player.production.megacredits).eq(1);
 
     // Ocean City is supposed to be on an ocean but that doesn't matter for this test.
     game.simpleAddTile(player, spaces[2], {tileType: TileType.OCEAN_CITY});
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(2);
+    expect(player.production.megacredits).eq(2);
 
     // Greenery won't doesn't change this card's reward.
     game.simpleAddTile(player, spaces[3], {tileType: TileType.GREENERY});
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(2);
+    expect(player.production.megacredits).eq(2);
 
     // Other player's special tile doesn't change this card's reward.
     game.simpleAddTile(player2, spaces[3], {tileType: TileType.LAVA_FLOWS});
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(2);
+    expect(player.production.megacredits).eq(2);
 
     game.simpleAddTile(player, spaces[4], {tileType: TileType.MINING_AREA});
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(3);
+    expect(player.production.megacredits).eq(3);
+  });
+
+  it('You do not own hazards you land-claimed', () => {
+    const [game, player] = testGame(1, {aresExtension: true, pathfindersExpansion: true});
+    const hazardSpace = game.board.spaces.filter(AresHandler.hasHazardTile)[0];
+    const landClaim = new LandClaim();
+    player.playCard(landClaim);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    expect(selectSpace.spaces).includes(hazardSpace);
+    selectSpace.cb(hazardSpace);
+
+    player.playCard(card);
+
+    expect(player.production.megacredits).eq(0);
   });
 });

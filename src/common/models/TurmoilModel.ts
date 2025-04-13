@@ -2,46 +2,38 @@ import {Color} from '../Color';
 import {PartyName} from '../turmoil/PartyName';
 import {GlobalEventName} from '../turmoil/globalEvents/GlobalEventName';
 import {Agenda} from '../turmoil/Types';
-export interface TurmoilModel {
+export type TurmoilModel = {
   dominant: PartyName | undefined;
   ruling: PartyName | undefined;
   chairman: Color | undefined;
   parties: Array<PartyModel>;
   lobby: Array<Color>;
   reserve: Array<DelegatesModel>;
-  distant: GlobalEventModel | undefined;
-  coming: GlobalEventModel | undefined;
-  current: GlobalEventModel | undefined;
+  distant: GlobalEventName | undefined;
+  coming: GlobalEventName | undefined;
+  current: GlobalEventName | undefined;
   politicalAgendas: PoliticalAgendasModel | undefined;
   policyActionUsers: Array<PolicyUser>;
 }
 
-export interface PolicyUser {
+export type PolicyUser = {
   color: Color;
   turmoilPolicyActionUsed: boolean;
   politicalAgendasActionUsedCount: number;
 }
 
-export interface PartyModel {
+export type PartyModel = {
   name: PartyName;
-  description: string;
   partyLeader: Color | undefined;
   delegates: Array<DelegatesModel>;
 }
 
-export interface DelegatesModel {
+export type DelegatesModel = {
   color: Color;
   number: number;
 }
 
-export interface GlobalEventModel {
-  name: GlobalEventName;
-  description: string;
-  revealed: PartyName;
-  current: PartyName;
-}
-
-export interface PoliticalAgendasModel {
+export type PoliticalAgendasModel = {
   marsFirst: Agenda;
   scientists: Agenda;
   unity: Agenda;

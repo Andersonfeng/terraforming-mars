@@ -1,40 +1,36 @@
 import {expect} from 'chai';
-import {MartianMonuments} from '../../../src/cards/pathfinders/MartianMonuments';
-import {Game} from '../../../src/Game';
+import {MartianMonuments} from '../../../src/server/cards/pathfinders/MartianMonuments';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {TestingUtils} from '../../TestingUtils';
+import {addCity} from '../../TestingUtils';
 import {Units} from '../../../src/common/Units';
-import {SpaceType} from '../../../src/common/boards/SpaceType';
-import {SpaceName} from '../../../src/SpaceName';
+import {SpaceName} from '../../../src/common/boards/SpaceName';
 
-describe('MartianMonuments', function() {
+describe('MartianMonuments', () => {
   let card: MartianMonuments;
   let player: TestPlayer;
   let player2: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new MartianMonuments();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player);
+    [/* game */, player, player2] = testGame(2);
   });
 
-  it('can play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.false;
-    TestingUtils.addCity(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('can play', () => {
+    expect(card.canPlay(player)).is.false;
+    addCity(player);
+    expect(card.canPlay(player)).is.true;
 
-    expect(player2.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player2)).is.false;
 
     // Add a city in space, it shouldn't count.
-    player.game.addCityTile(player2, SpaceName.GANYMEDE_COLONY, SpaceType.COLONY);
-    expect(player2.canPlayIgnoringCost(card)).is.false;
+    addCity(player2, SpaceName.GANYMEDE_COLONY);
+    expect(card.canPlay(player2)).is.false;
   });
 
-  it('play', function() {
+  it('play', () => {
     player.tagsForTest = {mars: 8};
     card.play(player);
-    expect(player.getProductionForTest()).deep.eq(Units.of({megacredits: 9})); // "including this"
+    expect(player.production.asUnits()).deep.eq(Units.of({megacredits: 9})); // "including this"
   });
 });

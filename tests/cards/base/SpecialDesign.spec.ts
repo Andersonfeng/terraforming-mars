@@ -1,16 +1,19 @@
 import {expect} from 'chai';
-import {SpecialDesign} from '../../../src/cards/base/SpecialDesign';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {SpecialDesign} from '../../../src/server/cards/base/SpecialDesign';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
+import {GlobalParameter} from '../../../src/common/GlobalParameter';
+import {CardName} from '../../../src/common/cards/CardName';
 
-describe('SpecialDesign', function() {
-  it('Should play', function() {
+describe('SpecialDesign', () => {
+  it('Should play', () => {
     const card = new SpecialDesign();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play();
-    expect(action).is.undefined;
-    expect(card.getRequirementBonus(player)).to.eq(0);
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
+    expect(card.getGlobalParameterRequirementBonus(player, GlobalParameter.TEMPERATURE)).to.eq(0);
+    player.lastCardPlayed = card.name;
+    expect(card.getGlobalParameterRequirementBonus(player, GlobalParameter.TEMPERATURE)).to.eq(2);
+    player.lastCardPlayed = CardName.MICROBIOLOGY_PATENTS;
+    expect(card.getGlobalParameterRequirementBonus(player, GlobalParameter.TEMPERATURE)).to.eq(0);
   });
 });

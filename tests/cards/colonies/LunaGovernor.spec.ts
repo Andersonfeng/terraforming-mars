@@ -1,15 +1,14 @@
 import {expect} from 'chai';
-import {LunaGovernor} from '../../../src/cards/colonies/LunaGovernor';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {LunaGovernor} from '../../../src/server/cards/colonies/LunaGovernor';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('LunaGovernor', function() {
-  it('Should play', function() {
+describe('LunaGovernor', () => {
+  it('Should play', () => {
     const card = new LunaGovernor();
-    const player = TestPlayers.BLUE.newPlayer();
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    const [/* game */, player] = testGame(1);
+    expect(card.canPlay(player)).is.not.true;
+    cast(card.play(player), undefined);
+    expect(player.production.megacredits).to.eq(2);
   });
 });

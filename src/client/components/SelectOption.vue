@@ -1,25 +1,27 @@
 <template>
   <div class="wf-component wf-component--select-option">
     <div v-if="showtitle === true" class="wf-component-title">{{ $t(playerinput.title) }}</div>
-    <Button v-if="showsave === true" size="big" @click="saveData" :title="$t(playerinput.buttonLabel)" />
+    <warnings-component :warnings="playerinput.warnings"></warnings-component>
+    <AppButton v-if="showsave === true" size="big" @click="saveData" :title="$t(playerinput.buttonLabel)" />
   </div>
 </template>
 
 <script lang="ts">
 
 import Vue from 'vue';
-import Button from '@/client/components/common/Button.vue';
-import {PlayerInputModel} from '@/common/models/PlayerInputModel';
-import {InputResponse} from '@/common/inputs/InputResponse';
+import AppButton from '@/client/components/common/AppButton.vue';
+import {SelectOptionModel} from '@/common/models/PlayerInputModel';
+import {SelectOptionResponse} from '@/common/inputs/InputResponse';
+import WarningsComponent from './WarningsComponent.vue';
 
 export default Vue.extend({
   name: 'select-option',
   props: {
     playerinput: {
-      type: Object as () => PlayerInputModel,
+      type: Object as () => SelectOptionModel,
     },
     onsave: {
-      type: Function as unknown as () => (out: InputResponse) => void,
+      type: Function as unknown as () => (out: SelectOptionResponse) => void,
     },
     showsave: {
       type: Boolean,
@@ -29,11 +31,12 @@ export default Vue.extend({
     },
   },
   components: {
-    Button,
+    AppButton,
+    WarningsComponent,
   },
   methods: {
     saveData() {
-      this.onsave([['1']]);
+      this.onsave({type: 'option'});
     },
   },
 });

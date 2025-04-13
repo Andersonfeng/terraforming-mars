@@ -1,15 +1,13 @@
-
 import {expect} from 'chai';
-import {AdaptedLichen} from '../../../src/cards/base/AdaptedLichen';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {AdaptedLichen} from '../../../src/server/cards/base/AdaptedLichen';
 
-describe('AdaptedLichen', function() {
-  it('Should play', function() {
+describe('AdaptedLichen', () => {
+  it('Should play', () => {
     const card = new AdaptedLichen();
-    const player = TestPlayers.BLUE.newPlayer();
+    const [/* game */, player] = testGame(1);
 
     card.play(player);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    expect(player.production.plants).to.eq(1);
   });
 });

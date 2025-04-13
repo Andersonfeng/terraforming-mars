@@ -1,47 +1,45 @@
 import {expect} from 'chai';
-import {AerialLenses} from '../../../src/cards/turmoil/AerialLenses';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
+import {AerialLenses} from '../../../src/server/cards/turmoil/AerialLenses';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
-describe('AerialLenses', function() {
-  let card : AerialLenses; let player : Player; let player2 : Player; let game : Game;
+describe('AerialLenses', () => {
+  let card: AerialLenses;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AerialLenses();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-
-    const gameOptions = TestingUtils.setCustomGameOptions();
-    game = Game.newInstance('foobar', [player, player2], player, gameOptions);
+    [game, player, player2] = testGame(2, {turmoilExtension: true});
   });
 
-  it('Can play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can play', () => {
+    expect(card.canPlay(player)).is.not.true;
 
-    const kelvinists = game.turmoil!.getPartyByName(PartyName.KELVINISTS)!;
-    kelvinists.delegates.push(player.id, player.id);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    const kelvinists = game.turmoil!.getPartyByName(PartyName.KELVINISTS);
+    kelvinists.delegates.add(player, 2);
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('Should play without plants', function() {
+  it('Should play without plants', () => {
     card.play(player);
-    expect(player.getProduction(Resources.HEAT)).to.eq(2);
+    expect(player.production.heat).to.eq(2);
     const input = game.deferredActions.peek()!.execute();
     expect(input).is.undefined;
   });
 
-  it('Should play with plants', function() {
+  it('Should play with plants', () => {
     player2.plants = 5;
     card.play(player);
-    expect(player.getProduction(Resources.HEAT)).to.eq(2);
+    expect(player.production.heat).to.eq(2);
     expect(game.deferredActions).has.lengthOf(1);
 
-    const orOptions = game.deferredActions.peek()!.execute() as OrOptions;
+    const orOptions = cast(game.deferredActions.peek()!.execute(), OrOptions);
     orOptions.options[0].cb();
     expect(player2.plants).to.eq(3);
   });

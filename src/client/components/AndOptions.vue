@@ -10,7 +10,7 @@
       :showsave="false"
       :showtitle="true" />
     <div v-if="showsave" class="wf-action">
-      <Button :title="playerinput.buttonLabel" type="submit" size="normal" @click="saveData" :disabled="!canSave()"/>
+      <AppButton :title="playerinput.buttonLabel" type="submit" size="normal" @click="saveData" :disabled="!canSave()"/>
     </div>
   </div>
 </template>
@@ -19,9 +19,13 @@
 
 import Vue from 'vue';
 import {PlayerViewModel, PublicPlayerModel} from '@/common/models/PlayerModel';
-import {PlayerInputModel} from '@/common/models/PlayerInputModel';
-import Button from '@/client/components/common/Button.vue';
-import {InputResponse} from '@/common/inputs/InputResponse';
+import {AndOptionsModel} from '@/common/models/PlayerInputModel';
+import AppButton from '@/client/components/common/AppButton.vue';
+import {AndOptionsResponse, InputResponse} from '@/common/inputs/InputResponse';
+
+interface DataModel {
+  responded: Array<InputResponse | undefined>,
+}
 
 export default Vue.extend({
   name: 'and-options',
@@ -33,10 +37,10 @@ export default Vue.extend({
       type: Array as () => Array<PublicPlayerModel>,
     },
     playerinput: {
-      type: Object as () => PlayerInputModel,
+      type: Object as () => AndOptionsModel,
     },
     onsave: {
-      type: Function as unknown as () => (out: InputResponse) => void,
+      type: Function as unknown as () => (out: AndOptionsResponse) => void,
     },
     showsave: {
       type: Boolean,
@@ -46,12 +50,9 @@ export default Vue.extend({
     },
   },
   components: {
-    Button,
+    AppButton,
   },
-  data() {
-    if (this.playerinput.options === undefined) {
-      throw new Error('options must be defined');
-    }
+  data(): DataModel {
     return {
       responded: this.playerinput.options.map(() => undefined),
     };
@@ -59,7 +60,7 @@ export default Vue.extend({
   methods: {
     playerFactorySaved(idx: number) {
       return (out: InputResponse) => {
-        this.$data.responded[idx] = out[0];
+        this.responded[idx] = out;
       };
     },
     canSave(): boolean {
@@ -83,7 +84,10 @@ export default Vue.extend({
           (child as any).saveData();
         }
       }
-      this.onsave(this.$data.responded);
+      this.onsave({
+        type: 'and',
+        responses: this.responded as Array<InputResponse>,
+      });
     },
   },
 });

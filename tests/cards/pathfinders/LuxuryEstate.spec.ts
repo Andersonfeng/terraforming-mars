@@ -1,54 +1,58 @@
 import {expect} from 'chai';
-import {LuxuryEstate} from '../../../src/cards/pathfinders/LuxuryEstate';
-import {Game} from '../../../src/Game';
+import {LuxuryEstate} from '../../../src/server/cards/pathfinders/LuxuryEstate';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {TestingUtils} from '../../TestingUtils';
+import {addGreenery, addCity, setOxygenLevel} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('LuxuryEstate', function() {
+describe('LuxuryEstate', () => {
   let card: LuxuryEstate;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new LuxuryEstate();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
     player.playedCards.push(card);
   });
 
-  it('canPlay', function() {
-    (game as any).oxygenLevel = 6;
-    expect(player.canPlayIgnoringCost(card)).is.false;
+  it('canPlay', () => {
+    setOxygenLevel(game, 6);
+    expect(card.canPlay(player)).is.false;
 
-    (game as any).oxygenLevel = 7;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    setOxygenLevel(game, 7);
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('play', function() {
+  it('play', () => {
     card.play(player);
     expect(player.titanium).eq(0);
 
     player.titanium = 0;
-    TestingUtils.addCity(player);
+    addCity(player);
     card.play(player);
     expect(player.titanium).eq(1);
 
     player.titanium = 0;
-    TestingUtils.addCity(player);
+    addCity(player);
     card.play(player);
     expect(player.titanium).eq(2);
 
     player.titanium = 0;
-    TestingUtils.addGreenery(player);
+    addGreenery(player);
     card.play(player);
     expect(player.titanium).eq(3);
 
     // Other player's cities don't count.
     player.titanium = 0;
-    TestingUtils.addCity(player2);
+    addCity(player2);
+    card.play(player);
+    expect(player.titanium).eq(3);
+
+    // Other player's greeneries don't count.
+    player.titanium = 0;
+    addGreenery(player2);
     card.play(player);
     expect(player.titanium).eq(3);
   });

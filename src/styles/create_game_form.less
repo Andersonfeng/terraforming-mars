@@ -178,6 +178,9 @@
   background-color: rgb(199, 199, 199);
   color: black;
 }
+.create-game-page-column input[type="radio"]:checked + label a {
+    color:black
+}
 
 .create-game-page-column input[type="checkbox"]:checked + label {
   background-color: rgb(199, 199, 199);
@@ -194,21 +197,30 @@
     margin-right: 10px;
 }
 
-.create-game-page-column .create-game-tharsis {
-    color: @board-tharsis;
+.create-game-page-column {
+    .create-game-tharsis {
+        color: @board-tharsis;
+    }
+    .create-game-hellas {
+        color: @board-hellas;
+    }
+    .create-game-elysium {
+        color: @board-elysium;
+    }
+    .create-game-amazonis {
+        color: @board-amazonis;
+    }
+    .create-game-arabia-terra {
+        color: @board-arabia_terra;
+    }
+    .create-game-terra-cimmeria{
+        color: @board-terra_cimmeria;
+    }
+    .create-game-vastitas-borealis{
+        color: @board-vastitas_borealis;
+    }
 }
-.create-game-page-column .create-game-hellas {
-    color: @board-hellas;
-}
-.create-game-page-column .create-game-elysium {
-    color: @board-elysium;
-}
-.create-game-page-column .create-game-arabia-terra {
-    color: rgb(30, 30, 30);
-}
-.create-game-page-column .create-game-vastitas-borealis {
-    color: rgb(187, 159, 67);
-}
+
 .create-game-page-column .create-game-random {
     color: rgb(106,106,106);
 }
@@ -360,7 +372,13 @@
     margin-top: 15px;
 }
 
-.create-game-discord-invite {
+.create-game {
+  .discord-invite {
     padding: 0px 15px;
     font-size: 20px;
+  }
+
+  .changelog {
+    padding: 0px 15px;
+  }
 }

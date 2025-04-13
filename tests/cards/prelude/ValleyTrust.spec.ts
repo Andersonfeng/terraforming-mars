@@ -1,49 +1,60 @@
-import {SelectCard} from '../../../src/inputs/SelectCard';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
 import {expect} from 'chai';
-import {TestingUtils} from '../../TestingUtils';
-import {Ants} from '../../../src/cards/base/Ants';
-import {MedicalLab} from '../../../src/cards/base/MedicalLab';
-import {Research} from '../../../src/cards/base/Research';
-import {ValleyTrust} from '../../../src/cards/prelude/ValleyTrust';
+import {cast} from '../../TestingUtils';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {MedicalLab} from '../../../src/server/cards/base/MedicalLab';
+import {Research} from '../../../src/server/cards/base/Research';
+import {ValleyTrust} from '../../../src/server/cards/prelude/ValleyTrust';
 import {TestPlayer} from '../../TestPlayer';
-import {CardType} from '../../../src/common/cards/CardType';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
+import {IPreludeCard, isPreludeCard} from '../../../src/server/cards/prelude/IPreludeCard';
+import {IGame} from '../../../src/server/IGame';
+import {Loan} from '../../../src/server/cards/prelude/Loan';
+import {HugeAsteroid} from '../../../src/server/cards/prelude/HugeAsteroid';
+import {MetalRichAsteroid} from '../../../src/server/cards/prelude/MetalRichAsteroid';
 
-describe('ValleyTrust', function() {
-  let card : ValleyTrust;
-  let player : TestPlayer;
+describe('ValleyTrust', () => {
+  let card: ValleyTrust;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ValleyTrust();
-    const game = newTestGame(1, {preludeExtension: true});
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {preludeExtension: true});
   });
 
-  it('Does not get card discount for other tags', function() {
+  it('Does not get card discount for other tags', () => {
     expect(card.getCardDiscount(player, new Ants())).to.eq(0);
   });
 
-  it('Gets card discount for science tags', function() {
+  it('Gets card discount for science tags', () => {
     expect(card.getCardDiscount(player, new MedicalLab())).to.eq(2);
     expect(card.getCardDiscount(player, new Research())).to.eq(4);
   });
 
-  it('Should play', function() {
-    const action = card.play();
-    expect(action).is.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
   });
 
   it('initial action', () => {
-    const selectCard = TestingUtils.cast(card.initialAction(player), SelectCard);
-    expect(selectCard.cards).has.length(3);
-    expect(selectCard.cards.filter((c) => c.cardType === CardType.PRELUDE)).has.length(3);
+    const loan = new Loan();
+    const hugeAsteroid = new HugeAsteroid();
+    const metalRichAsteroid = new MetalRichAsteroid();
+
+    game.preludeDeck.drawPile.push(loan, hugeAsteroid, metalRichAsteroid);
+    const selectCard = cast(card.initialAction(player), SelectCard<IPreludeCard>);
+    expect(selectCard.cards).to.have.members([loan, hugeAsteroid, metalRichAsteroid]);
+
+    selectCard.cb([loan]);
+    expect(player.playedCards).includes(loan);
+    expect(game.preludeDeck.discardPile).to.have.members([hugeAsteroid, metalRichAsteroid]);
   });
 
-  it('Card works even without prelude', () => {
-    const game = newTestGame(1, {preludeExtension: false});
-    const player = getTestPlayer(game, 0);
-    const selectCard = TestingUtils.cast(card.initialAction(player), SelectCard);
+  it('Card works even without prelude expansion enabled', () => {
+    [/* game */, player] = testGame(1, {preludeExtension: false});
+    const selectCard = cast(card.initialAction(player), SelectCard<IPreludeCard>);
+
     expect(selectCard.cards).has.length(3);
-    expect(selectCard.cards.filter((c) => c.cardType === CardType.PRELUDE)).has.length(3);
+    expect(selectCard.cards.every((c) => isPreludeCard(c))).is.true;
   });
 });

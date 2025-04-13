@@ -1,43 +1,46 @@
 import {expect} from 'chai';
-import {IndustrialCenter} from '../../../src/cards/base/IndustrialCenter';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
+import {IndustrialCenter} from '../../../src/server/cards/base/IndustrialCenter';
+import {IGame} from '../../../src/server/IGame';
 import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
+import {TestPlayer} from '../../TestPlayer';
+import {addCity, cast, runAllActions} from '../../TestingUtils';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {testGame} from '../../TestGame';
 
-describe('IndustrialCenter', function() {
-  let card : IndustrialCenter; let player : Player; let game : Game;
+describe('IndustrialCenter', () => {
+  let card: IndustrialCenter;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new IndustrialCenter();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play or act', function() {
+  it('Can not play or act', () => {
     expect(card.canAct(player)).is.not.true;
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should action', function() {
+  it('Should action', () => {
     player.megaCredits = 7;
     card.action(player);
     game.deferredActions.runNext();
     expect(player.megaCredits).to.eq(0);
-    expect(player.getProduction(Resources.STEEL)).to.eq(1);
+    expect(player.production.steel).to.eq(1);
   });
 
-  it('Should play', function() {
-    game.addCityTile(player, game.board.getAvailableSpacesOnLand(player)[0].id);
-    expect(game.getCitiesOnMarsCount()).to.eq(1);
+  it('Should play', () => {
+    addCity(player);
+    expect(game.board.getCitiesOnMars()).has.length(1);
 
-    const action = card.play(player);
-    const space = action!.availableSpaces[0];
-        action!.cb(space);
-        expect(space.tile).is.not.undefined;
-        expect(space.tile && space.tile.tileType).to.eq(TileType.INDUSTRIAL_CENTER);
-        expect(space.adjacency?.bonus).eq(undefined);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    const space = selectSpace.spaces[0];
+    selectSpace.cb(space);
+
+    expect(space.tile?.tileType).to.eq(TileType.INDUSTRIAL_CENTER);
+    expect(space.adjacency?.bonus).eq(undefined);
   });
 });

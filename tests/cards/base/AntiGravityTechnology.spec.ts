@@ -1,26 +1,29 @@
 import {expect} from 'chai';
-import {AntiGravityTechnology} from '../../../src/cards/base/AntiGravityTechnology';
+import {AntiGravityTechnology} from '../../../src/server/cards/base/AntiGravityTechnology';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
 
-describe('AntiGravityTechnology', function() {
-  let card : AntiGravityTechnology; let player : TestPlayer;
+describe('AntiGravityTechnology', () => {
+  let card: AntiGravityTechnology;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AntiGravityTechnology();
-    player = TestPlayers.BLUE.newPlayer();
+    player = TestPlayer.BLUE.newPlayer();
   });
 
-  it('Cannot play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Cannot play', () => {
+    player.tagsForTest = {science: 6};
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.playedCards.push(card, card, card, card, card, card, card);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Can play', () => {
+    player.tagsForTest = {science: 7};
+    expect(card.canPlay(player)).is.true;
+  });
 
-    card.play();
-    expect(card.getVictoryPoints()).to.eq(3);
+  it('Should play', () => {
+    card.play(player);
+    expect(card.getVictoryPoints(player)).to.eq(3);
     expect(card.getCardDiscount()).to.eq(2);
   });
 });

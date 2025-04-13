@@ -1,18 +1,16 @@
 import {expect} from 'chai';
-import {AcquiredSpaceAgency} from '../../../src/cards/prelude/AcquiredSpaceAgency';
-import {Tags} from '../../../src/common/cards/Tags';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {AcquiredSpaceAgency} from '../../../src/server/cards/prelude/AcquiredSpaceAgency';
+import {Tag} from '../../../src/common/cards/Tag';
+import {testGame} from '../../TestingUtils';
 
-describe('AcquiredSpaceAgency', function() {
-  it('Should play', function() {
+describe('AcquiredSpaceAgency', () => {
+  it('Should play', () => {
     const card = new AcquiredSpaceAgency();
-    const player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    const [/* game*/, player] = testGame(1);
     card.play(player);
 
     expect(player.titanium).to.eq(6);
     expect(player.cardsInHand).has.lengthOf(2);
-    expect(player.cardsInHand.filter((card) => card.tags.includes(Tags.SPACE))).has.lengthOf(2);
+    expect(player.cardsInHand.filter((card) => card.tags.includes(Tag.SPACE))).has.lengthOf(2);
   });
 });

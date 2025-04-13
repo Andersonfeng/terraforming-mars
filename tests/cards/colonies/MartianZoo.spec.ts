@@ -1,40 +1,38 @@
 import {expect} from 'chai';
-import {LunaGovernor} from '../../../src/cards/colonies/LunaGovernor';
-import {MartianZoo} from '../../../src/cards/colonies/MartianZoo';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {LunaGovernor} from '../../../src/server/cards/colonies/LunaGovernor';
+import {MartianZoo} from '../../../src/server/cards/colonies/MartianZoo';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {cast} from '../../TestingUtils';
 
-describe('MartianZoo', function() {
-  let card : MartianZoo; let player : Player;
+describe('MartianZoo', () => {
+  let card: MartianZoo;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new MartianZoo();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     const lands = player.game.board.getAvailableSpacesOnLand(player);
-    player.game.addCityTile(player, lands[0].id);
-    player.game.addCityTile(player, lands[1].id);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    player.game.addCity(player, lands[0]);
+    player.game.addCity(player, lands[1]);
+    expect(card.canPlay(player)).is.true;
 
-    const action = card.play();
-    expect(action).is.undefined;
+    cast(card.play(player), undefined);
   });
 
-  it('Can\'t act', function() {
+  it('Can not act', () => {
     player.playedCards.push(card);
     expect(card.canAct()).is.not.true;
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     card.onCardPlayed(player, new LunaGovernor());
     expect(card.canAct()).is.true;
 

@@ -1,50 +1,52 @@
 import {expect} from 'chai';
-import {UrbanizedArea} from '../../../src/cards/base/UrbanizedArea';
-import {Game} from '../../../src/Game';
-import {ISpace} from '../../../src/boards/ISpace';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {SpaceName} from '../../../src/SpaceName';
+import {UrbanizedArea} from '../../../src/server/cards/base/UrbanizedArea';
+import {IGame} from '../../../src/server/IGame';
+import {Space} from '../../../src/server/boards/Space';
+import {Resource} from '../../../src/common/Resource';
+import {SpaceName} from '../../../src/common/boards/SpaceName';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
-import {TestPlayers} from '../../TestPlayers';
+import {TestPlayer} from '../../TestPlayer';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {cast, churn} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('UrbanizedArea', function() {
-  let card : UrbanizedArea; let player : Player; let game : Game; let lands: ISpace[];
+describe('UrbanizedArea', () => {
+  let card: UrbanizedArea;
+  let player: TestPlayer;
+  let game: IGame;
+  let lands: Space[];
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new UrbanizedArea();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
 
-    const tharsisTholus = game.board.getSpace(SpaceName.THARSIS_THOLUS);
+    const tharsisTholus = game.board.getSpaceOrThrow(SpaceName.THARSIS_THOLUS);
     lands = game.board.getAdjacentSpaces(tharsisTholus).filter((space) => space.spaceType === SpaceType.LAND);
   });
 
-  it('Can\'t play without energy production', function() {
+  it('Can not play without energy production', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can\'t play without available space between two cities', function() {
-    game.addCityTile(player, lands[0].id);
-    player.addProduction(Resources.ENERGY, 1);
+  it('Can not play without available space between two cities', () => {
+    game.addCity(player, lands[0]);
+    player.production.add(Resource.ENERGY, 1);
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    game.addCityTile(player, lands[0].id);
-    game.addCityTile(player, lands[1].id);
+  it('Should play', () => {
+    game.addCity(player, lands[0]);
+    game.addCity(player, lands[1]);
 
-    player.addProduction(Resources.ENERGY, 1);
+    player.production.add(Resource.ENERGY, 1);
     expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).is.not.undefined;
-    expect(action.availableSpaces).has.lengthOf(1);
+    const selectSpace = cast(churn(card.play(player), player), SelectSpace);
+    expect(selectSpace.spaces).has.lengthOf(1);
 
-    action.cb(action.availableSpaces[0]);
-    expect(game.getCitiesCount()).to.eq(3);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    selectSpace.cb(selectSpace.spaces[0]);
+    expect(game.board.getCities()).has.length(3);
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.megacredits).to.eq(2);
   });
 });

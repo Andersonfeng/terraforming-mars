@@ -1,23 +1,19 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {MiningRobotsManufCenter} from '../../../src/cards/moon/MiningRobotsManufCenter';
 import {expect} from 'chai';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {TestPlayer} from '../../TestPlayer';
+import {MiningRobotsManufCenter} from '../../../src/server/cards/moon/MiningRobotsManufCenter';
 
 describe('MiningRobotsManufCenter', () => {
-  let game: Game;
-  let player: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player: TestPlayer;
+  let moonData: MoonData;
   let card: MiningRobotsManufCenter;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
     card = new MiningRobotsManufCenter();
   });
@@ -26,9 +22,9 @@ describe('MiningRobotsManufCenter', () => {
     player.cardsInHand = [card];
     player.titanium = 0;
     player.megaCredits = card.cost;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
     player.titanium = 1;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {

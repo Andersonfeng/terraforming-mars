@@ -1,88 +1,93 @@
 import {expect} from 'chai';
-import {Tardigrades} from '../../../src/cards/base/Tardigrades';
-import {PharmacyUnion} from '../../../src/cards/promo/PharmacyUnion';
-import {Recyclon} from '../../../src/cards/promo/Recyclon';
-import {Splice} from '../../../src/cards/promo/Splice';
-import {Game} from '../../../src/Game';
-import {AndOptions} from '../../../src/inputs/AndOptions';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, formatMessage, runAllActions} from '../../TestingUtils';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
+import {PharmacyUnion} from '../../../src/server/cards/promo/PharmacyUnion';
+import {Recyclon} from '../../../src/server/cards/promo/Recyclon';
+import {Splice} from '../../../src/server/cards/promo/Splice';
+import {testGame} from '../../TestGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {SelectOption} from '../../../src/server/inputs/SelectOption';
+import {IGame} from '../../../src/server/IGame';
 
-describe('Splice', function() {
-  let card : Splice; let player : Player; let player2 : Player;
+describe('Splice', () => {
+  let card: Splice;
+  let game: IGame;
+  let player: TestPlayer;
+  let player2: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Splice();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('Should play', function() {
-    const card2 = new Tardigrades();
-    const play = card.play();
-    expect(play).is.undefined;
+  it('Should play', () => {
+    const tardigrades = new Tardigrades();
+    cast(card.play(player), undefined);
 
-    player.corporationCard = card;
+    player.corporations.push(card);
 
-    player2.playedCards.push(card2);
-    const action = card.onCardPlayed(player2, card2);
-    expect(action).instanceOf(OrOptions);
-    if ( ! (action instanceof OrOptions)) return;
+    player2.playedCards.push(tardigrades);
+    cast(card.onCardPlayed(player2, tardigrades), undefined);
+    runAllActions(game);
+    const orOptions = cast(player2.popWaitingFor(), OrOptions);
 
-    expect(action.options).has.lengthOf(2);
-    const orOptions = action.options[0] as OrOptions;
+    expect(orOptions.options).has.lengthOf(2);
 
-    orOptions.cb();
-    expect(card2.resourceCount).to.eq(1);
+    const selectMoney = cast(orOptions.options[0], SelectOption);
+    selectMoney.cb(undefined);
+    runAllActions(game);
+    cast(player.popWaitingFor(), undefined);
+
+    expect(tardigrades.resourceCount).to.eq(1);
     expect(player.megaCredits).to.eq(2);
   });
 
-  it('Should play with multiple microbe tags', function() {
-    const card2 = new PharmacyUnion();
-    const play = card.play();
-    player.corporationCard = card;
-    const play2 = card2.play(player);
-    player2.corporationCard = card2;
-    expect(play).is.undefined;
-    expect(play2).is.undefined;
+  it('Should play with multiple microbe tags', () => {
+    const pharmacyUnion = new PharmacyUnion();
+    cast(card.play(player), undefined);
+    player.corporations.push(card);
 
-    const action = card.onCardPlayed(player2, card2);
-    expect(action).is.undefined;
+    runAllActions(game);
+    cast(player.getWaitingFor(), undefined);
+    cast(player2.popWaitingFor(), undefined);
+
+    cast(pharmacyUnion.play(player), undefined);
+    player2.corporations.push(pharmacyUnion);
+
+    cast(card.onCardPlayed(player2, pharmacyUnion), undefined);
+
+    runAllActions(game);
+    cast(player.popWaitingFor(), undefined);
+    cast(player2.popWaitingFor(), undefined);
+
     expect(player.megaCredits).to.eq(4);
     expect(player2.megaCredits).to.eq(4);
   });
 
-  it('Should grant Recyclon a Microbe or 2MC', function() {
-    const card2 = new Recyclon();
-    // Player 1 picks Splice
-    const pi = player.getWaitingFor() as AndOptions;
-    pi.options[0].cb([card]);
-    pi.options[1].cb([]);
-    pi.cb();
-    // Player 2 picks Recyclon
-    const pi2 = player2.getWaitingFor() as AndOptions;
-    pi2.options[0].cb([card2]);
-    pi2.options[1].cb([]);
-    pi2.cb();
+  it('Should grant Recyclon a microbe or 2MC', () => {
+    const recyclon = new Recyclon();
+
+    player.playCorporationCard(card);
+    player2.playCorporationCard(recyclon);
 
     // Default resource on Recyclon and player2's MC
-    expect(card2.resourceCount).to.eq(1);
+    expect(recyclon.resourceCount).to.eq(1);
     expect(player2.megaCredits).to.eq(38);
 
     // Player 2 should have the option to pick a microbe or 2 MC
-    const pi3 = player2.getWaitingFor() as OrOptions;
-    expect(pi3.options).has.lengthOf(2);
-    expect(pi3.options[0].title).to.eq('Add a microbe resource to this card');
-    expect(pi3.options[1].title).to.eq('Gain 2 MC');
+    const orOptions = cast(player2.getWaitingFor(), OrOptions);
+    expect(orOptions.options).has.lengthOf(2);
+    expect(orOptions.options[0].title).to.eq('Add a microbe resource to this card');
+    expect(formatMessage(orOptions.options[1].title)).to.eq('Gain 2 M€');
 
     // Pick the microbe
-    pi3.options[0].cb();
-    expect(card2.resourceCount).to.eq(2);
+    orOptions.options[0].cb();
+    expect(recyclon.resourceCount).to.eq(2);
 
     // Pick 2 MC
-    pi3.options[1].cb();
+    orOptions.options[1].cb();
+    runAllActions(game);
     expect(player2.megaCredits).to.eq(40);
   });
 });

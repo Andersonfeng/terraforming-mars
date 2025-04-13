@@ -1,34 +1,34 @@
 import {expect} from 'chai';
-import {GalileanMining} from '../../../src/cards/prelude/GalileanMining';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {GalileanMining} from '../../../src/server/cards/prelude/GalileanMining';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
-describe('GalileanMining', function() {
-  let card : GalileanMining; let player : Player; let game : Game;
+describe('GalileanMining', () => {
+  let card: GalileanMining;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new GalileanMining();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     player.megaCredits = 4;
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.megaCredits = 5;
     expect(card.canPlay(player)).is.true;
 
     card.play(player);
 
-    // SelectHowToPayDeferred
+    // SelectPaymentDeferred
     game.deferredActions.runNext();
 
     expect(player.megaCredits).to.eq(0);
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(2);
+    expect(player.production.titanium).to.eq(2);
   });
 });

@@ -4,11 +4,11 @@ import {getLocalVue} from './getLocalVue';
 
 import {expect} from 'chai';
 import AndOptions from '@/client/components/AndOptions.vue';
-import {PlayerInputTypes} from '@/common/input/PlayerInputTypes';
 import {InputResponse} from '@/common/inputs/InputResponse';
+import PlayerInputFactory from '@/client/components/PlayerInputFactory.vue';
 
-describe('AndOptions', function() {
-  it('saves the options', async function() {
+describe('AndOptions', () => {
+  it('saves the options', async () => {
     let savedData: InputResponse | undefined;
     const component = mount(AndOptions, {
       localVue: getLocalVue(),
@@ -19,11 +19,11 @@ describe('AndOptions', function() {
         playerinput: {
           title: 'foo',
           options: [{
-            inputType: PlayerInputTypes.SELECT_OPTION,
+            type: 'option',
             title: 'select a',
           }, {
             title: 'select b',
-            inputType: PlayerInputTypes.SELECT_OPTION,
+            type: 'option',
           }],
         },
         onsave: function(data: InputResponse) {
@@ -32,11 +32,14 @@ describe('AndOptions', function() {
         showsave: true,
         showtitle: true,
       },
+      components: {
+        'player-input-factory': PlayerInputFactory,
+      },
     });
-    const buttons = component.findAllComponents({name: 'Button'});
+    const buttons = component.findAllComponents({name: 'AppButton'});
     await buttons.at(0).findAllComponents({
-      name: 'button',
+      name: 'AppButton',
     }).at(0).trigger('click');
-    expect(savedData).to.deep.eq([['1'], ['1']]);
+    expect(savedData).to.deep.eq({type: 'and', responses: [{type: 'option'}, {type: 'option'}]});
   });
 });

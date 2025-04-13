@@ -4,8 +4,8 @@ import {getLocalVue} from './getLocalVue';
 import {expect} from 'chai';
 import Tag from '@/client/components/Tag.vue';
 
-describe('Tag', function() {
-  it('getClasses with only tag', function() {
+describe('Tag', () => {
+  it('getClasses with only tag', () => {
     const tag = mount(Tag, {
       localVue: getLocalVue(),
       propsData: {
@@ -14,6 +14,6 @@ describe('Tag', function() {
         type: 'main',
       },
     });
-    expect(tag.find('div[class="tag-count tag-vp tag-size-big tag-type-main"]').exists()).is.true;
+    expect(tag.find('div[class="tag-count tooltip tooltip-bottom tag-vp tag-size-big tag-type-main"]').exists()).is.true;
   });
 });

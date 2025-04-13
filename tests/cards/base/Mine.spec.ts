@@ -1,14 +1,13 @@
 import {expect} from 'chai';
-import {Mine} from '../../../src/cards/base/Mine';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {Mine} from '../../../src/server/cards/base/Mine';
+import {cast} from '../../TestingUtils';
 
-describe('Mine', function() {
-  it('Should play', function() {
+describe('Mine', () => {
+  it('Should play', () => {
     const card = new Mine();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.STEEL)).to.eq(1);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.steel).to.eq(1);
   });
 });

@@ -1,24 +1,21 @@
 import {expect} from 'chai';
-import {MicroMills} from '../../../src/cards/base/MicroMills';
-import {Conscription} from '../../../src/cards/colonies/Conscription';
-import {Game} from '../../../src/Game';
+import {MicroMills} from '../../../src/server/cards/base/MicroMills';
+import {Conscription} from '../../../src/server/cards/colonies/Conscription';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, testGame} from '../../TestingUtils';
 
-describe('Conscription', function() {
+describe('Conscription', () => {
   let card: Conscription;
   let player: TestPlayer;
 
   beforeEach(() => {
     card = new Conscription();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player, TestPlayers.RED.newPlayer()], player);
+    [/* game */, player] = testGame(2);
   });
 
   it('play', () => {
-    const action = card.play();
-    expect(action).is.undefined;
-    expect(card.getVictoryPoints()).to.eq(-1);
+    cast(card.play(player), undefined);
+    expect(card.getVictoryPoints(player)).to.eq(-1);
     expect(card.getCardDiscount(player)).to.eq(0);
   });
 

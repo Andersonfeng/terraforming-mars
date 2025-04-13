@@ -1,23 +1,21 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {EarthCatapult} from '../../../src/cards/base/EarthCatapult';
-import {PointLuna} from '../../../src/cards/prelude/PointLuna';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {EarthCatapult} from '../../../src/server/cards/base/EarthCatapult';
+import {PointLuna} from '../../../src/server/cards/prelude/PointLuna';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
-describe('PointLuna', function() {
-  let card : PointLuna; let player : Player;
+describe('PointLuna', () => {
+  let card: PointLuna;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new PointLuna();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
-    player.corporationCard = card;
+    [/* game */, player] = testGame(1);
+    player.corporations.push(card);
   });
 
-  it('Gets card when earth tag played', function() {
+  it('Gets card when earth tag played', () => {
     card.onCardPlayed(player, new Ants());
     expect(player.cardsInHand).has.lengthOf(0);
 
@@ -25,9 +23,9 @@ describe('PointLuna', function() {
     expect(player.cardsInHand).has.lengthOf(1);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(1);
+    expect(player.production.titanium).to.eq(1);
     expect(player.cardsInHand).has.lengthOf(1);
   });
 });

@@ -1,25 +1,24 @@
-import {Game} from '../../../src/Game';
-import {TempestConsultancy} from '../../../src/cards/moon/TempestConsultancy';
+import {IGame} from '../../../src/server/IGame';
+import {TempestConsultancy} from '../../../src/server/cards/moon/TempestConsultancy';
 import {expect} from 'chai';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
-import {Turmoil} from '../../../src/turmoil/Turmoil';
+import {Turmoil} from '../../../src/server/turmoil/Turmoil';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {SendDelegateToArea} from '../../../src/deferredActions/SendDelegateToArea';
-import {Greens} from '../../../src/turmoil/parties/Greens';
-import {TestingUtils} from '../../TestingUtils';
+import {SendDelegateToArea} from '../../../src/server/deferredActions/SendDelegateToArea';
+import {SelectParty} from '../../../src/server/inputs/SelectParty';
+import {Greens} from '../../../src/server/turmoil/parties/Greens';
+import {cast, runAllActions} from '../../TestingUtils';
+import {VoteOfNoConfidence} from '../../../src/server/cards/turmoil/VoteOfNoConfidence';
+import {testGame} from '../../TestGame';
 
 describe('TempestConsultancy', () => {
   let player: TestPlayer;
-  let otherPlayer: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let card: TempestConsultancy;
   let turmoil: Turmoil;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    otherPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('id', [player, otherPlayer], player, TestingUtils.setCustomGameOptions());
+    [game, player/* , otherPlayer */] = testGame(2, {turmoilExtension: true});
     card = new TempestConsultancy();
     turmoil = game.turmoil!;
   });
@@ -32,73 +31,91 @@ describe('TempestConsultancy', () => {
     expect(card.canAct(player)).is.false;
   });
 
-  it('can act, not enough delegates', () => {
+  it('cannot act, not enough delegates', () => {
     player.tagsForTest = {moon: 5};
     expect(card.canAct(player)).is.true;
-    turmoil.delegateReserve = [];
-    // Can still play, just ... no delegates
-    expect(card.canAct(player)).is.true;
+    turmoil.delegateReserve.clear();
+    expect(card.canAct(player)).is.false;
   });
 
   it('action, 1 delegate', () => {
     player.tagsForTest = {moon: 5};
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(6);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(7);
     // This test is brittle - it assumes mars first will be orOptions[0]. But OK.
-    const marsFirst = turmoil.getPartyByName(PartyName.MARS)!;
-    expect(marsFirst.getDelegates(player.id)).eq(0);
+    const marsFirst = turmoil.getPartyByName(PartyName.MARS);
+    expect(marsFirst.delegates.get(player)).eq(0);
     card.action(player);
-    const action = player.game.deferredActions.pop() as SendDelegateToArea;
+    const action = cast(player.game.deferredActions.pop(), SendDelegateToArea);
     const options = action.execute();
     options!.cb(marsFirst.name);
 
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(5);
-    expect(marsFirst.getDelegates(player.id)).eq(1);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(6);
+    expect(marsFirst.delegates.get(player)).eq(1);
   });
 
   it('action, 3 delegates', () => {
     player.tagsForTest = {moon: 16};
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(6);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(7);
     // This test is brittle - it assumes mars first will be orOptions[0]. But OK.
-    const marsFirst = turmoil.getPartyByName(PartyName.MARS)!;
-    expect(marsFirst.getDelegates(player.id)).eq(0);
+    const marsFirst = turmoil.getPartyByName(PartyName.MARS);
+    expect(marsFirst.delegates.get(player)).eq(0);
     card.action(player);
-    const action = player.game.deferredActions.pop() as SendDelegateToArea;
-    const options = action.execute();
-    options!.cb(marsFirst.name);
+    const action = cast(player.game.deferredActions.pop(), SendDelegateToArea);
+    const options = cast(action.execute(), SelectParty);
+    options.cb(marsFirst.name);
 
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(3);
-    expect(marsFirst.getDelegates(player.id)).eq(3);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(4);
+    expect(marsFirst.delegates.get(player)).eq(3);
   });
 
   it('action, 3 delegates, only 2 available', () => {
     player.tagsForTest = {moon: 16};
-    turmoil.delegateReserve = [player.id, player.id];
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(2);
+    turmoil.delegateReserve.clear();
+    turmoil.delegateReserve.add(player, 2);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(2);
     // This test is brittle - it assumes mars first will be orOptions[0]. But OK.
-    const marsFirst = turmoil.getPartyByName(PartyName.MARS)!;
-    expect(marsFirst.getDelegates(player.id)).eq(0);
+    const marsFirst = turmoil.getPartyByName(PartyName.MARS);
+    expect(marsFirst.delegates.get(player)).eq(0);
 
     card.action(player);
 
-    const action = player.game.deferredActions.pop() as SendDelegateToArea;
-    const options = action.execute();
-    options!.cb(marsFirst.name);
+    const action = cast(player.game.deferredActions.pop(), SendDelegateToArea);
+    const options = cast(action.execute(), SelectParty);
+    options.cb(marsFirst.name);
 
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(0);
-    expect(marsFirst.getDelegates(player.id)).eq(2);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(0);
+    expect(marsFirst.delegates.get(player)).eq(2);
   });
 
   it('new chairman', () => {
-    player.corporationCard = card;
-    turmoil.rulingParty = new Greens();
-    turmoil.rulingParty.partyLeader = player.id;
+    player.corporations.push(card);
+    turmoil.dominantParty = new Greens();
+    turmoil.dominantParty.partyLeader = player;
     expect(player.getTerraformRating()).eq(20);
 
     turmoil.setRulingParty(game);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(turmoil.chairman).eq(player.id);
+    expect(turmoil.chairman).eq(player);
     expect(player.getTerraformRating()).eq(22);
+  });
+
+  it('With Vote of No Confidence', () => {
+    player.corporations.push(card);
+    turmoil.chairman = 'NEUTRAL';
+
+    const greens = turmoil.getPartyByName(PartyName.GREENS);
+    greens.partyLeader = player;
+
+    expect(player.getTerraformRating()).to.eq(20);
+
+    const voteOfNoConfidence = new VoteOfNoConfidence();
+    voteOfNoConfidence.play(player);
+
+    expect(turmoil.chairman).eq(player);
+    runAllActions(game);
+    // With Vote of No Confidence, player becomes chairman and gains 1 TR. Tempest gives player a second TR.
+    expect(player.getTerraformRating()).to.eq(22);
   });
 });
 

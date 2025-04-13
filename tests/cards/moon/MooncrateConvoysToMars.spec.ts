@@ -1,30 +1,25 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {MooncrateConvoysToMars} from '../../../src/cards/moon/MooncrateConvoysToMars';
 import {expect} from 'chai';
-import {SelectAmount} from '../../../src/inputs/SelectAmount';
-import {Reds} from '../../../src/turmoil/parties/Reds';
-import {MarsFirst} from '../../../src/turmoil/parties/MarsFirst';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {IGame} from '../../../src/server/IGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {cast} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {MooncrateConvoysToMars} from '../../../src/server/cards/moon/MooncrateConvoysToMars';
+import {SelectAmount} from '../../../src/server/inputs/SelectAmount';
+import {Reds} from '../../../src/server/turmoil/parties/Reds';
+import {MarsFirst} from '../../../src/server/turmoil/parties/MarsFirst';
+import {testGame} from '../../TestGame';
 
 describe('MooncrateConvoysToMars', () => {
-  let game: Game;
-  let player1: Player;
-  let player2: Player;
-  let player3: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player1: TestPlayer;
+  let player2: TestPlayer;
+  let player3: TestPlayer;
+  let moonData: MoonData;
   let card: MooncrateConvoysToMars;
 
   beforeEach(() => {
-    player1 = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    player3 = TestPlayers.GREEN.newPlayer();
-    game = Game.newInstance('id', [player1, player2, player3], player1, MOON_OPTIONS);
+    [game, player1, player2, player3] = testGame(3, {moonExpansion: true, turmoilExtension: true});
     moonData = MoonExpansion.moonData(game);
     card = new MooncrateConvoysToMars();
   });
@@ -34,10 +29,10 @@ describe('MooncrateConvoysToMars', () => {
     player1.megaCredits = card.cost;
 
     game.turmoil!.rulingParty = new MarsFirst();
-    expect(player1.getPlayableCards()).does.include(card);
+    expect(player1.getPlayableCardsForTest()).does.include(card);
 
     game.turmoil!.rulingParty = new Reds();
-    expect(player1.getPlayableCards()).does.not.include(card);
+    expect(player1.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('play', () => {
@@ -54,7 +49,7 @@ describe('MooncrateConvoysToMars', () => {
 
     expect(moonData.logisticRate).eq(1);
 
-    const firstSale = game.deferredActions.pop()!.execute() as SelectAmount;
+    const firstSale = cast(game.deferredActions.pop()!.execute(), SelectAmount);
     expect(firstSale.max).eq(5);
     firstSale.cb(2);
     expect(player1.steel).eq(3);
@@ -63,7 +58,7 @@ describe('MooncrateConvoysToMars', () => {
     const secondSale = game.deferredActions.pop()!.execute();
     expect(secondSale).is.undefined;
 
-    const thirdSale = game.deferredActions.pop()!.execute() as SelectAmount;
+    const thirdSale = cast(game.deferredActions.pop()!.execute(), SelectAmount);
     expect(thirdSale.max).eq(3);
   });
 });

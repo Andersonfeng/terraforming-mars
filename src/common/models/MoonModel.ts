@@ -1,8 +1,8 @@
 import {SpaceModel} from './SpaceModel';
 
-export interface MoonModel {
+export type MoonModel = {
   spaces: Array<SpaceModel>;
-  colonyRate: number;
+  habitatRate: number;
   miningRate: number;
   logisticsRate: number;
 }

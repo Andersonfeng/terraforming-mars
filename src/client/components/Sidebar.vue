@@ -4,15 +4,15 @@
     <div class="gen-text" v-i18n>GEN</div>
     <div class="gen-marker">{{ getGenMarker() }}</div>
   </div>
-  <div v-if="gameOptions.turmoilExtension" :title="$t('Ruling Party')">
+  <div v-if="gameOptions.expansions.turmoil" :title="$t('Ruling Party')">
     <div :class="'party-name party-name-indicator party-name--'+rulingPartyToCss()"> <span v-i18n>{{ getRulingParty() }}</span></div>
   </div>
   <div class="global_params">
     <global-parameter-value :param="this.globalParameter.TEMPERATURE" :value="this.temperature"></global-parameter-value>
     <global-parameter-value :param="this.globalParameter.OXYGEN" :value="this.oxygen"></global-parameter-value>
     <global-parameter-value :param="this.globalParameter.OCEANS" :value="this.oceans"></global-parameter-value>
-    <global-parameter-value v-if="gameOptions.venusNextExtension" :param="this.globalParameter.VENUS" :value="this.venus"></global-parameter-value>
-    <MoonGlobalParameterValue v-if="gameOptions.moonExpansion" :moonData="this.moonData"></MoonGlobalParameterValue>
+    <global-parameter-value v-if="gameOptions.expansions.venus" :param="this.globalParameter.VENUS" :value="this.venus"></global-parameter-value>
+    <MoonGlobalParameterValue v-if="gameOptions.expansions.moon" :moonData="this.moonData"></MoonGlobalParameterValue>
   </div>
   <div class="sidebar_item preferences_player" :title="$t('Player Color Cube')">
     <div :class="getPlayerColorCubeClass()+' player_bg_color_' + player_color"></div>
@@ -39,6 +39,8 @@
       </div>
   </a>
 
+  <language-icon></language-icon>
+
   <div class="sidebar_item sidebar_item--info" :title="$t('Information panel')">
     <i class="sidebar_icon sidebar_icon--info"
       :class="{'sidebar_item--is-active': ui.gamesetup_detail_open}"
@@ -55,7 +57,7 @@
     </div>
   </div>
 
-  <a href="/help" target="_blank">
+  <a href="help" target="_blank">
     <div class="sidebar_item sidebar_item--help">
       <i class="sidebar_icon sidebar_icon--help" :title="$t('player aid')"></i>
     </div>
@@ -79,6 +81,7 @@ import MoonGlobalParameterValue from '@/client/components/moon/MoonGlobalParamet
 import {GlobalParameter} from '@/common/GlobalParameter';
 import {MoonModel} from '@/common/models/MoonModel';
 import PreferencesIcon from '@/client/components/PreferencesIcon.vue';
+import LanguageIcon from '@/client/components/LanguageIcon.vue';
 
 export default Vue.extend({
   name: 'sidebar',
@@ -128,6 +131,7 @@ export default Vue.extend({
     'global-parameter-value': GlobalParameterValue,
     MoonGlobalParameterValue,
     PreferencesIcon,
+    LanguageIcon,
   },
   data() {
     return {
@@ -155,15 +159,17 @@ export default Vue.extend({
       return this.turmoil.ruling.toLowerCase().split(' ').join('_');
     },
     getRulingParty(): string {
-      const rulingPartyName = this.turmoil.ruling;
-      if (rulingPartyName === PartyName.MARS) {
+      switch (this.turmoil.ruling) {
+      case PartyName.MARS:
         return 'Mars';
-      } else if (rulingPartyName === PartyName.SCIENTISTS) {
+      case PartyName.SCIENTISTS:
         return 'Science';
-      } else if (rulingPartyName === PartyName.KELVINISTS) {
+      case PartyName.KELVINISTS:
         return 'Kelvin';
-      } else {
-        return rulingPartyName as string;
+      case undefined:
+        return '???';
+      default:
+        return this.turmoil.ruling;
       }
     },
   },

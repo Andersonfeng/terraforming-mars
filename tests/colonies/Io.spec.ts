@@ -1,43 +1,42 @@
 import {expect} from 'chai';
-import {Io} from '../../src/colonies/Io';
-import {Game} from '../../src/Game';
-import {Player} from '../../src/Player';
-import {Resources} from '../../src/common/Resources';
-import {TestPlayers} from '../TestPlayers';
-import {TestingUtils} from '../TestingUtils';
+import {Io} from '../../src/server/colonies/Io';
+import {IGame} from '../../src/server/IGame';
+import {TestPlayer} from '../TestPlayer';
+import {runAllActions} from '../TestingUtils';
+import {testGame} from '../TestGame';
 
-describe('Io', function() {
-  let io: Io; let player: Player; let player2: Player; let game: Game;
+describe('Io', () => {
+  let io: Io;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     io = new Io();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
-    game.gameOptions.coloniesExtension = true;
+    [game, player, player2] = testGame(2, {coloniesExtension: true});
     game.colonies.push(io);
   });
 
-  it('Should build', function() {
+  it('Should build', () => {
     io.addColony(player);
-    expect(player.getProduction(Resources.HEAT)).to.eq(1);
-    expect(player2.getProduction(Resources.HEAT)).to.eq(0);
+    expect(player.production.heat).to.eq(1);
+    expect(player2.production.heat).to.eq(0);
   });
 
-  it('Should trade', function() {
+  it('Should trade', () => {
     io.trade(player);
     expect(player.heat).to.eq(3);
     expect(player2.heat).to.eq(0);
   });
 
-  it('Should give trade bonus', function() {
+  it('Should give trade bonus', () => {
     io.addColony(player);
 
     io.trade(player2);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(player.getProduction(Resources.HEAT)).to.eq(1);
-    expect(player2.getProduction(Resources.HEAT)).to.eq(0);
+    expect(player.production.heat).to.eq(1);
+    expect(player2.production.heat).to.eq(0);
     expect(player.heat).to.eq(2);
     expect(player2.heat).to.eq(3);
   });

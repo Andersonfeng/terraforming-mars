@@ -1,30 +1,25 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {LunarSecurityStations} from '../../../src/cards/moon/LunarSecurityStations';
 import {expect} from 'chai';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {HiredRaiders} from '../../../src/cards/base/HiredRaiders';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {cast} from '../../TestingUtils';
+import {LunarSecurityStations} from '../../../src/server/cards/moon/LunarSecurityStations';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {HiredRaiders} from '../../../src/server/cards/base/HiredRaiders';
 import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {TestPlayer} from '../../TestPlayer';
 
 describe('LunarSecurityStations', () => {
-  let game: Game;
-  let player: Player;
-  let opponent1: Player;
-  let opponent2: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player: TestPlayer;
+  let opponent1: TestPlayer;
+  let opponent2: TestPlayer;
+  let moonData: MoonData;
   let card: LunarSecurityStations;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    opponent1 = TestPlayers.RED.newPlayer();
-    opponent2 = TestPlayers.GREEN.newPlayer();
-    game = Game.newInstance('id', [player, opponent1, opponent2], player, MOON_OPTIONS);
+    [game, player, opponent1, opponent2] = testGame(3, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
     card = new LunarSecurityStations();
   });
@@ -38,10 +33,10 @@ describe('LunarSecurityStations', () => {
     spaces[1].tile = {tileType: TileType.MOON_ROAD};
     spaces[2].tile = {tileType: TileType.MOON_ROAD};
 
-    expect(player.getPlayableCards()).includes(card);
+    expect(player.getPlayableCardsForTest()).includes(card);
 
-    spaces[1].tile = {tileType: TileType.MOON_COLONY};
-    expect(player.getPlayableCards()).does.not.include(card);
+    spaces[1].tile = {tileType: TileType.MOON_HABITAT};
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('protects against Hired Raiders', () => {
@@ -51,12 +46,12 @@ describe('LunarSecurityStations', () => {
     const hiredRaiders = new HiredRaiders();
 
     opponent2.playedCards = [];
-    let action = hiredRaiders.play(player) as OrOptions;
+    let action = cast(hiredRaiders.play(player), OrOptions);
     // Options for both opponents.
     expect(action.options).has.lengthOf(3);
 
     opponent2.playedCards = [card];
-    action = hiredRaiders.play(player) as OrOptions;
+    action = cast(hiredRaiders.play(player), OrOptions);
     // Options for only one opponent.
     expect(action.options).has.lengthOf(2);
     action.options[0].cb();

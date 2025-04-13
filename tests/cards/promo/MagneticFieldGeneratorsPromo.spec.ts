@@ -1,34 +1,36 @@
 import {expect} from 'chai';
-import {MagneticFieldGeneratorsPromo} from '../../../src/cards/promo/MagneticFieldGeneratorsPromo';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {MagneticFieldGeneratorsPromo} from '../../../src/server/cards/promo/MagneticFieldGeneratorsPromo';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('MagneticFieldGeneratorsPromo', function() {
-  let card : MagneticFieldGeneratorsPromo; let player : Player;
+describe('MagneticFieldGeneratorsPromo', () => {
+  let card: MagneticFieldGeneratorsPromo;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new MagneticFieldGeneratorsPromo();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Cannot play without enough energy production', function() {
-    player.addProduction(Resources.ENERGY, 3);
+  it('Cannot play without enough energy production', () => {
+    player.production.add(Resource.ENERGY, 3);
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.ENERGY, 4);
+  it('Should play', () => {
+    player.production.add(Resource.ENERGY, 4);
     expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(2);
+    card.play(player);
+    runAllActions(game);
+    cast(player.popWaitingFor(), SelectSpace);
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.plants).to.eq(2);
     expect(player.getTerraformRating()).to.eq(23);
   });
 });

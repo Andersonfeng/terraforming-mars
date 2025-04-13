@@ -1,32 +1,29 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {PersonalAgenda} from '../../../src/cards/pathfinders/PersonalAgenda';
-import {Game} from '../../../src/Game';
+import {testGame} from '../../TestGame';
+import {PersonalAgenda} from '../../../src/server/cards/pathfinders/PersonalAgenda';
 import {Units} from '../../../src/common/Units';
-import {Tags} from '../../../src/common/cards/Tags';
+import {Tag} from '../../../src/common/cards/Tag';
 import {TestPlayer} from '../../TestPlayer';
 import {CardType} from '../../../src/common/cards/CardType';
 
-describe('PersonalAgenda', function() {
+describe('PersonalAgenda', () => {
   let card: PersonalAgenda;
   let player: TestPlayer;
-  let game: Game;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new PersonalAgenda();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [/* game */, player] = testGame(1);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
 
-    expect(player.getProductionForTest()).deep.eq(Units.of({megacredits: 3}));
+    expect(player.production.asUnits()).deep.eq(Units.of({megacredits: 3}));
 
     expect(player.cardsInHand).has.lengthOf(3);
     player.cardsInHand.forEach((card) => {
-      expect(card.cardType).eq(CardType.EVENT);
-      expect(card.tags.indexOf(Tags.SPACE)).to.eq(-1);
+      expect(card.type).eq(CardType.EVENT);
+      expect(card.tags.indexOf(Tag.SPACE)).to.eq(-1);
     });
   });
 });

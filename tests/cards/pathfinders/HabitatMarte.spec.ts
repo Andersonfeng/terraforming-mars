@@ -1,49 +1,46 @@
 import {expect} from 'chai';
-import {HabitatMarte} from '../../../src/cards/pathfinders/HabitatMarte';
-import {Game} from '../../../src/Game';
+import {HabitatMarte} from '../../../src/server/cards/pathfinders/HabitatMarte';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {TestingUtils} from '../../TestingUtils';
-import {Tags} from '../../../src/common/cards/Tags';
-import {ValleyTrust} from '../../../src/cards/prelude/ValleyTrust';
-import {OlympusConference} from '../../../src/cards/base/OlympusConference';
-import {InterstellarColonyShip} from '../../../src/cards/base/InterstellarColonyShip';
+import {testGame} from '../../TestGame';
+import {cast, fakeCard, runAllActions} from '../../TestingUtils';
+import {Tag} from '../../../src/common/cards/Tag';
+import {ValleyTrust} from '../../../src/server/cards/prelude/ValleyTrust';
+import {OlympusConference} from '../../../src/server/cards/base/OlympusConference';
+import {InterstellarColonyShip} from '../../../src/server/cards/base/InterstellarColonyShip';
 
 describe('HabitatMarte', () => {
   let card: HabitatMarte;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
   beforeEach(() => {
     card = new HabitatMarte();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1);
   });
 
   it('tag count', () => {
-    player.corporationCard = card;
-    expect(player.getTagCount(Tags.SCIENCE, 'raw')).eq(0);
-    expect(player.getTagCount(Tags.SCIENCE)).eq(1);
+    player.corporations.push(card);
+    expect(player.tags.count(Tag.SCIENCE, 'raw')).eq(0);
+    expect(player.tags.count(Tag.SCIENCE)).eq(1);
   });
 
   it('card cost', () => {
-    player.playedCards.push(new ValleyTrust()); // -2 per science tag (This is hilarious because Valley Trust is actually a corp card.)
-    player.corporationCard = undefined;
-    expect(player.getCardCost(TestingUtils.fakeCard({cost: 10, tags: [Tags.MARS]}))).eq(10);
-    expect(player.getCardCost(TestingUtils.fakeCard({cost: 10, tags: [Tags.SCIENCE]}))).eq(8);
-    expect(player.getCardCost(TestingUtils.fakeCard({cost: 10, tags: [Tags.MARS, Tags.MARS]}))).eq(10);
+    player.corporations.push(new ValleyTrust()); // -2 per science tag
+    expect(player.getCardCost(fakeCard({cost: 10, tags: [Tag.MARS]}))).eq(10);
+    expect(player.getCardCost(fakeCard({cost: 10, tags: [Tag.SCIENCE]}))).eq(8);
+    expect(player.getCardCost(fakeCard({cost: 10, tags: [Tag.MARS, Tag.MARS]}))).eq(10);
 
-    player.corporationCard = card;
-    expect(player.getCardCost(TestingUtils.fakeCard({cost: 10, tags: [Tags.MARS]}))).eq(8);
-    expect(player.getCardCost(TestingUtils.fakeCard({cost: 10, tags: [Tags.SCIENCE]}))).eq(8);
-    expect(player.getCardCost(TestingUtils.fakeCard({cost: 10, tags: [Tags.MARS, Tags.MARS]}))).eq(6);
+    player.corporations.push(card);
+    expect(player.getCardCost(fakeCard({cost: 10, tags: [Tag.MARS]}))).eq(8);
+    expect(player.getCardCost(fakeCard({cost: 10, tags: [Tag.SCIENCE]}))).eq(8);
+    expect(player.getCardCost(fakeCard({cost: 10, tags: [Tag.MARS, Tag.MARS]}))).eq(6);
   });
 
   it('card requirements', () => {
-    player.corporationCard = undefined;
-    const fourScienceTags = TestingUtils.fakeCard({tags: [Tags.SCIENCE, Tags.SCIENCE, Tags.SCIENCE, Tags.SCIENCE]});
-    const oneMarsTag = TestingUtils.fakeCard({tags: [Tags.MARS]});
-    const fiveMarsTags = TestingUtils.fakeCard({tags: [Tags.MARS, Tags.MARS, Tags.MARS, Tags.MARS, Tags.MARS]});
+    const fourScienceTags = fakeCard({tags: [Tag.SCIENCE, Tag.SCIENCE, Tag.SCIENCE, Tag.SCIENCE]});
+    const oneMarsTag = fakeCard({tags: [Tag.MARS]});
+    const fiveMarsTags = fakeCard({tags: [Tag.MARS, Tag.MARS, Tag.MARS, Tag.MARS, Tag.MARS]});
 
     // Requires five science tags
     const interstellar = new InterstellarColonyShip();
@@ -56,34 +53,34 @@ describe('HabitatMarte', () => {
 
     expect(player.canPlay(interstellar)).is.false;
 
-    player.corporationCard = card;
+    player.corporations.push(card);
     expect(player.canPlay(interstellar)).is.true;
 
     player.playedCards = [fiveMarsTags];
 
     expect(player.canPlay(interstellar)).is.true;
 
-    player.corporationCard = undefined;
+    player.corporations = [];
 
     expect(player.canPlay(interstellar)).is.false;
   });
 
   it('Olympus Conference', () => {
     player.popWaitingFor();
-    const marsCard = TestingUtils.fakeCard({tags: [Tags.MARS]});
+    const marsCard = fakeCard({tags: [Tag.MARS]});
     const olympusConference = new OlympusConference();
     player.playedCards = [olympusConference];
     expect(olympusConference.resourceCount).eq(0);
 
     olympusConference.onCardPlayed(player, marsCard);
-    TestingUtils.runAllActions(game);
-    expect(player.getWaitingFor()).is.undefined;
+    runAllActions(game);
+    cast(player.getWaitingFor(), undefined);
     expect(olympusConference.resourceCount).eq(0);
 
-    player.corporationCard = card;
+    player.corporations.push(card);
     olympusConference.onCardPlayed(player, marsCard);
-    TestingUtils.runAllActions(game);
-    expect(player.getWaitingFor()).is.undefined;
+    runAllActions(game);
+    cast(player.getWaitingFor(), undefined);
     expect(olympusConference.resourceCount).eq(1);
   });
 });

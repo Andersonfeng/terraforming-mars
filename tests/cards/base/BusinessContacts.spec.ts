@@ -1,29 +1,39 @@
-
 import {expect} from 'chai';
-import {BusinessContacts} from '../../../src/cards/base/BusinessContacts';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {BusinessContacts} from '../../../src/server/cards/base/BusinessContacts';
+import {IProjectCard} from '../../../src/server/cards/IProjectCard';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {testGame} from '../../TestGame';
 
-describe('BusinessContacts', function() {
-  it('Should play', function() {
+describe('BusinessContacts', () => {
+  it('Should play', () => {
     const card = new BusinessContacts();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player)!;
-    expect(action).is.not.undefined;
-    expect(action).instanceOf(SelectCard);
-    const card1 = action.cards[0];
-    const card2 = action.cards[1];
-    const card3 = action.cards[2];
-    const card4 = action.cards[3];
+    const [game, player] = testGame(2);
+
+    cast(card.play(player), undefined);
+    runAllActions(game);
+
+    const action = cast(player.popWaitingFor(), SelectCard<IProjectCard>);
+    const [card1, card2, card3, card4] = action.cards;
+
     action.cb([card1, card2]);
-    expect(player.cardsInHand.indexOf(card1)).to.eq(0);
-    expect(player.cardsInHand.indexOf(card2)).to.eq(1);
-    expect(player.cardsInHand).has.lengthOf(2);
-    expect(game.dealer.discarded).has.lengthOf(2);
-    expect(game.dealer.discarded.indexOf(card3)).to.eq(0);
-    expect(game.dealer.discarded.indexOf(card4)).to.eq(1);
+
+    expect(player.cardsInHand).deep.eq([card1, card2]);
+    expect(game.projectDeck.discardPile).deep.eq([card3, card4]);
+  });
+
+  it('Cannot draw when the deck is empty', () => {
+    const card = new BusinessContacts();
+    const [game, player] = testGame(2);
+
+    game.projectDeck.discardPile.length = 0;
+    game.projectDeck.drawPile.length = 5;
+    expect(card.canPlay(player)).is.true;
+    game.projectDeck.drawPile.length = 4;
+    expect(card.canPlay(player)).is.true;
+    game.projectDeck.drawPile.length = 3;
+    expect(card.canPlay(player)).is.false;
+    game.projectDeck.drawPile.length = 2;
+    expect(card.canPlay(player)).is.false;
   });
 });

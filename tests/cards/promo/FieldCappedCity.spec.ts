@@ -1,25 +1,21 @@
 import {expect} from 'chai';
-import {FieldCappedCity} from '../../../src/cards/promo/FieldCappedCity';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Resources} from '../../../src/common/Resources';
-import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
+import {FieldCappedCity} from '../../../src/server/cards/promo/FieldCappedCity';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {assertPlaceCity} from '../../assertions';
 
-describe('FieldCappedCity', function() {
-  it('Should play', function() {
+describe('FieldCappedCity', () => {
+  it('Should play', () => {
     const card = new FieldCappedCity();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.not.undefined;
-    expect(action).instanceOf(SelectSpace);
-    action.cb(action.availableSpaces[0]);
-    expect(action.availableSpaces[0].tile && action.availableSpaces[0].tile.tileType).to.eq(TileType.CITY);
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
+
+    runAllActions(player.game);
+
+    assertPlaceCity(player, player.popWaitingFor());
     expect(player.plants).to.eq(3);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    expect(player.production.energy).to.eq(1);
+    expect(player.production.megacredits).to.eq(2);
   });
 });
 

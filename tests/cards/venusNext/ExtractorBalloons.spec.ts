@@ -1,34 +1,43 @@
 import {expect} from 'chai';
-import {ExtractorBalloons} from '../../../src/cards/venusNext/ExtractorBalloons';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {ExtractorBalloons} from '../../../src/server/cards/venusNext/ExtractorBalloons';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('ExtractorBalloons', function() {
-  let card : ExtractorBalloons; let player : Player; let game : Game;
+describe('ExtractorBalloons', () => {
+  let card: ExtractorBalloons;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ExtractorBalloons();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    const action = card.play(player);
-    expect(action).is.undefined;
-  });
-
-  it('Should act', function() {
-    card.play(player);
+  it('Should play', () => {
+    cast(card.play(player), undefined);
+    runAllActions(game);
     expect(card.resourceCount).to.eq(3);
+  });
 
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions instanceof OrOptions).is.true;
+  it('Can act', () => {
+    player.playedCards.push(card);
+    card.resourceCount = 1;
+    expect(card.canAct()).is.true;
+    card.resourceCount = 2;
+    expect(card.canAct()).is.true;
+  });
 
-        orOptions!.options[0].cb();
-        expect(card.resourceCount).to.eq(1);
-        expect(game.getVenusScaleLevel()).to.eq(2);
+  it('Should act', () => {
+    player.playedCards.push(card);
+    card.resourceCount = 3;
+
+    const orOptions = cast(card.action(player), OrOptions);
+
+    orOptions.options[0].cb();
+    expect(card.resourceCount).to.eq(1);
+    expect(game.getVenusScaleLevel()).to.eq(2);
   });
 });

@@ -1,45 +1,48 @@
 import {expect} from 'chai';
-import {Flooding} from '../../../src/cards/base/Flooding';
-import {LandClaim} from '../../../src/cards/base/LandClaim';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectPlayer} from '../../../src/inputs/SelectPlayer';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
+import {Flooding} from '../../../src/server/cards/base/Flooding';
+import {LandClaim} from '../../../src/server/cards/base/LandClaim';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectPlayer} from '../../../src/server/inputs/SelectPlayer';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TestPlayer} from '../../TestPlayer';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
-import {maxOutOceans} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {addGreenery, cast, maxOutOceans, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('Flooding', function() {
-  let card : Flooding; let player : TestPlayer; let player2 : TestPlayer; let game : Game;
+describe('Flooding', () => {
+  let card: Flooding;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Flooding();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
+    [game, player, player2] = testGame(2);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     const oceans = game.board.getAvailableSpacesForOcean(player);
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
 
-    expect(action!.cb(oceans[0])).is.undefined;
+    expect(selectSpace.cb(oceans[0])).is.undefined;
     const adjacentSpaces = game.board.getAdjacentSpaces(oceans[0]);
     oceans[0].tile = undefined;
-    for (let i = 0; i < adjacentSpaces.length; i++) {
-      if (adjacentSpaces[i].spaceType === SpaceType.LAND) {
-        game.addGreenery(player2, adjacentSpaces[i].id);
+    for (const adjacentSpace of adjacentSpaces) {
+      if (adjacentSpace.spaceType === SpaceType.LAND) {
+        game.addGreenery(player2, adjacentSpace);
         break;
       }
     }
 
-    const subAction: OrOptions = action!.cb(oceans[0]) as OrOptions;
-    expect(subAction instanceof OrOptions).is.true;
-    expect(subAction!.options).has.lengthOf(2);
-    expect(subAction!.options[1].cb()).is.undefined;
-    const subActionSelectPlayer: SelectPlayer = subAction!.options[0] as SelectPlayer;
+    cast(selectSpace.cb(oceans[0]), undefined);
+    runAllActions(game);
+    const subAction = cast(player.popWaitingFor(), OrOptions);
+    expect(subAction.options).has.lengthOf(2);
+    expect(subAction.options[1].cb()).is.undefined;
+    const subActionSelectPlayer = cast(subAction.options[0], SelectPlayer);
     expect(subActionSelectPlayer.players).has.lengthOf(1);
     expect(subActionSelectPlayer.players[0]).to.eq(player2);
 
@@ -47,28 +50,31 @@ describe('Flooding', function() {
     subActionSelectPlayer.cb(player2);
     expect(player2.megaCredits).to.eq(0);
 
-    expect(card.getVictoryPoints()).to.eq(-1);
+    expect(card.getVictoryPoints(player)).to.eq(-1);
   });
 
-  it('Does not suggest to remove money from yourself', function() {
+  it('Does not suggest to remove money from yourself', () => {
     const oceanSpaces = game.board.getAvailableSpacesForOcean(player);
-    const action = card.play(player);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
 
-    game.addGreenery(player, '03');
-    game.addGreenery(player2, '05');
+    addGreenery(player, '03');
+    addGreenery(player2, '05');
 
-    expect(action).instanceOf(SelectSpace);
-    const subActions: OrOptions = action!.cb(oceanSpaces[0]) as OrOptions;
-    expect(subActions.options).has.lengthOf(2);
+    cast(selectSpace.cb(oceanSpaces[0]), undefined);
+    runAllActions(game);
+    const subAction = cast(player.popWaitingFor(), OrOptions);
+    expect(subAction.options).has.lengthOf(2);
 
-    const subActionSelectPlayer: SelectPlayer = subActions.options[0] as SelectPlayer;
+    const subActionSelectPlayer = cast(subAction.options[0], SelectPlayer);
     expect(subActionSelectPlayer.players).has.lengthOf(1);
     expect(subActionSelectPlayer.players[0]).to.eq(player2);
   });
 
-  it('Does not suggest player who played Land Claim', function() {
+  it('Does not suggest player who played Land Claim', () => {
     const landClaim = new LandClaim();
-    const landClaimAction = landClaim.play(player2);
+    const landClaimAction = cast(landClaim.play(player2), SelectSpace);
     const adjacentSpace = game.board.getAvailableSpacesOnLand(player).filter((space) => space.id === '03')[0];
 
     landClaimAction.cb(adjacentSpace);
@@ -76,15 +82,16 @@ describe('Flooding', function() {
     expect(adjacentSpace.tile).is.undefined;
 
     const oceanSpaces = game.board.getAvailableSpacesForOcean(player);
-    const action = card.play(player) as SelectSpace;
-    expect(action.cb(oceanSpaces[0])).is.undefined;
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    expect(selectSpace.cb(oceanSpaces[0])).is.undefined;
   });
 
-  it('Does not suggest to remove money if oceans are already maxed', function() {
+  it('Does not suggest to remove money if oceans are already maxed', () => {
     maxOutOceans(player);
     expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).is.undefined;
+    cast(card.play(player), undefined);
   });
 });

@@ -1,30 +1,31 @@
 import {expect} from 'chai';
-import {Player} from '../../../src/Player';
-import {Game} from '../../../src/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TileType} from '../../../src/common/TileType';
-import {RestrictedAreaAres} from '../../../src/cards/ares/RestrictedAreaAres';
+import {RestrictedAreaAres} from '../../../src/server/cards/ares/RestrictedAreaAres';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {testGame} from '../../TestGame';
 
-describe('RestrictedAreaAres', function() {
-  let card : RestrictedAreaAres; let player : Player;
+describe('RestrictedAreaAres', () => {
+  let card: RestrictedAreaAres;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new RestrictedAreaAres();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+    [game, player] = testGame(2, {aresExtension: true});
   });
 
-  it('Should play', function() {
-    const action = card.play(player);
-    expect(action).is.not.undefined;
-
-    const space = action.availableSpaces[0];
-
+  it('Should play', () => {
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+    const space = action.spaces[0];
     action.cb(space);
-    expect(space.tile && space.tile.tileType).to.eq(TileType.RESTRICTED_AREA);
+
+    expect(space.tile?.tileType).to.eq(TileType.RESTRICTED_AREA);
     expect(space.adjacency).to.deep.eq({bonus: [SpaceBonus.DRAW_CARD]});
   });
 });

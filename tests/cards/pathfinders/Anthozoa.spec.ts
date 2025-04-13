@@ -1,39 +1,35 @@
 import {expect} from 'chai';
-import {Anthozoa} from '../../../src/cards/pathfinders/Anthozoa';
-import {Game} from '../../../src/Game';
+import {Anthozoa} from '../../../src/server/cards/pathfinders/Anthozoa';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-// import {Units} from '../../../src/Units';
-import {TestingUtils} from '../../TestingUtils';
+import {addOcean, testGame} from '../../TestingUtils';
 
-describe('Anthozoa', function() {
+describe('Anthozoa', () => {
   let card: Anthozoa;
   let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Anthozoa();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    [/* game */, player] = testGame(1);
   });
 
-  it('canPlay', function() {
+  it('canPlay', () => {
     player.megaCredits = card.cost;
     expect(player.canPlay(card)).is.false;
-    TestingUtils.addOcean(player);
+    addOcean(player);
     expect(player.canPlay(card)).is.false;
-    TestingUtils.addOcean(player);
+    addOcean(player);
     expect(player.canPlay(card)).is.false;
-    TestingUtils.addOcean(player);
+    addOcean(player);
     expect(player.canPlay(card)).is.true;
   });
 
-  it('canAct', function() {
+  it('canAct', () => {
     expect(card.canAct(player)).is.false;
     player.plants = 1;
     expect(card.canAct(player)).is.true;
   });
 
-  it('action', function() {
+  it('action', () => {
     player.plants = 1;
     expect(card.resourceCount).eq(0);
 
@@ -43,14 +39,14 @@ describe('Anthozoa', function() {
     expect(card.resourceCount).eq(1);
   });
 
-  it('getVictoryPoints', function() {
+  it('getVictoryPoints', () => {
     card.resourceCount = 1;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 2;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 3;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 4;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
   });
 });

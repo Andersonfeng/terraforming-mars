@@ -1,39 +1,39 @@
 import {expect} from 'chai';
-import {BlackPolarDust} from '../../../src/cards/base/BlackPolarDust';
-import {Player} from '../../../src/Player';
-import {Game} from '../../../src/Game';
-import {maxOutOceans} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {Resources} from '../../../src/common/Resources';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
+import {BlackPolarDust} from '../../../src/server/cards/base/BlackPolarDust';
+import {IGame} from '../../../src/server/IGame';
+import {cast, maxOutOceans} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {Resource} from '../../../src/common/Resource';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {testGame} from '../../TestGame';
 
-describe('BlackPolarDust', function() {
-  let card : BlackPolarDust; let player : Player; let game : Game;
+describe('BlackPolarDust', () => {
+  let card: BlackPolarDust;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new BlackPolarDust();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    player.addProduction(Resources.MEGACREDITS, -4);
+  it('Can not play', () => {
+    player.production.add(Resource.MEGACREDITS, -4);
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(-2);
-    expect(player.getProduction(Resources.HEAT)).to.eq(3);
+    expect(player.production.megacredits).to.eq(-2);
+    expect(player.production.heat).to.eq(3);
 
     expect(game.deferredActions).has.lengthOf(1);
-    const selectSpace = game.deferredActions.peek()!.execute() as SelectSpace;
-    selectSpace.cb(selectSpace.availableSpaces[0]);
+    const selectSpace = cast(game.deferredActions.peek()!.execute(), SelectSpace);
+    selectSpace.cb(selectSpace.spaces[0]);
     expect(player.getTerraformRating()).to.eq(21);
   });
 
-  it('Cannot place ocean if no oceans left', function() {
+  it('Cannot place ocean if no oceans left', () => {
     maxOutOceans(player);
     card.play(player);
   });

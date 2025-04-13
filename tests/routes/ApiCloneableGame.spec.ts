@@ -1,59 +1,57 @@
 import {expect} from 'chai';
-import {ApiCloneableGame} from '../../src/routes/ApiCloneableGame';
+import {ApiCloneableGame} from '../../src/server/routes/ApiCloneableGame';
 import {MockResponse} from './HttpMocks';
-import {Database} from '../../src/database/Database';
+import {Database} from '../../src/server/database/Database';
 import {RouteTestScaffolding} from './RouteTestScaffolding';
+import {GameId} from '../../src/common/Types';
+import {statusCode} from '../../src/common/http/statusCode';
 
 describe('ApiCloneableGame', () => {
   let scaffolding: RouteTestScaffolding;
   let res: MockResponse;
-  const origgetPlayerCount = Database.getInstance().getPlayerCount;
+  let originalGetPlayerCount: (gameId: GameId) => Promise<number>;
 
   beforeEach(() => {
     scaffolding = new RouteTestScaffolding();
     res = new MockResponse();
+    originalGetPlayerCount = Database.getInstance().getPlayerCount;
   });
 
   afterEach(() => {
-    Database.getInstance().getPlayerCount = origgetPlayerCount;
+    Database.getInstance().getPlayerCount = originalGetPlayerCount;
   });
 
-  it('no parameter', () => {
+  it('no parameter', async () => {
     scaffolding.url = '/api/cloneablegames';
-    scaffolding.get(ApiCloneableGame.INSTANCE, res);
-    expect(res.statusCode).eq(400);
-    expect(res.content).eq('Bad request: id parameter missing');
+    await scaffolding.get(ApiCloneableGame.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.badRequest);
+    expect(res.content).eq('Bad request: missing id parameter');
   });
 
-  it('has error while loading', () => {
-    Database.getInstance().getPlayerCount = (gameId, cb) => {
-      expect(gameId).eq('invalidId');
-      cb(new Error('Segmentation fault'), undefined);
-    };
+  it('invalid id', async () => {
     scaffolding.url = '/api/cloneablegames?id=invalidId';
-    scaffolding.get(ApiCloneableGame.INSTANCE, res);
-    expect(res.statusCode).eq(500);
-    expect(res.content).eq('Internal server error: Segmentation fault');
+    await scaffolding.get(ApiCloneableGame.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.badRequest);
+    expect(res.content).eq('Bad request: invalid game id');
   });
 
-  it('does not find game', () => {
-    Database.getInstance().getPlayerCount = (gameId, cb) => {
-      expect(gameId).eq('notfound');
-      cb(undefined, undefined);
+  it('has error while loading', async () => {
+    Database.getInstance().getPlayerCount = (_gameId) => {
+      return new Promise((_resolve, reject) => {
+        reject(new Error('Segmentation fault'));
+      });
     };
-    scaffolding.url = '/api/cloneablegames?id=notfound';
-    scaffolding.get(ApiCloneableGame.INSTANCE, res);
-    expect(res.statusCode).eq(404);
+    scaffolding.url = '/api/cloneablegames?id=gameIdInvalid';
+    await scaffolding.get(ApiCloneableGame.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.notFound);
     expect(res.content).eq('Not found');
   });
 
-  it('finds game', () => {
-    Database.getInstance().getPlayerCount = (_gameId, cb) => {
-      cb(undefined, 2);
-    };
+  it('finds game', async () => {
+    Database.getInstance().getPlayerCount = (_gameId) => Promise.resolve(2);
     scaffolding.url = '/api/cloneablegames?id=g456';
-    scaffolding.get(ApiCloneableGame.INSTANCE, res);
-    expect(res.statusCode).eq(200);
+    await scaffolding.get(ApiCloneableGame.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.ok);
     expect(res.content).eq(JSON.stringify({
       gameId: 'g456',
       playerCount: 2,

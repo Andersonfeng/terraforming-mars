@@ -1,82 +1,58 @@
 import {expect} from 'chai';
-import {LobbyHalls} from '../../../src/cards/pathfinders/LobbyHalls';
+import {LobbyHalls} from '../../../src/server/cards/pathfinders/LobbyHalls';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
 import {Units} from '../../../src/common/Units';
-import {Turmoil} from '../../../src/turmoil/Turmoil';
-import {Game} from '../../../src/Game';
-import {DeclareCloneTag} from '../../../src/pathfinders/DeclareCloneTag';
-import {Tags} from '../../../src/common/cards/Tags';
-import {PartyName} from '../../../src/common/turmoil/PartyName';
-import {DeferredAction} from '../../../src//deferredActions/DeferredAction';
-import {SendDelegateToArea} from '../../../src//deferredActions/SendDelegateToArea';
-import {SelectPartyToSendDelegate} from '../../../src//inputs/SelectPartyToSendDelegate';
-import {TestingUtils} from '../../TestingUtils';
+import {Turmoil} from '../../../src/server/turmoil/Turmoil';
+import {IGame} from '../../../src/server/IGame';
+import {DeclareCloneTag} from '../../../src/server/pathfinders/DeclareCloneTag';
+import {Tag} from '../../../src/common/cards/Tag';
+import {IDeferredAction} from '../../../src/server//deferredActions/DeferredAction';
+import {cast} from '../../TestingUtils';
+import {assertAddDelegateAction} from '../../turmoil/turmoilAssertions';
 
-describe('LobbyHalls', function() {
+describe('LobbyHalls', () => {
   let card: LobbyHalls;
-  let game: Game;
+  let game: IGame;
   let player: TestPlayer;
   let turmoil: Turmoil;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new LobbyHalls();
-    game = newTestGame(1, {turmoilExtension: true, pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {turmoilExtension: true, pathfindersExpansion: true});
     turmoil = game.turmoil!;
   });
 
-  it('play', function() {
-    card.play(player);
-    expect(player.getProductionForTest()).deep.eq(Units.of({megacredits: 2}));
+  it('cannot play, not enough delegates', () => {
+    turmoil.delegateReserve.clear();
+    expect(card.tags).deep.eq([Tag.CLONE, Tag.BUILDING]);
+
+    expect(card.canPlay(player)).is.false;
   });
 
-  it('play, not enough delegates', () => {
-    turmoil.delegateReserve = [];
-    expect(card.tags).deep.eq([Tags.CLONE, Tags.BUILDING]);
-
+  it('play', () => {
     card.play(player);
-
-    // Only one available action
-    expect(game.deferredActions.length).eq(1);
-
-    // First action is define a clone tag
-    assertCloneTagAction(game.deferredActions.pop()!);
+    expect(player.production.asUnits()).deep.eq(Units.of({megacredits: 2}));
   });
 
   it('play, has a delegate', () => {
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(6);
-    expect(card.tags).deep.eq([Tags.CLONE, Tags.BUILDING]);
+    expect(turmoil.getAvailableDelegateCount(player)).eq(7);
+    expect(card.tags).deep.eq([Tag.CLONE, Tag.BUILDING]);
 
     card.play(player);
 
-    expect(game.deferredActions.length).eq(2);
+    expect(game.deferredActions).has.length(2);
 
     // First action is define a clone tag
     assertCloneTagAction(game.deferredActions.pop()!);
 
     // Next test adds a delegate.
-    // This test is brittle - it assumes mars first will be orOptions[0]. But OK.
-    assertAddDelegateAction(game.deferredActions.pop()!);
+    assertAddDelegateAction(player, game.deferredActions.pop()?.execute());
   });
 
-  function assertCloneTagAction(action: DeferredAction) {
-    const options = TestingUtils.cast(action, DeclareCloneTag).execute();
-    options.options[0].cb();
-    expect(card.tags).deep.eq([Tags.EARTH, Tags.BUILDING]);
-  }
-
-  function assertAddDelegateAction(action: DeferredAction) {
-    const marsFirst = turmoil.getPartyByName(PartyName.MARS)!;
-
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(6);
-    expect(marsFirst.getDelegates(player.id)).eq(0);
-
-    expect(action).instanceOf(SendDelegateToArea);
-    const options = action.execute()! as SelectPartyToSendDelegate;
-    options.cb(marsFirst.name);
-
-    expect(turmoil.getAvailableDelegateCount(player.id, 'reserve')).eq(5);
-    expect(marsFirst.getDelegates(player.id)).eq(1);
+  function assertCloneTagAction(action: IDeferredAction) {
+    const options = cast(action, DeclareCloneTag).execute();
+    options.options[1].cb();
+    expect(card.tags).deep.eq([Tag.EARTH, Tag.BUILDING]);
   }
 });

@@ -1,17 +1,14 @@
 import {expect} from 'chai';
-import {TradeEnvoys} from '../../../src/cards/colonies/TradeEnvoys';
-import {Ceres} from '../../../src/colonies/Ceres';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {TradeEnvoys} from '../../../src/server/cards/colonies/TradeEnvoys';
+import {Ceres} from '../../../src/server/colonies/Ceres';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('TradeEnvoys', function() {
-  it('Should play', function() {
+describe('TradeEnvoys', () => {
+  it('Should play', () => {
     const card = new TradeEnvoys();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
     const ceres = new Ceres();
     ceres.trade(player);
     expect(player.steel).to.eq(3);

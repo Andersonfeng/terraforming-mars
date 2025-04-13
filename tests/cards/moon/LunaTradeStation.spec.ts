@@ -1,26 +1,22 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {LunaTradeStation} from '../../../src/cards/moon/LunaTradeStation';
 import {expect} from 'chai';
-import {Resources} from '../../../src/common/Resources';
-import {MoonSpaces} from '../../../src/moon/MoonSpaces';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {runAllActions} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {LunaTradeStation} from '../../../src/server/cards/moon/LunaTradeStation';
+import {NamedMoonSpaces} from '../../../src/common/moon/NamedMoonSpaces';
 import {TileType} from '../../../src/common/TileType';
 
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
-
 describe('LunaTradeStation', () => {
-  let game: Game;
-  let player: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player: TestPlayer;
+  let moonData: MoonData;
   let card: LunaTradeStation;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
     card = new LunaTradeStation();
   });
@@ -29,44 +25,47 @@ describe('LunaTradeStation', () => {
     player.cardsInHand = [card];
     player.titanium = 1;
     player.megaCredits = card.cost;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
     player.titanium = 2;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {
     player.titanium = 3;
-    expect(player.getProduction(Resources.STEEL)).eq(0);
+    expect(player.production.steel).eq(0);
 
     card.play(player);
 
     expect(player.titanium).eq(1);
 
-    const lunaTradeStation = moonData.moon.getSpace(MoonSpaces.LUNA_TRADE_STATION);
+    const lunaTradeStation = moonData.moon.getSpaceOrThrow(NamedMoonSpaces.LUNA_TRADE_STATION);
     expect(lunaTradeStation.player).eq(player);
     expect(lunaTradeStation.tile!.tileType).eq(TileType.LUNA_TRADE_STATION);
   });
 
   it('action', () => {
     player.megaCredits = 0;
-    const spaces = moonData.moon.getNonReservedLandSpaces();
+    const spaces = moonData.moon.getAvailableSpacesOnLand(player);
 
     card.action(player);
     expect(player.megaCredits).eq(0);
 
     player.megaCredits = 0;
-    spaces[0].tile = {tileType: TileType.MOON_COLONY};
+    spaces[0].tile = {tileType: TileType.MOON_HABITAT};
     card.action(player);
+    runAllActions(game);
     expect(player.megaCredits).eq(2);
 
     player.megaCredits = 0;
-    spaces[1].tile = {tileType: TileType.MOON_COLONY};
+    spaces[1].tile = {tileType: TileType.MOON_HABITAT};
     card.action(player);
+    runAllActions(game);
     expect(player.megaCredits).eq(4);
 
     player.megaCredits = 0;
-    spaces[2].tile = {tileType: TileType.MOON_COLONY};
+    spaces[2].tile = {tileType: TileType.MOON_HABITAT};
     card.action(player);
+    runAllActions(game);
     expect(player.megaCredits).eq(6);
   });
 });

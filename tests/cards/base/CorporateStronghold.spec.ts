@@ -1,38 +1,36 @@
 import {expect} from 'chai';
-import {CorporateStronghold} from '../../../src/cards/base/CorporateStronghold';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
+import {CorporateStronghold} from '../../../src/server/cards/base/CorporateStronghold';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
+import {Resource} from '../../../src/common/Resource';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {assertPlaceCity} from '../../assertions';
 
-describe('CorporateStronghold', function() {
-  let card : CorporateStronghold; let player : TestPlayer;
+describe('CorporateStronghold', () => {
+  let card: CorporateStronghold;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CorporateStronghold();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.ENERGY, 1);
+  it('Should play', () => {
+    player.production.add(Resource.ENERGY, 1);
     expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
-    action.cb(action.availableSpaces[0]);
+    cast(card.play(player), undefined);
+    runAllActions(player.game);
 
-    expect(action.availableSpaces[0].tile && action.availableSpaces[0].tile.tileType).to.eq(TileType.CITY);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(3);
+    assertPlaceCity(player, player.popWaitingFor());
 
-    expect(card.getVictoryPoints()).to.eq(-2);
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.megacredits).to.eq(3);
+
+    expect(card.getVictoryPoints(player)).to.eq(-2);
   });
 });

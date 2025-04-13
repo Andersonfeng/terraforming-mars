@@ -1,23 +1,20 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {WaterTreatmentComplex} from '../../../src/cards/moon/WaterTreatmentComplex';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {WaterTreatmentComplex} from '../../../src/server/cards/moon/WaterTreatmentComplex';
 import {expect} from 'chai';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {IMoonData} from '../../../src/moon/IMoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {MoonData} from '../../../src/server/moon/MoonData';
 import {TileType} from '../../../src/common/TileType';
 
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
-
 describe('WaterTreatmentComplex', () => {
-  let player: Player;
+  let game: IGame;
+  let player: TestPlayer;
   let card: WaterTreatmentComplex;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new WaterTreatmentComplex();
     moonData = MoonExpansion.moonData(game);
   });
@@ -29,27 +26,27 @@ describe('WaterTreatmentComplex', () => {
     const space = moonData.moon.getAvailableSpacesOnLand(player)[0];
 
     player.titanium = 1;
-    space.tile = {tileType: TileType.MOON_COLONY};
-    expect(player.getPlayableCards()).does.include(card);
+    space.tile = {tileType: TileType.MOON_HABITAT};
+    expect(player.getPlayableCardsForTest()).does.include(card);
 
     player.titanium = 0;
-    space.tile = {tileType: TileType.MOON_COLONY};
-    expect(player.getPlayableCards()).does.not.include(card);
+    space.tile = {tileType: TileType.MOON_HABITAT};
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
     player.titanium = 1;
     space.tile = {tileType: TileType.MOON_ROAD};
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('play', () => {
-    expect(moonData.colonyRate).eq(0);
+    expect(moonData.habitatRate).eq(0);
     expect(player.getTerraformRating()).eq(14);
     player.titanium = 1;
 
     card.play(player);
 
     expect(player.titanium).eq(0);
-    expect(moonData.colonyRate).eq(2);
+    expect(moonData.habitatRate).eq(2);
     expect(player.getTerraformRating()).eq(16);
   });
 });

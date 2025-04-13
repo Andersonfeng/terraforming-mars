@@ -1,27 +1,30 @@
 import {expect} from 'chai';
-import {Bushes} from '../../../src/cards/base/Bushes';
-import {QuantumExtractor} from '../../../src/cards/base/QuantumExtractor';
-import {TollStation} from '../../../src/cards/base/TollStation';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {Bushes} from '../../../src/server/cards/base/Bushes';
+import {QuantumExtractor} from '../../../src/server/cards/base/QuantumExtractor';
+import {TollStation} from '../../../src/server/cards/base/TollStation';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('QuantumExtractor', function() {
-  let card : QuantumExtractor; let player : Player;
+describe('QuantumExtractor', () => {
+  let card: QuantumExtractor;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new QuantumExtractor();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    player.tagsForTest = {science: 3};
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.playedCards.push(card, card, card, card);
+  it('Can play', () => {
+    player.tagsForTest = {science: 4};
+    expect(card.canPlay(player)).is.true;
+  });
+
+  it('Should play', () => {
     card.play(player);
     expect(card.getCardDiscount(player, new TollStation())).to.eq(2);
     expect(card.getCardDiscount(player, new Bushes())).to.eq(0);

@@ -1,22 +1,19 @@
-import {Game} from '../../../src/Game';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {LunarTradeFleet} from '../../../src/cards/moon/LunarTradeFleet';
 import {expect} from 'chai';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {LunarTradeFleet} from '../../../src/server/cards/moon/LunarTradeFleet';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
 import {TestPlayer} from '../../TestPlayer';
 
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
-
 describe('LunarTradeFleet', () => {
+  let game: IGame;
   let player: TestPlayer;
   let card: LunarTradeFleet;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new LunarTradeFleet();
     moonData = MoonExpansion.moonData(game);
   });
@@ -25,21 +22,21 @@ describe('LunarTradeFleet', () => {
     player.cardsInHand = [card];
     player.megaCredits = card.cost;
 
-    player.setProductionForTest({titanium: 2});
-    expect(player.getPlayableCards()).does.include(card);
+    player.production.override({titanium: 2});
+    expect(player.getPlayableCardsForTest()).does.include(card);
 
-    player.setProductionForTest({titanium: 1});
-    expect(player.getPlayableCards()).does.not.include(card);
+    player.production.override({titanium: 1});
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('play', () => {
-    player.setProductionForTest({megacredits: 0});
+    player.production.override({megacredits: 0});
     expect(player.getTerraformRating()).eq(14);
     moonData.logisticRate = 0;
 
     card.play(player);
 
-    player.setProductionForTest({megacredits: 2});
+    player.production.override({megacredits: 2});
     expect(moonData.logisticRate).eq(1);
     expect(player.getTerraformRating()).eq(15);
   });

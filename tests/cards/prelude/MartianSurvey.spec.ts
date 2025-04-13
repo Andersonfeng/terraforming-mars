@@ -1,32 +1,34 @@
 import {expect} from 'chai';
-import {MartianSurvey} from '../../../src/cards/prelude/MartianSurvey';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {setOxygenLevel} from '../../TestingUtils';
+import {MartianSurvey} from '../../../src/server/cards/prelude/MartianSurvey';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
-describe('MartianSurvey', function() {
-  let card : MartianSurvey; let player : Player; let game : Game;
+describe('MartianSurvey', () => {
+  let card: MartianSurvey;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new MartianSurvey();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
   });
 
   it('Cannot play', () => {
-    (game as any).oxygenLevel = 5;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    setOxygenLevel(game, 5);
+    expect(card.canPlay(player)).is.not.true;
   });
   it('Can play', () => {
-    (game as any).oxygenLevel = 4;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    setOxygenLevel(game, 4);
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Should play', () => {
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
     card.play(player);
 
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
     expect(player.cardsInHand).has.lengthOf(2);
   });
 });

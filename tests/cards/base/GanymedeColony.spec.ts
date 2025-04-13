@@ -1,16 +1,13 @@
 import {expect} from 'chai';
-import {GanymedeColony} from '../../../src/cards/base/GanymedeColony';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {GanymedeColony} from '../../../src/server/cards/base/GanymedeColony';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('GanymedeColony', function() {
-  it('Should play', function() {
+describe('GanymedeColony', () => {
+  it('Should play', () => {
     const card = new GanymedeColony();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
     player.playedCards.push(card);
     expect(card.getVictoryPoints(player)).to.eq(1);
   });

@@ -1,67 +1,74 @@
 import {expect} from 'chai';
-import {OceanSanctuary} from '../../../src/cards/ares/OceanSanctuary';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
+import {OceanSanctuary} from '../../../src/server/cards/ares/OceanSanctuary';
+import {IGame} from '../../../src/server/IGame';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
 import {TileType} from '../../../src/common/TileType';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
-import {addOcean} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {addOcean, cast} from '../../TestingUtils';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('OceanSanctuary', function() {
-  let card : OceanSanctuary; let player : Player; let otherPlayer: Player; let game : Game;
+describe('OceanSanctuary', () => {
+  let card: OceanSanctuary;
+  let player: TestPlayer;
+  let otherPlayer: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new OceanSanctuary();
-    player = TestPlayers.BLUE.newPlayer();
-    otherPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, otherPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+    [game, player, otherPlayer] = testGame(2, {aresExtension: true});
   });
 
-  it('Can play', function() {
+  it('Can play', () => {
     addOcean(player);
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     addOcean(player);
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     addOcean(player);
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     addOcean(player);
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     addOcean(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('Play', function() {
+  it('Play', () => {
     const oceanSpace = addOcean(player);
-    const action = card.play(player);
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
     action.cb(oceanSpace);
     expect(oceanSpace.player).to.eq(player);
     expect(oceanSpace.tile!.tileType).to.eq(TileType.OCEAN_SANCTUARY);
     expect(oceanSpace.adjacency).to.deep.eq({bonus: [SpaceBonus.ANIMAL]});
+    runAllActions(game);
     expect(card.resourceCount).is.eq(1);
   });
 
-  it('Ocean Sanctuary counts as ocean for adjacency', function() {
+  it('Ocean Sanctuary counts as ocean for adjacency', () => {
     const oceanSpace = addOcean(player);
-    const action = card.play(player);
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
     action.cb(oceanSpace);
     const greenery = game.board.getAdjacentSpaces(oceanSpace).filter((space) => space.spaceType === SpaceType.LAND)[0];
 
     expect(otherPlayer.megaCredits).eq(0);
 
-    game.addGreenery(otherPlayer, greenery.id);
+    game.addGreenery(otherPlayer, greenery);
 
     expect(otherPlayer.megaCredits).eq(2);
   });
 
-  it('Victory Points', function() {
+  it('Victory Points', () => {
     card.resourceCount = 7;
-    expect(card.getVictoryPoints()).eq(7);
+    expect(card.getVictoryPoints(player)).eq(7);
   });
 
   it('Placing Ocean Sanctuary does not grant underlying space bonus', () => {
@@ -70,10 +77,12 @@ describe('OceanSanctuary', function() {
     })[0];
 
     player.plants = 0;
-    game.addOceanTile(player, oceanSpace.id);
+    game.addOcean(player, oceanSpace);
     expect(player.plants).eq(1);
 
-    const action = card.play(player);
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
 
     expect(player.plants).eq(1);
 

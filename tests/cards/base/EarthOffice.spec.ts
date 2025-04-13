@@ -1,30 +1,28 @@
 import {expect} from 'chai';
-import {Birds} from '../../../src/cards/base/Birds';
-import {EarthOffice} from '../../../src/cards/base/EarthOffice';
-import {LunaGovernor} from '../../../src/cards/colonies/LunaGovernor';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {Birds} from '../../../src/server/cards/base/Birds';
+import {EarthOffice} from '../../../src/server/cards/base/EarthOffice';
+import {LunaGovernor} from '../../../src/server/cards/colonies/LunaGovernor';
+import {TestPlayer} from '../../TestPlayer';
+import {cast} from '../../TestingUtils';
 
-describe('EarthOffice', function() {
-  let card : EarthOffice; let player : Player;
+describe('EarthOffice', () => {
+  let card: EarthOffice;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EarthOffice();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
 
-    const action = card.play();
-    expect(action).is.undefined;
+    cast(card.play(player), undefined);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     expect(card.getCardDiscount(player, card)).to.eq(3);
     expect(card.getCardDiscount(player, new Birds())).to.eq(0);
   });
 
-  it('Discounts Luna Governor correctly', function() {
+  it('Discounts Luna Governor correctly', () => {
     expect(card.getCardDiscount(player, new LunaGovernor())).to.eq(6);
   });
 });

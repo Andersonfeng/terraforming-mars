@@ -1,14 +1,11 @@
 import {expect} from 'chai';
-import {ConvoyFromEuropa} from '../../../src/cards/base/ConvoyFromEuropa';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {ConvoyFromEuropa} from '../../../src/server/cards/base/ConvoyFromEuropa';
+import {testGame} from '../../TestGame';
 
-describe('ConvoyFromEuropa', function() {
-  it('Should play', function() {
+describe('ConvoyFromEuropa', () => {
+  it('Should play', () => {
     const card = new ConvoyFromEuropa();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    const [/* game */, player] = testGame(2);
     card.play(player);
     expect(player.cardsInHand).has.lengthOf(1);
   });

@@ -1,26 +1,22 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {OffWorldCityLiving} from '../../../src/cards/moon/OffWorldCityLiving';
 import {expect} from 'chai';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {IMoonData} from '../../../src/moon/IMoonData';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {OffWorldCityLiving} from '../../../src/server/cards/moon/OffWorldCityLiving';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {MoonData} from '../../../src/server/moon/MoonData';
 import {TileType} from '../../../src/common/TileType';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
-import {Resources} from '../../../src/common/Resources';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
 
 describe('OffWorldCityLiving', () => {
-  let player: Player;
+  let game: IGame;
+  let player: TestPlayer;
   let card: OffWorldCityLiving;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
     // Adding a vestigial player to avoid the two starting cities.
-    const game = Game.newInstance('id', [player, TestPlayers.RED.newPlayer()], player, MOON_OPTIONS);
+    [game, player] = testGame(2, {moonExpansion: true});
     card = new OffWorldCityLiving();
     moonData = MoonExpansion.moonData(game);
   });
@@ -29,13 +25,13 @@ describe('OffWorldCityLiving', () => {
     player.cardsInHand = [card];
     player.megaCredits = card.cost;
 
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {
-    expect(moonData.colonyRate).eq(0);
+    expect(moonData.habitatRate).eq(0);
     expect(player.getTerraformRating()).eq(20);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(0);
+    expect(player.production.megacredits).eq(0);
 
     const colonySpaces = player.game.board.spaces.filter((s) => s.spaceType === SpaceType.COLONY);
     colonySpaces[0].tile = {tileType: TileType.CITY};
@@ -48,12 +44,13 @@ describe('OffWorldCityLiving', () => {
 
     card.play(player);
 
-    expect(moonData.colonyRate).eq(1);
+    expect(moonData.habitatRate).eq(1);
     expect(player.getTerraformRating()).eq(21);
-    expect(player.getProduction(Resources.MEGACREDITS)).eq(2);
+    expect(player.production.megacredits).eq(2);
   });
 
   it('getVictoryPoints', () => {
+    player.playedCards.push(card);
     expect(card.getVictoryPoints(player)).eq(0);
     const colonySpaces = player.game.board.spaces.filter((s) => s.spaceType === SpaceType.COLONY);
     colonySpaces[0].tile = {tileType: TileType.CITY};

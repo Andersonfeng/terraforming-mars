@@ -1,24 +1,22 @@
 import {expect} from 'chai';
-import {BusinessNetwork} from '../../../src/cards/base/BusinessNetwork';
-import {PowerPlant} from '../../../src/cards/base/PowerPlant';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
-import {TerralabsResearch} from '../../../src/cards/turmoil/TerralabsResearch';
-import {Game} from '../../../src/Game';
-import {AndOptions} from '../../../src/inputs/AndOptions';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {BusinessNetwork} from '../../../src/server/cards/base/BusinessNetwork';
+import {PowerPlant} from '../../../src/server/cards/base/PowerPlant';
+import {TerralabsResearch} from '../../../src/server/cards/turmoil/TerralabsResearch';
+import {SelectInitialCards} from '../../../src/server/inputs/SelectInitialCards';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {testGame} from '../../TestGame';
 
-describe('TerralabsResearch', function() {
-  it('Should play', function() {
+describe('TerralabsResearch', () => {
+  it('Should play', () => {
     const card = new TerralabsResearch();
     const card2 = new PowerPlant();
     const card3 = new BusinessNetwork();
-    const player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('foobar', [player], player);
-    const pi = player.getWaitingFor() as AndOptions;
+    const [game, player] = testGame(1, {skipInitialCardSelection: false});
+    const pi = cast(player.getWaitingFor(), SelectInitialCards);
     pi.options[0].cb([card]);
     pi.options[1].cb([card2, card2]);
-    pi.cb();
+    pi.cb(undefined);
 
     // 14 starting MC - 1 for each card select at the start (total: 2)
     expect(player.megaCredits).to.eq(12);
@@ -26,10 +24,10 @@ describe('TerralabsResearch', function() {
     expect(player.getTerraformRating()).to.eq(13);
 
     player.playedCards.push(card3);
-    const action = card3.action(player);
-    expect(action).is.not.undefined;
-    expect(action).instanceOf(SelectCard);
-    (action as SelectCard<IProjectCard>).cb([(action as SelectCard<IProjectCard>).cards[0]]);
+    expect(card3.action(player)).is.undefined;
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectCard);
+    action.cb([action.cards[0]]);
     game.deferredActions.runNext();
     expect(player.megaCredits).to.eq(11);
     expect(player.cardsInHand).has.lengthOf(3);

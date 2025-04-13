@@ -1,26 +1,24 @@
 import {expect} from 'chai';
-import {StanfordTorus} from '../../../src/cards/promo/StanfordTorus';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {StanfordTorus} from '../../../src/server/cards/promo/StanfordTorus';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('StanfordTorus', function() {
-  let card : StanfordTorus; let player : Player;
+describe('StanfordTorus', () => {
+  let card: StanfordTorus;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new StanfordTorus();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2, {promoCardsOption: true});
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
-    expect(player.game.getCitiesCount()).to.eq(1);
+    expect(player.game.board.getCities()).has.length(1);
   });
 
-  it('Should give victory points', function() {
+  it('Should give victory points', () => {
     card.play(player);
-    expect(card.getVictoryPoints()).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(2);
   });
 });

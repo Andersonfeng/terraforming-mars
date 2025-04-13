@@ -1,30 +1,31 @@
 import {expect} from 'chai';
-import {GeneRepair} from '../../../src/cards/base/GeneRepair';
-import {Game} from '../../../src/Game';
+import {testGame} from '../../TestGame';
+import {GeneRepair} from '../../../src/server/cards/base/GeneRepair';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
 
-describe('GeneRepair', function() {
-  let card : GeneRepair; let player : TestPlayer;
+describe('GeneRepair', () => {
+  let card: GeneRepair;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new GeneRepair();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    player.tagsForTest = {science: 2};
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.playedCards.push(card, card, card);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Can play', () => {
+    player.tagsForTest = {science: 3};
+    expect(card.canPlay(player)).is.true;
+  });
+
+  it('Should play', () => {
     card.play(player);
 
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
-    expect(card.getVictoryPoints()).to.eq(2);
+    expect(player.production.megacredits).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(2);
   });
 });

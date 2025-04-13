@@ -1,43 +1,42 @@
 import {expect} from 'chai';
-import {Ganymede} from '../../src/colonies/Ganymede';
-import {Game} from '../../src/Game';
-import {Player} from '../../src/Player';
-import {Resources} from '../../src/common/Resources';
-import {TestPlayers} from '../TestPlayers';
-import {TestingUtils} from '../TestingUtils';
+import {Ganymede} from '../../src/server/colonies/Ganymede';
+import {IGame} from '../../src/server/IGame';
+import {TestPlayer} from '../TestPlayer';
+import {runAllActions} from '../TestingUtils';
+import {testGame} from '../TestGame';
 
-describe('Ganymede', function() {
-  let ganymede: Ganymede; let player: Player; let player2: Player; let game: Game;
+describe('Ganymede', () => {
+  let ganymede: Ganymede;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     ganymede = new Ganymede();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
-    game.gameOptions.coloniesExtension = true;
+    [game, player, player2] = testGame(2, {coloniesExtension: true});
     game.colonies.push(ganymede);
   });
 
-  it('Should build', function() {
+  it('Should build', () => {
     ganymede.addColony(player);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
-    expect(player2.getProduction(Resources.PLANTS)).to.eq(0);
+    expect(player.production.plants).to.eq(1);
+    expect(player2.production.plants).to.eq(0);
   });
 
-  it('Should trade', function() {
+  it('Should trade', () => {
     ganymede.trade(player);
     expect(player.plants).to.eq(1);
     expect(player2.plants).to.eq(0);
   });
 
-  it('Should give trade bonus', function() {
+  it('Should give trade bonus', () => {
     ganymede.addColony(player);
 
     ganymede.trade(player2);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
-    expect(player2.getProduction(Resources.PLANTS)).to.eq(0);
+    expect(player.production.plants).to.eq(1);
+    expect(player2.production.plants).to.eq(0);
     expect(player.plants).to.eq(1);
     expect(player2.plants).to.eq(1);
   });

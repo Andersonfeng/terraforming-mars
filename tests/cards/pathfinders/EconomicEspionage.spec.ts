@@ -1,23 +1,20 @@
 import {expect} from 'chai';
-import {EconomicEspionage} from '../../../src/cards/pathfinders/EconomicEspionage';
-import {Game} from '../../../src/Game';
+import {EconomicEspionage} from '../../../src/server/cards/pathfinders/EconomicEspionage';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {TestingUtils} from '../../TestingUtils';
+import {runAllActions} from '../../TestingUtils';
 
-describe('EconomicEspionage', function() {
+describe('EconomicEspionage', () => {
   let card: EconomicEspionage;
   let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EconomicEspionage();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
     player.playedCards.push(card);
   });
 
-  it('can act', function() {
+  it('can act', () => {
     player.megaCredits = 1;
 
     expect(card.canAct(player)).is.false;
@@ -27,26 +24,26 @@ describe('EconomicEspionage', function() {
     expect(card.canAct(player)).is.true;
   });
 
-  it('action', function() {
+  it('action', () => {
     player.megaCredits = 2;
 
     card.action(player);
-    TestingUtils.runAllActions(player.game);
+    runAllActions(player.game);
     expect(player.megaCredits).eq(0);
     expect(card.resourceCount).eq(1);
   });
 
-  it('victoryPoints', function() {
+  it('victoryPoints', () => {
     card.resourceCount = 2;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
 
     card.resourceCount = 3;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
 
     card.resourceCount = 5;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
 
     card.resourceCount = 6;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
   });
 });

@@ -1,18 +1,14 @@
 import {expect} from 'chai';
-import {VestaShipyard} from '../../../src/cards/base/VestaShipyard';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {VestaShipyard} from '../../../src/server/cards/base/VestaShipyard';
+import {testGame} from '../../TestGame';
 
-describe('VestaShipyard', function() {
-  it('Should play', function() {
+describe('VestaShipyard', () => {
+  it('Should play', () => {
     const card = new VestaShipyard();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    const [/* game */, player] = testGame(2);
 
     card.play(player);
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(1);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(player.production.titanium).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

@@ -1,37 +1,49 @@
 import {expect} from 'chai';
-import {HiTechLab} from '../../../src/cards/promo/HiTechLab';
-import {Game} from '../../../src/Game';
-import {SelectAmount} from '../../../src/inputs/SelectAmount';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {HiTechLab} from '../../../src/server/cards/promo/HiTechLab';
+import {SelectAmount} from '../../../src/server/inputs/SelectAmount';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, testGame} from '../../TestingUtils';
 
-describe('HiTechLab', function() {
-  let card : HiTechLab; let player : Player;
+describe('HiTechLab', () => {
+  let card: HiTechLab;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new HiTechLab();
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t act if no energy resources available', function() {
+  it('Can not act if no energy resources available', () => {
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Should act', function() {
-    player.addResource(Resources.ENERGY, 5);
-    expect(card.canAct(player)).is.true;
-
-    const amount = card.action(player) as SelectAmount;
-    expect(amount instanceof SelectAmount).is.true;
-
-        amount!.cb(3);
-        expect(player.getResource(Resources.ENERGY)).to.eq(2);
+  it('cannot act with empty deck', () => {
+    player.energy = 10;
+    player.game.projectDeck.drawPile.length = 0;
+    expect(card.canAct(player)).is.false;
   });
 
-  it('Should give victory points', function() {
-    card.play();
-    expect(card.getVictoryPoints()).to.eq(1);
+  it('can act with small deck', () => {
+    player.energy = 10;
+    player.game.projectDeck.drawPile.length = 8;
+    expect(card.canAct(player)).is.true;
+    const selectAmount = cast(card.action(player), SelectAmount);
+    expect(selectAmount.max).eq(8);
+  });
+
+  it('Should act', () => {
+    player.stock.add(Resource.ENERGY, 5);
+    expect(card.canAct(player)).is.true;
+
+    const selectAmount = cast(card.action(player), SelectAmount);
+
+    selectAmount.cb(3);
+    expect(player.energy).to.eq(2);
+  });
+
+  it('Should give victory points', () => {
+    card.play(player);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

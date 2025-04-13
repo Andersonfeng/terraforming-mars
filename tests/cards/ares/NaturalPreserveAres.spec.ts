@@ -1,32 +1,31 @@
 import {expect} from 'chai';
-import {Player} from '../../../src/Player';
-import {Game} from '../../../src/Game';
+import {IGame} from '../../../src/server/IGame';
 import {TileType} from '../../../src/common/TileType';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {NaturalPreserveAres} from '../../../src/cards/ares/NaturalPreserveAres';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {NaturalPreserveAres} from '../../../src/server/cards/ares/NaturalPreserveAres';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('NaturalPreserveAres', function() {
-  let card : NaturalPreserveAres; let player : Player;
+describe('NaturalPreserveAres', () => {
+  let card: NaturalPreserveAres;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new NaturalPreserveAres();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+    [game, player] = testGame(2, {aresExtension: true});
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     expect(card.canPlay(player)).is.true;
-    const action = card.play(player);
-    expect(action).is.not.undefined;
-    expect(action).instanceOf(SelectSpace);
-
-    const space = action.availableSpaces[0];
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+    const space = action.spaces[0];
     action.cb(space);
-    expect(space.tile && space.tile.tileType).to.eq(TileType.NATURAL_PRESERVE);
+    expect(space.tile?.tileType).to.eq(TileType.NATURAL_PRESERVE);
     expect(space.adjacency).to.deep.eq({bonus: [SpaceBonus.MEGACREDITS]});
   });
 });

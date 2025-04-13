@@ -1,32 +1,31 @@
 import {expect} from 'chai';
-import {CollegiumCopernicus} from '../../../src/cards/pathfinders/CollegiumCopernicus';
-import {Luna} from '../../../src/colonies/Luna';
-import {Triton} from '../../../src/colonies/Triton';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectColony} from '../../../src/inputs/SelectColony';
-import {Player} from '../../../src/Player';
-import {AndOptions} from '../../../src/inputs/AndOptions';
-import {TestingUtils} from '../../TestingUtils';
-import {newTestGame, getTestPlayer} from '../../TestGame';
-import {Enceladus} from '../../../src/colonies/Enceladus';
-import {Europa} from '../../../src/colonies/Europa';
-import {Io} from '../../../src/colonies/Io';
-import {Pluto} from '../../../src/colonies/Pluto';
-import {LunarObservationPost} from '../../../src/cards/moon/LunarObservationPost';
-import {Tags} from '../../../src/common/cards/Tags';
-import {SelectCard} from '../../../src/inputs/SelectCard';
+import {CollegiumCopernicus} from '../../../src/server/cards/pathfinders/CollegiumCopernicus';
+import {Luna} from '../../../src/server/colonies/Luna';
+import {Triton} from '../../../src/server/colonies/Triton';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectColony} from '../../../src/server/inputs/SelectColony';
+import {AndOptions} from '../../../src/server/inputs/AndOptions';
+import {cast, fakeCard, formatMessage, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {Enceladus} from '../../../src/server/colonies/Enceladus';
+import {Europa} from '../../../src/server/colonies/Europa';
+import {Io} from '../../../src/server/colonies/Io';
+import {Pluto} from '../../../src/server/colonies/Pluto';
+import {LunarObservationPost} from '../../../src/server/cards/moon/LunarObservationPost';
+import {Tag} from '../../../src/common/cards/Tag';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
 
-describe('CollegiumCopernicus', function() {
+describe('CollegiumCopernicus', () => {
   let card: CollegiumCopernicus;
-  let player: Player;
-  let game: Game;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CollegiumCopernicus();
-    game = newTestGame(2, {coloniesExtension: true, pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
-    player.corporationCard = card;
+    [game, player] = testGame(2, {coloniesExtension: true, pathfindersExpansion: true});
+    player.corporations.push(card);
     // Looks as though when Enceladus is first, the test fails. So removing flakiness by defining colonies.
     game.colonies = [
       new Europa(),
@@ -56,12 +55,12 @@ describe('CollegiumCopernicus', function() {
     expect(card.canAct(player)).is.true;
   });
 
-  it('action with multiple coloniess available', function() {
+  it('action with multiple coloniess available', () => {
     game.colonies = [new Luna(), new Triton()];
     card.resourceCount = 10;
 
     card.action(player);
-    const selectColony = game.deferredActions.peek()!.execute() as SelectColony;
+    const selectColony = cast(game.deferredActions.peek()!.execute(), SelectColony);
     selectColony.cb(selectColony.colonies[0]);
     expect(card.resourceCount).to.eq(7);
     expect(player.megaCredits).to.eq(2);
@@ -77,21 +76,20 @@ describe('CollegiumCopernicus', function() {
 
     expect(getTradeAction()).is.undefined;
 
-    player.corporationCard = card;
     card.resourceCount = 2;
 
     expect(getTradeAction()).is.undefined;
 
     card.resourceCount = 3;
 
-    const tradeAction = TestingUtils.cast(getTradeAction(), AndOptions);
+    const tradeAction = cast(getTradeAction(), AndOptions);
 
-    const payAction = TestingUtils.cast(tradeAction.options[0], OrOptions);
+    const payAction = cast(tradeAction.options[0], OrOptions);
     expect(payAction.title).eq('Pay trade fee');
     expect(payAction.options).has.length(1);
 
     const dataOption = payAction.options[0];
-    expect(dataOption.title).to.match(/Pay 3 Data/);
+    expect(formatMessage(dataOption.title)).to.match(/Pay 3 data/);
 
     expect(player.megaCredits).eq(0);
 
@@ -102,10 +100,10 @@ describe('CollegiumCopernicus', function() {
     expect(player.megaCredits).eq(2);
   });
 
-  it('play', function() {
+  it('play', () => {
     expect(card.resourceCount).eq(0);
     card.play(player);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
     expect(card.resourceCount).eq(1);
   });
 
@@ -113,9 +111,9 @@ describe('CollegiumCopernicus', function() {
     const lunarObservationPost = new LunarObservationPost();
     player.playedCards = [lunarObservationPost];
 
-    card.onCardPlayed(player, TestingUtils.fakeCard({tags: [Tags.SCIENCE]}));
-    TestingUtils.runAllActions(game);
-    const selectCard = TestingUtils.cast(player.getWaitingFor(), SelectCard);
+    card.onCardPlayed(player, fakeCard({tags: [Tag.SCIENCE]}));
+    runAllActions(game);
+    const selectCard = cast(player.getWaitingFor(), SelectCard);
 
     expect(selectCard.cards).has.members([card, lunarObservationPost]);
     expect(lunarObservationPost.resourceCount).eq(0);
@@ -127,10 +125,11 @@ describe('CollegiumCopernicus', function() {
     expect(card.resourceCount).eq(0);
   });
 
-  it('initialAction', function() {
+  it('initialAction', () => {
     expect(player.cardsInHand).is.empty;
-    card.initialAction(player);
+    player.deferInitialAction(card);
+    runAllActions(game);
     expect(player.cardsInHand).has.length(2);
-    expect(player.cardsInHand.filter((card) => card.tags.includes(Tags.SCIENCE))).has.length(2);
+    expect(player.cardsInHand.filter((card) => card.tags.includes(Tag.SCIENCE))).has.length(2);
   });
 });

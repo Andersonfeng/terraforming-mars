@@ -1,28 +1,26 @@
 import {expect} from 'chai';
-import {DataLeak} from '../../../src/cards/pathfinders/DataLeak';
-import {Game} from '../../../src/Game';
+import {DataLeak} from '../../../src/server/cards/pathfinders/DataLeak';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {LunarObservationPost} from '../../../src/cards/moon/LunarObservationPost';
-import {TestingUtils} from '../../TestingUtils';
+import {LunarObservationPost} from '../../../src/server/cards/moon/LunarObservationPost';
+import {runAllActions, testGame} from '../../TestingUtils';
 
-describe('DataLeak', function() {
+describe('DataLeak', () => {
   let card: DataLeak;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new DataLeak();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
   });
 
-  it('play', function() {
+  it('play', () => {
     const lunarObservationPost = new LunarObservationPost();
     player.playedCards = [lunarObservationPost];
 
     card.play(player);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
     expect(lunarObservationPost.resourceCount).eq(5);
   });

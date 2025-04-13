@@ -1,30 +1,30 @@
 import {expect} from 'chai';
-import {Heather} from '../../../src/cards/base/Heather';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {setTemperature} from '../../TestingUtils';
+import {Heather} from '../../../src/server/cards/base/Heather';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('Heather', function() {
-  let card : Heather; let player : Player; let game: Game;
+describe('Heather', () => {
+  let card: Heather;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Heather();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    (game as any).temperature = -14;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    setTemperature(game, -14);
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    expect(player.production.plants).to.eq(1);
     expect(player.plants).to.eq(1);
   });
 });

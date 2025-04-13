@@ -1,35 +1,40 @@
 import {expect} from 'chai';
-import {AquiferTurbines} from '../../../src/cards/prelude/AquiferTurbines';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {AquiferTurbines} from '../../../src/server/cards/prelude/AquiferTurbines';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestingUtils';
 
-describe('AquiferTurbines', function() {
-  let card : AquiferTurbines; let player : Player; let game : Game;
+describe('AquiferTurbines', () => {
+  let card: AquiferTurbines;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AquiferTurbines();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
   });
 
-  it('Can play', function() {
+  it('Can not play', () => {
+    player.megaCredits = 2;
+    expect(card.canPlay(player)).is.false;
+  });
+
+  it('Can play', () => {
     player.megaCredits = 3;
     expect(card.canPlay(player)).is.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.megaCredits = 3;
     card.play(player);
 
     // PlaceOceanTile
     game.deferredActions.pop();
 
-    // SelectHowToPayDeferred
+    // SelectPaymentDeferred
     game.deferredActions.runNext();
 
-    expect(player.getProduction(Resources.ENERGY)).to.eq(2);
+    expect(player.production.energy).to.eq(2);
     expect(player.megaCredits).to.eq(0);
   });
 });

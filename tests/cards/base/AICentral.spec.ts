@@ -1,39 +1,40 @@
 import {expect} from 'chai';
-import {AICentral} from '../../../src/cards/base/AICentral';
+import {AICentral} from '../../../src/server/cards/base/AICentral';
 import {TestPlayer} from '../../TestPlayer';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Resource} from '../../../src/common/Resource';
+import {testGame} from '../../TestGame';
 
-describe('AICentral', function() {
-  let card : AICentral; let player : TestPlayer;
+describe('AICentral', () => {
+  let card: AICentral;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AICentral();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play if not enough science tags to play', function() {
+  it('Can not play if not enough science tags to play', () => {
+    player.production.add(Resource.ENERGY, 1);
+    player.tagsForTest = {science: 2};
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Can\'t play if no energy production', function() {
-    player.playedCards.push(card, card, card);
+  it('Can not play if no energy production', () => {
+    player.tagsForTest = {science: 3};
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.playedCards.push(card, card, card);
-    player.addProduction(Resources.ENERGY, 1);
+  it('Should play', () => {
+    player.tagsForTest = {science: 3};
+    player.production.add(Resource.ENERGY, 1);
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(player.production.energy).to.eq(0);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 
-  it('Should take action', function() {
+  it('Should take action', () => {
     card.action(player);
     expect(player.cardsInHand).has.lengthOf(2);
   });

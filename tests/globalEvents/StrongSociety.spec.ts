@@ -1,28 +1,22 @@
 import {expect} from 'chai';
-import {Game} from '../../src/Game';
-import {Resources} from '../../src/common/Resources';
-import {StrongSociety} from '../../src/turmoil/globalEvents/StrongSociety';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {StrongSociety} from '../../src/server/turmoil/globalEvents/StrongSociety';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {addCity, testGame} from '../TestingUtils';
 
-describe('StrongSociety', function() {
-  it('resolve play', function() {
+describe('StrongSociety', () => {
+  it('resolve play', () => {
     const card = new StrongSociety();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
-    const turmoil = Turmoil.newInstance(game);
-
-    game.addCityTile(player, game.board.getAvailableSpacesOnLand(player)[0].id);
-    turmoil.chairman = player2.id;
+    const [game, player, player2] = testGame(2, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
+    addCity(player);
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(2);
-    expect(player2.getResource(Resources.MEGACREDITS)).to.eq(6);
+    expect(player.megaCredits).to.eq(2);
+    expect(player2.megaCredits).to.eq(6);
   });
 });

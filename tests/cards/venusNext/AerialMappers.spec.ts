@@ -1,52 +1,57 @@
 import {expect} from 'chai';
-import {ICard} from '../../../src/cards/ICard';
-import {AerialMappers} from '../../../src/cards/venusNext/AerialMappers';
-import {Dirigibles} from '../../../src/cards/venusNext/Dirigibles';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {ICard} from '../../../src/server/cards/ICard';
+import {AerialMappers} from '../../../src/server/cards/venusNext/AerialMappers';
+import {Dirigibles} from '../../../src/server/cards/venusNext/Dirigibles';
+import {testGame} from '../../TestGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {TestPlayer} from '../../TestPlayer';
+import {IGame} from '../../../src/server/IGame';
 
-describe('AerialMappers', function() {
-  let card : AerialMappers; let player : Player;
+describe('AerialMappers', () => {
+  let card: AerialMappers;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AerialMappers();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
     player.playedCards.push(card);
   });
 
-  it('Should play', function() {
-    const action = card.play();
-    expect(action).is.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
   });
 
-  it('Should act - multiple targets', function() {
+  it('Should act - multiple targets', () => {
     const card2 = new Dirigibles();
     player.playedCards.push(card2);
-    const action = card.action(player) as SelectCard<ICard>;
-    expect(action).instanceOf(SelectCard);
+    card.action(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectCard<ICard>);
 
     action.cb([card]);
     expect(card.resourceCount).to.eq(1);
 
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions instanceof OrOptions).is.true;
+    card.action(player);
+    runAllActions(game);
+    const orOptions = cast(player.popWaitingFor(), OrOptions);
 
     orOptions.options[0].cb([card]);
     expect(card.resourceCount).to.eq(0);
     expect(player.cardsInHand).has.lengthOf(1);
   });
 
-  it('Should act - single target', function() {
+  it('Should act - single target', () => {
     card.action(player);
+    runAllActions(game);
     expect(card.resourceCount).to.eq(1);
 
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions instanceof OrOptions).is.true;
+    card.action(player);
+    runAllActions(game);
+    const orOptions = cast(player.popWaitingFor(), OrOptions);
+
     orOptions.options[0].cb([card]);
     expect(card.resourceCount).to.eq(0);
     expect(player.cardsInHand).has.lengthOf(1);

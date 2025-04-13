@@ -1,22 +1,19 @@
 import {expect} from 'chai';
-import {FloatingHabs} from '../../src/cards/venusNext/FloatingHabs';
-import {Game} from '../../src/Game';
-import {CloudSocieties} from '../../src/turmoil/globalEvents/CloudSocieties';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {TestPlayers} from '../TestPlayers';
+import {FloatingHabs} from '../../src/server/cards/venusNext/FloatingHabs';
+import {CloudSocieties} from '../../src/server/turmoil/globalEvents/CloudSocieties';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {testGame} from '../TestingUtils';
 
-describe('CloudSocieties', function() {
-  it('resolve play', function() {
+describe('CloudSocieties', () => {
+  it('resolve play', () => {
     const card = new CloudSocieties();
-    const player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('foobar', [player], player);
-    const turmoil = Turmoil.newInstance(game);
+    const [game, player] = testGame(1, {turmoilExtension: true});
+    const turmoil = game.turmoil!;
     player.playedCards.push(new FloatingHabs());
-    turmoil.chairman = player.id;
+    turmoil.chairman = player;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player.id;
-    turmoil.dominantParty.delegates.push(player.id);
+    turmoil.dominantParty.partyLeader = player;
+    turmoil.dominantParty.delegates.add(player);
     card.resolve(game, turmoil);
     game.deferredActions.runNext();
     expect(player.playedCards[0].resourceCount).to.eq(3);

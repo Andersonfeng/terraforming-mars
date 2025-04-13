@@ -1,10 +1,12 @@
-export interface IPreferences {
+export type Preferences = {
   learner_mode: boolean,
   enable_sounds: boolean,
   magnify_cards: boolean,
   show_alerts: boolean,
   hide_hand: boolean,
   hide_awards_and_milestones: boolean,
+  show_milestone_details: boolean,
+  show_award_details: boolean,
   hide_top_bar: boolean,
   small_cards: boolean,
   remove_background: boolean,
@@ -15,12 +17,13 @@ export interface IPreferences {
   hide_discount_on_cards: boolean,
   hide_animated_sidebar: boolean,
   experimental_ui: boolean,
+  debug_view: boolean,
   lang: string,
 }
 
-export type Preference = keyof IPreferences;
+export type Preference = keyof Preferences;
 
-const defaults: IPreferences = {
+const defaults: Preferences = {
   learner_mode: true,
   enable_sounds: true,
   magnify_cards: true,
@@ -29,6 +32,8 @@ const defaults: IPreferences = {
 
   hide_hand: false,
   hide_awards_and_milestones: false,
+  show_milestone_details: true,
+  show_award_details: true,
   hide_top_bar: false,
   small_cards: false,
   remove_background: false,
@@ -39,11 +44,12 @@ const defaults: IPreferences = {
   hide_discount_on_cards: false,
   hide_animated_sidebar: false,
   experimental_ui: false,
+  debug_view: false,
 };
 
 export class PreferencesManager {
   public static INSTANCE = new PreferencesManager();
-  private readonly _values: IPreferences;
+  private readonly _values: Preferences;
 
   private localStorageSupported(): boolean {
     return typeof localStorage !== 'undefined';
@@ -71,7 +77,7 @@ export class PreferencesManager {
 
   // Making this Readonly means that it's Typescript-impossible to
   // set preferences through the fields themselves.
-  values(): Readonly<IPreferences> {
+  values(): Readonly<Preferences> {
     return this._values;
   }
 
@@ -81,14 +87,14 @@ export class PreferencesManager {
     this._set(name, val);
     if (this.localStorageSupported()) {
       if (name === 'lang') {
-        localStorage?.setItem(name, this._values.lang);
+        localStorage.setItem(name, this._values.lang);
       } else {
-        localStorage?.setItem(name, val ? '1' : '0');
+        localStorage.setItem(name, val ? '1' : '0');
       }
     }
   }
 }
 
-export function getPreferences(): Readonly<IPreferences> {
+export function getPreferences(): Readonly<Preferences> {
   return PreferencesManager.INSTANCE.values();
 }

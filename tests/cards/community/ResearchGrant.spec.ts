@@ -1,17 +1,18 @@
 import {expect} from 'chai';
-import {ResearchGrant} from '../../../src/cards/community/ResearchGrant';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {ResearchGrant} from '../../../src/server/cards/community/ResearchGrant';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('ResearchGrant', function() {
-  let card : ResearchGrant; let player : Player;
+describe('ResearchGrant', () => {
+  let card: ResearchGrant;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new ResearchGrant();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
     expect(player.megaCredits).to.eq(8);
   });

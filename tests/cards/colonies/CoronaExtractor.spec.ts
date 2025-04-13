@@ -1,15 +1,14 @@
 import {expect} from 'chai';
-import {CoronaExtractor} from '../../../src/cards/colonies/CoronaExtractor';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {CoronaExtractor} from '../../../src/server/cards/colonies/CoronaExtractor';
+import {cast} from '../../TestingUtils';
 
-describe('CoronaExtractor', function() {
-  it('Should play', function() {
+describe('CoronaExtractor', () => {
+  it('Should play', () => {
     const card = new CoronaExtractor();
-    const player = TestPlayers.BLUE.newPlayer();
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(4);
+    const [/* game */, player] = testGame(1);
+    expect(card.canPlay(player)).is.not.true;
+    cast(card.play(player), undefined);
+    expect(player.production.energy).to.eq(4);
   });
 });

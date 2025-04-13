@@ -1,20 +1,15 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {LunarObservationPost} from '../../../src/cards/moon/LunarObservationPost';
 import {expect} from 'chai';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {churn} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {LunarObservationPost} from '../../../src/server/cards/moon/LunarObservationPost';
+import {testGame} from '../../TestGame';
 
 describe('LunarObservationPost', () => {
-  let game: Game;
-  let player: Player;
+  let player: TestPlayer;
   let card: LunarObservationPost;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [/* game */, player] = testGame(2, {moonExpansion: true});
     card = new LunarObservationPost();
   });
 
@@ -23,10 +18,10 @@ describe('LunarObservationPost', () => {
     player.megaCredits = card.cost;
 
     player.titanium = 1;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
 
     player.titanium = 0;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('play', () => {
@@ -42,9 +37,7 @@ describe('LunarObservationPost', () => {
 
     expect(card.resourceCount).eq(0);
 
-    card.action(player);
-    const action = game.deferredActions.pop();
-    action!.execute();
+    expect(churn(card.action(player), player)).is.undefined;
 
     expect(card.resourceCount).eq(1);
 
@@ -54,24 +47,24 @@ describe('LunarObservationPost', () => {
 
   it('getVictoryPoints', () => {
     card.resourceCount = 0;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 1;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 2;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
 
     card.resourceCount = 3;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 4;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
     card.resourceCount = 5;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
 
     card.resourceCount = 6;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
     card.resourceCount = 7;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
     card.resourceCount = 8;
-    expect(card.getVictoryPoints()).eq(2);
+    expect(card.getVictoryPoints(player)).eq(2);
   });
 });

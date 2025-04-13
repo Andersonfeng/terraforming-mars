@@ -1,52 +1,47 @@
 import {expect} from 'chai';
-import {Game} from '../../src/Game';
-import {EstateDealer} from '../../src/awards/EstateDealer';
-import {SpaceType} from '../../src/common/boards/SpaceType';
+import {testGame} from '../TestGame';
+import {EstateDealer} from '../../src/server/awards/EstateDealer';
 import {TileType} from '../../src/common/TileType';
-import {TestPlayers} from '../TestPlayers';
+import {addGreenery, addOcean} from '../TestingUtils';
 
-describe('EstateDealer', function() {
-  it('Correctly counts ocean tiles', function() {
+describe('EstateDealer', () => {
+  it('Correctly counts ocean tiles', () => {
     const award = new EstateDealer();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
+    const [/* game */, player, player2] = testGame(2);
 
-    game.addOceanTile(player2, '34'); // Normal ocean tile
+    addOcean(player2, '34'); // Normal ocean tile
     expect(award.getScore(player)).to.eq(0);
 
     // This tile should count
-    game.addGreenery(player, '35');
+    addGreenery(player, '35');
     expect(award.getScore(player)).to.eq(1);
 
-    game.addGreenery(player2, '28', SpaceType.OCEAN); // Greenery on ocean space
+    addGreenery(player2, '28'); // Greenery on ocean space
     expect(award.getScore(player)).to.eq(1);
 
     // This tile should not count
-    game.addGreenery(player, '37');
+    addGreenery(player, '37');
     expect(award.getScore(player)).to.eq(1);
   });
 
-  it('Correctly counts Ares upgraded oceans', function() {
+  it('Correctly counts Ares upgraded oceans', () => {
     const award = new EstateDealer();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, player2], player);
+    const [game, player, player2] = testGame(2);
 
-    game.addOceanTile(player2, '34');
-    game.board.getSpace('34').tile!.tileType = TileType.OCEAN_CITY; // Upgraded ocean tile
+    addOcean(player2, '34');
+    game.board.getSpaceOrThrow('34').tile!.tileType = TileType.OCEAN_CITY; // Upgraded ocean tile
 
     expect(award.getScore(player)).to.eq(0);
 
     // This tile should count
-    game.addGreenery(player, '35');
+    addGreenery(player, '35');
     expect(award.getScore(player)).to.eq(1);
 
-    game.addGreenery(player2, '28', SpaceType.OCEAN); // Greenery on ocean space
+    addGreenery(player2, '28'); // Greenery on ocean space
     expect(award.getScore(player)).to.eq(1);
 
     // This tile should not count
-    game.addGreenery(player, '37');
+    addGreenery(player, '37');
     expect(award.getScore(player)).to.eq(1);
   });
 });

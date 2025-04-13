@@ -1,26 +1,22 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {LunaConference} from '../../../src/cards/moon/LunaConference';
 import {expect} from 'chai';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {IMoonData} from '../../../src/moon/IMoonData';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {LunaConference} from '../../../src/server/cards/moon/LunaConference';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {MoonData} from '../../../src/server/moon/MoonData';
 import {TileType} from '../../../src/common/TileType';
-import {Scientists} from '../../../src/turmoil/parties/Scientists';
-import {Greens} from '../../../src/turmoil/parties/Greens';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {Scientists} from '../../../src/server/turmoil/parties/Scientists';
+import {Greens} from '../../../src/server/turmoil/parties/Greens';
 
 describe('LunaConference', () => {
-  let player: Player;
-  let game: Game;
+  let player: TestPlayer;
+  let game: IGame;
   let card: LunaConference;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(2, {moonExpansion: true, turmoilExtension: true});
     card = new LunaConference();
     moonData = MoonExpansion.moonData(game);
   });
@@ -30,10 +26,10 @@ describe('LunaConference', () => {
     player.megaCredits = card.cost;
 
     game.turmoil!.rulingParty = new Scientists();
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
 
     game.turmoil!.rulingParty = new Greens();
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
   });
 
   it('play', () => {
@@ -46,9 +42,9 @@ describe('LunaConference', () => {
 
     expect(player.megaCredits).eq(4);
 
-    spaces[0].tile = {tileType: TileType.MOON_COLONY};
-    spaces[1].tile = {tileType: TileType.MOON_COLONY};
-    spaces[2].tile = {tileType: TileType.MOON_COLONY};
+    spaces[0].tile = {tileType: TileType.MOON_HABITAT};
+    spaces[1].tile = {tileType: TileType.MOON_HABITAT};
+    spaces[2].tile = {tileType: TileType.MOON_HABITAT};
 
     player.megaCredits = 0;
     card.play(player);

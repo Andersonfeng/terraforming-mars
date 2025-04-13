@@ -1,34 +1,33 @@
 import {expect} from 'chai';
-import {PermafrostExtraction} from '../../../src/cards/base/PermafrostExtraction';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {runAllActions, cast} from '../../TestingUtils';
+import {PermafrostExtraction} from '../../../src/server/cards/base/PermafrostExtraction';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {runAllActions, cast, setTemperature} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('PermafrostExtraction', function() {
-  let card : PermafrostExtraction; let player : Player; let game : Game;
+describe('PermafrostExtraction', () => {
+  let card: PermafrostExtraction;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new PermafrostExtraction();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Cannot play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Cannot play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    (game as any).temperature = -8;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    setTemperature(game, -8);
+    expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).is.undefined;
+    cast(card.play(player), undefined);
     runAllActions(game);
     const selectSpace = cast(player.getWaitingFor(), SelectSpace);
-    selectSpace.cb(selectSpace.availableSpaces[0]);
-    expect(game.board.getOceanCount()).to.eq(1);
+    selectSpace.cb(selectSpace.spaces[0]);
+    expect(game.board.getOceanSpaces()).has.length(1);
   });
 });

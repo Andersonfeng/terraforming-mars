@@ -1,36 +1,33 @@
 import {expect} from 'chai';
-import {BusinessNetwork} from '../../../src/cards/base/BusinessNetwork';
-import {PowerPlant} from '../../../src/cards/base/PowerPlant';
-import {Polyphemos} from '../../../src/cards/colonies/Polyphemos';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
-import {Game} from '../../../src/Game';
-import {AndOptions} from '../../../src/inputs/AndOptions';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {BusinessNetwork} from '../../../src/server/cards/base/BusinessNetwork';
+import {PowerPlant} from '../../../src/server/cards/base/PowerPlant';
+import {Polyphemos} from '../../../src/server/cards/colonies/Polyphemos';
+import {SelectInitialCards} from '../../../src/server/inputs/SelectInitialCards';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {testGame} from '../../TestingUtils';
 
-describe('Polyphemos', function() {
-  it('Should play', function() {
+describe('Polyphemos', () => {
+  it('Should play', () => {
     const card = new Polyphemos();
     const card2 = new PowerPlant();
     const card3 = new BusinessNetwork();
-    const player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
-    const pi = player.getWaitingFor() as AndOptions;
+    const [/* game*/, player] = testGame(1, {skipInitialCardSelection: false});
+    const pi = cast(player.getWaitingFor(), SelectInitialCards);
     pi.options[0].cb([card]);
     pi.options[1].cb([card2, card2]);
-    pi.cb();
+    pi.cb(undefined);
 
     // 50 starting MC - 5 for each card select at the start (total: 10)
     expect(player.megaCredits).to.eq(40);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(5);
+    expect(player.production.megacredits).to.eq(5);
 
     player.playedCards.push(card3);
-    const action = card3.action(player);
-    expect(action).is.not.undefined;
-    expect(action).instanceOf(SelectCard);
-    (action as SelectCard<IProjectCard>).cb([(action as SelectCard<IProjectCard>).cards[0]]);
-    player.game.deferredActions.runNext();
+    expect(card3.action(player)).is.undefined;
+    runAllActions(player.game);
+    const action = cast(player.popWaitingFor(), SelectCard);
+    action.cb([action.cards[0]]);
+    runAllActions(player.game);
     expect(player.megaCredits).to.eq(35);
     expect(player.cardsInHand).has.lengthOf(3);
   });

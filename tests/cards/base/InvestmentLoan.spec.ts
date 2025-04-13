@@ -1,18 +1,16 @@
 import {expect} from 'chai';
-import {InvestmentLoan} from '../../../src/cards/base/InvestmentLoan';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {InvestmentLoan} from '../../../src/server/cards/base/InvestmentLoan';
+import {runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('InvestmentLoan', function() {
-  it('Should play', function() {
+describe('InvestmentLoan', () => {
+  it('Should play', () => {
     const card = new InvestmentLoan();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(-1);
+    const [game, player] = testGame(2);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    expect(player.production.megacredits).to.eq(-1);
     expect(player.megaCredits).to.eq(10);
   });
 });

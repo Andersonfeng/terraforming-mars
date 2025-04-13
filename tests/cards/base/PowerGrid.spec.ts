@@ -1,21 +1,20 @@
 import {expect} from 'chai';
-import {PowerGrid} from '../../../src/cards/base/PowerGrid';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
-import {Game} from '../../../src/Game';
+import {PowerGrid} from '../../../src/server/cards/base/PowerGrid';
+import {EnergySaving} from '../../../src/server/cards/base/EnergySaving';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('PowerGrid', function() {
-  it('Should play', function() {
+describe('PowerGrid', () => {
+  it('Should play', () => {
     const card = new PowerGrid();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('foobar', [player, redPlayer], player);
-    player.game = game;
+    const [/* game */, player] = testGame(2);
     const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    player.playedCards.push(card);
+
+    cast(action, undefined);
+    expect(player.production.energy).to.eq(1);
+
+    player.playedCards.push(new EnergySaving()); // Also contains a power tag.
     card.play(player);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(3);
+    expect(player.production.energy).to.eq(3);
   });
 });

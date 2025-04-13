@@ -1,26 +1,19 @@
 import {expect} from 'chai';
-import {DustSeals} from '../../../src/cards/base/DustSeals';
-import {HeatTrappers} from '../../../src/cards/base/HeatTrappers';
-import {CuttingEdgeTechnology} from '../../../src/cards/promo/CuttingEdgeTechnology';
-import {VoteOfNoConfidence} from '../../../src/cards/turmoil/VoteOfNoConfidence';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {DustSeals} from '../../../src/server/cards/base/DustSeals';
+import {HeatTrappers} from '../../../src/server/cards/base/HeatTrappers';
+import {CuttingEdgeTechnology} from '../../../src/server/cards/promo/CuttingEdgeTechnology';
+import {VoteOfNoConfidence} from '../../../src/server/cards/turmoil/VoteOfNoConfidence';
+import {testGame} from '../../TestGame';
 
-describe('CuttingEdgeTechnology', function() {
-  it('Should play', function() {
+describe('CuttingEdgeTechnology', () => {
+  it('Should play', () => {
     const card = new CuttingEdgeTechnology();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    card.play();
+    const [/* game */, player] = testGame(2);
+    card.play(player);
 
-    const discountedCard = new DustSeals();
-    const discountedCard2 = new VoteOfNoConfidence();
-    const undiscountedCard = new HeatTrappers();
-
-    expect(card.getCardDiscount(player, discountedCard)).to.eq(2);
-    expect(card.getCardDiscount(player, discountedCard2)).to.eq(2);
-    expect(card.getCardDiscount(player, undiscountedCard)).to.eq(0);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getCardDiscount(player, new DustSeals())).to.eq(2);
+    expect(card.getCardDiscount(player, new VoteOfNoConfidence())).to.eq(2);
+    expect(card.getCardDiscount(player, new HeatTrappers())).to.eq(0);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

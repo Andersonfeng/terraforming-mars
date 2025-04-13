@@ -1,29 +1,30 @@
 import {expect} from 'chai';
-import {RedCity} from '../../../src/cards/pathfinders/RedCity';
-import {Game} from '../../../src/Game';
+import {RedCity} from '../../../src/server/cards/pathfinders/RedCity';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {Turmoil} from '../../../src/turmoil/Turmoil';
+import {testGame} from '../../TestGame';
+import {Turmoil} from '../../../src/server/turmoil/Turmoil';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
 import {Phase} from '../../../src/common/Phase';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
 import {TileType} from '../../../src/common/TileType';
-import {Board} from '../../../src/boards/Board';
+import {MarsBoard} from '../../../src/server/boards/MarsBoard';
 import {Units} from '../../../src/common/Units';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {cast, runAllActions} from '../../TestingUtils';
+import {Mangrove} from '../../../src/server/cards/base/Mangrove';
 
-describe('RedCity', function() {
+describe('RedCity', () => {
   let card: RedCity;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let turmoil: Turmoil;
-  let board: Board;
+  let board: MarsBoard;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new RedCity();
-    game = newTestGame(2, {pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 1);
+    [game, player, player2] = testGame(2, {pathfindersExpansion: true, turmoilExtension: true});
     turmoil = game.turmoil!;
     board = game.board;
   });
@@ -32,16 +33,16 @@ describe('RedCity', function() {
     game.phase = Phase.ACTION;
     player.megaCredits = card.cost;
     turmoil.rulingParty = turmoil.getPartyByName(PartyName.SCIENTISTS);
-    player.setProductionForTest({energy: 1});
+    player.production.override({energy: 1});
 
     expect(player.canPlay(card)).is.false;
 
     turmoil.rulingParty = turmoil.getPartyByName(PartyName.REDS);
-    player.setProductionForTest({energy: 0});
+    player.production.override({energy: 0});
 
     expect(player.canPlay(card)).is.false;
 
-    player.setProductionForTest({energy: 1});
+    player.production.override({energy: 1});
     turmoil.rulingParty = turmoil.getPartyByName(PartyName.REDS);
 
     expect(player.canPlay(card)).is.true;
@@ -50,12 +51,12 @@ describe('RedCity', function() {
   it('cannot play when no spaces are available', () => {
     game.phase = Phase.ACTION;
     player.megaCredits = card.cost;
-    player.setProductionForTest({energy: 1});
+    player.production.override({energy: 1});
     turmoil.rulingParty = turmoil.getPartyByName(PartyName.REDS);
     expect(player.canPlay(card)).is.true;
 
     // An arbitrary space.
-    const redCitySpace = board.getSpace('53');
+    const redCitySpace = board.getSpaceOrThrow('53');
 
     board.spaces.forEach((space) => {
       if (space.spaceType !== SpaceType.OCEAN) {
@@ -83,23 +84,27 @@ describe('RedCity', function() {
     expect(player.canPlay(card)).is.true;
   });
 
-  it('play', function() {
-    const redCitySpace = board.getSpace('53');
-    player.setProductionForTest({energy: 1});
-    const action = card.play(player);
-    expect(player.getProductionForTest()).deep.eq(Units.of({energy: 0, megacredits: 2}));
-    expect(action.availableSpaces).includes(redCitySpace);
+  it('play', () => {
+    const redCitySpace = board.getSpaceOrThrow('53');
+    player.production.override({energy: 1});
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    expect(player.production.asUnits()).deep.eq(Units.of({energy: 0, megacredits: 2}));
+    expect(selectSpace.spaces).includes(redCitySpace);
 
-    action.cb(redCitySpace);
+    selectSpace.cb(redCitySpace);
 
     expect(redCitySpace.tile?.tileType).eq(TileType.RED_CITY);
     expect(redCitySpace.player).eq(player);
   });
 
-  it('vps', function() {
-    const redCitySpace = board.getSpace('53');
-    player.setProductionForTest({energy: 1});
-    card.play(player).cb(redCitySpace);
+  it('vps', () => {
+    const redCitySpace = board.getSpaceOrThrow('53');
+    player.production.override({energy: 1});
+    card.play(player);
+    runAllActions(game);
+    cast(player.popWaitingFor(), SelectSpace).cb(redCitySpace);
 
     expect(card.getVictoryPoints(player)).eq(4);
 
@@ -116,20 +121,38 @@ describe('RedCity', function() {
     expect(card.getVictoryPoints(player)).eq(1);
   });
 
-  it('cannot place greenery next to red city', function() {
-    const redCitySpace = board.getSpace('53');
-    player.setProductionForTest({energy: 1});
-    card.play(player).cb(redCitySpace);
+  it('cannot place greenery next to red city', () => {
+    const redCitySpace = board.getSpaceOrThrow('53');
+    player.production.override({energy: 1});
+    card.play(player);
+    runAllActions(game);
+    cast(player.popWaitingFor(), SelectSpace).cb(redCitySpace);
     const adjacentSpaces = board.getAdjacentSpaces(redCitySpace);
 
     // Nobody may place a greenery next to Red City.
     board.getAvailableSpacesForGreenery(player).forEach((space) => {
       expect(adjacentSpaces).does.not.contain(space);
     });
-
     // Even other players.
     board.getAvailableSpacesForGreenery(player2).forEach((space) => {
       expect(adjacentSpaces).does.not.contain(space);
     });
+  });
+
+  it('Cannot use Mangrove next to Red City #6523', () => {
+    const redCitySpace = board.getSpaceOrThrow('53');
+    player.production.override({energy: 1});
+    card.play(player);
+    runAllActions(game);
+    cast(player.popWaitingFor(), SelectSpace).cb(redCitySpace);
+    const adjacentSpaces = board.getAdjacentSpaces(redCitySpace);
+    const oceanSpace = adjacentSpaces[0];
+    oceanSpace.spaceType = SpaceType.OCEAN;
+
+    const mangrove = new Mangrove();
+    mangrove.play(player);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    expect(selectSpace.spaces).does.not.contain(oceanSpace);
   });
 });

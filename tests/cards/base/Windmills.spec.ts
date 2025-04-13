@@ -1,30 +1,30 @@
 import {expect} from 'chai';
-import {Windmills} from '../../../src/cards/base/Windmills';
-import {Game} from '../../../src/Game';
+import {setOxygenLevel} from '../../TestingUtils';
+import {Windmills} from '../../../src/server/cards/base/Windmills';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
 
-describe('Windmills', function() {
-  let card : Windmills; let player : TestPlayer; let game : Game;
+describe('Windmills', () => {
+  let card: Windmills;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Windmills();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    (game as any).oxygenLevel = 6;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    setOxygenLevel(game, 6);
+    expect(card.canPlay(player)).is.not.true;
   });
-  it('Should play', function() {
-    (game as any).oxygenLevel = 7;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Should play', () => {
+    setOxygenLevel(game, 7);
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(player.production.energy).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

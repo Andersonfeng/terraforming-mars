@@ -1,26 +1,22 @@
-import {Game} from '../../../src/Game';
-import {IMoonData} from '../../../src/moon/IMoonData';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {ImprovedMoonConcrete} from '../../../src/cards/moon/ImprovedMoonConcrete';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {TestPlayer} from '../../TestPlayer';
+import {ImprovedMoonConcrete} from '../../../src/server/cards/moon/ImprovedMoonConcrete';
 import {expect} from 'chai';
-import {MareSerenitatisMine} from '../../../src/cards/moon/MareSerenitatisMine';
+import {MareSerenitatisMine} from '../../../src/server/cards/moon/MareSerenitatisMine';
 import {CardName} from '../../../src/common/cards/CardName';
-import {MoonMineStandardProject} from '../../../src/cards/moon/MoonMineStandardProject';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {MoonMineStandardProject} from '../../../src/server/cards/moon/MoonMineStandardProject';
 
 describe('ImprovedMoonConcrete', () => {
-  let game: Game;
-  let player: Player;
-  let moonData: IMoonData;
+  let game: IGame;
+  let player: TestPlayer;
+  let moonData: MoonData;
   let card: ImprovedMoonConcrete;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     moonData = MoonExpansion.moonData(game);
     card = new ImprovedMoonConcrete();
   });
@@ -30,9 +26,9 @@ describe('ImprovedMoonConcrete', () => {
     player.megaCredits = 1000;
 
     player.steel = 1;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
     player.steel = 2;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {
@@ -54,15 +50,15 @@ describe('ImprovedMoonConcrete', () => {
 
     const msm = new MareSerenitatisMine();
     player.cardsInHand = [msm];
-    expect(player.getPlayableCards().map((card) => card.name)).deep.eq([CardName.MARE_SERENITATIS_MINE]);
+    expect(player.getPlayableCards().map((card) => card.card.name)).deep.eq([CardName.MARE_SERENITATIS_MINE]);
 
     player.titanium = 1;
     player.steel = 1;
-    expect(player.getPlayableCards().map((card) => card.name)).is.empty;
+    expect(player.getPlayableCards().map((card) => card.card.name)).is.empty;
 
     // And this one shows that with Improved Moon Concrete, titanium isn't necessary
     player.playedCards = [card];
-    expect(player.getPlayableCards().map((card) => card.name)).deep.eq([CardName.MARE_SERENITATIS_MINE]);
+    expect(player.getPlayableCards().map((card) => card.card.name)).deep.eq([CardName.MARE_SERENITATIS_MINE]);
   });
 
   it('applies to mine standard project', () => {

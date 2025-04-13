@@ -1,60 +1,56 @@
 import {expect} from 'chai';
-import {Research} from '../../src/cards/base/Research';
-import {Game} from '../../src/Game';
-import {Resources} from '../../src/common/Resources';
-import {SpinoffProducts} from '../../src/turmoil/globalEvents/SpinoffProducts';
-import {Kelvinists} from '../../src/turmoil/parties/Kelvinists';
-import {Turmoil} from '../../src/turmoil/Turmoil';
-import {getTestPlayer, newTestGame} from '../TestGame';
+import {Research} from '../../src/server/cards/base/Research';
+import {IGame} from '../../src/server/IGame';
+import {SpinoffProducts} from '../../src/server/turmoil/globalEvents/SpinoffProducts';
+import {Kelvinists} from '../../src/server/turmoil/parties/Kelvinists';
+import {Turmoil} from '../../src/server/turmoil/Turmoil';
+import {testGame} from '../TestGame';
 import {TestPlayer} from '../TestPlayer';
-import {HabitatMarte} from '../../src/cards/pathfinders/HabitatMarte';
-import {DesignedOrganisms} from '../../src/cards/pathfinders/DesignedOrganisms';
-import {TestingUtils} from '../TestingUtils';
+import {HabitatMarte} from '../../src/server/cards/pathfinders/HabitatMarte';
+import {DesignedOrganisms} from '../../src/server/cards/pathfinders/DesignedOrganisms';
 
-describe('SpinoffProducts', function() {
+describe('SpinoffProducts', () => {
   let card: SpinoffProducts;
-  let game: Game;
+  let game: IGame;
   let player: TestPlayer;
   let player2: TestPlayer;
   let turmoil: Turmoil;
 
   beforeEach(() => {
     card = new SpinoffProducts();
-    game = newTestGame(2, TestingUtils.setCustomGameOptions());
-    player = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 1);
+    [game, player, player2] = testGame(2, {turmoilExtension: true});
     turmoil = game.turmoil!;
   });
 
-  it('resolve play', function() {
+  it('resolve play', () => {
     player.playedCards.push(new Research());
     player2.playedCards.push(new Research());
     player2.playedCards.push(new Research());
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(4);
-    expect(player2.getResource(Resources.MEGACREDITS)).to.eq(14);
+    expect(player.megaCredits).to.eq(4);
+    expect(player2.megaCredits).to.eq(14);
   });
 
-  it('resolve play, with Habitat Marte', function() {
-    player.corporationCard = new HabitatMarte();
+  it('resolve play, with Habitat Marte', () => {
+    player.corporations.push(new HabitatMarte());
     player.playedCards.push(new Research(), new DesignedOrganisms());
 
-    turmoil.chairman = player2.id;
+    turmoil.chairman = player2;
     turmoil.dominantParty = new Kelvinists();
-    turmoil.dominantParty.partyLeader = player2.id;
-    turmoil.dominantParty.delegates.push(player2.id);
-    turmoil.dominantParty.delegates.push(player2.id);
+    turmoil.dominantParty.partyLeader = player2;
+    turmoil.dominantParty.delegates.add(player2);
+    turmoil.dominantParty.delegates.add(player2);
 
     card.resolve(game, turmoil);
 
     // This includes Habitat Marte itself, which has a Mars tag.
-    expect(player.getResource(Resources.MEGACREDITS)).to.eq(10);
+    expect(player.megaCredits).to.eq(10);
   });
 });

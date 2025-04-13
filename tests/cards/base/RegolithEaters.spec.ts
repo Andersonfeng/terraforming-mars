@@ -1,36 +1,38 @@
 import {expect} from 'chai';
-import {RegolithEaters} from '../../../src/cards/base/RegolithEaters';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, churn, runAllActions} from '../../TestingUtils';
+import {RegolithEaters} from '../../../src/server/cards/base/RegolithEaters';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('RegolithEaters', function() {
-  let card : RegolithEaters; let player : Player; let game : Game;
+describe('RegolithEaters', () => {
+  let card: RegolithEaters;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new RegolithEaters();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.playedCards.push(card);
-    const action = card.action(player);
-    expect(action).is.undefined;
+    expect(churn(card.action(player), player)).is.undefined;
     expect(card.resourceCount).to.eq(1);
 
-    card.action(player);
+    expect(churn(card.action(player), player)).is.undefined;
     expect(card.resourceCount).to.eq(2);
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions instanceof OrOptions).is.true;
 
-        orOptions!.options[1].cb();
-        expect(card.resourceCount).to.eq(3);
+    const orOptions = cast(churn(card.action(player), player), OrOptions);
 
-        orOptions!.options[0].cb();
-        expect(card.resourceCount).to.eq(1);
-        expect(game.getOxygenLevel()).to.eq(1);
+    orOptions.options[1].cb();
+    runAllActions(game);
+    expect(card.resourceCount).to.eq(3);
+
+    orOptions.options[0].cb();
+    runAllActions(game);
+    expect(card.resourceCount).to.eq(1);
+    expect(game.getOxygenLevel()).to.eq(1);
   });
 });

@@ -1,16 +1,15 @@
 import {expect} from 'chai';
-import {Biofuels} from '../../../src/cards/prelude/Biofuels';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {Biofuels} from '../../../src/server/cards/prelude/Biofuels';
+import {cast} from '../../TestingUtils';
 
-describe('Biofuels', function() {
-  it('Should play', function() {
+describe('Biofuels', () => {
+  it('Should play', () => {
     const card = new Biofuels();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(1);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.energy).to.eq(1);
+    expect(player.production.plants).to.eq(1);
     expect(player.plants).to.eq(2);
   });
 });

@@ -1,76 +1,79 @@
 import {expect} from 'chai';
-import {Ambient} from '../../../src/cards/pathfinders/Ambient';
-import {Game} from '../../../src/Game';
+import {Ambient} from '../../../src/server/cards/pathfinders/Ambient';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {TestingUtils} from '../../TestingUtils';
-import {Tags} from '../../../src/common/cards/Tags';
-import {Resources} from '../../../src/common/Resources';
+import {testGame} from '../../TestGame';
+import {cast, fakeCard, runAllActions, setTemperature} from '../../TestingUtils';
+import {Tag} from '../../../src/common/cards/Tag';
 import {MAX_TEMPERATURE} from '../../../src/common/constants';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {SelectCard} from '../../../src/inputs/SelectCard';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {Phase} from '../../../src/common/Phase';
+import {Turmoil} from '../../../src/server/turmoil/Turmoil';
+import {Reds} from '../../../src/server/turmoil/parties/Reds';
+import {PoliticalAgendas} from '../../../src/server/turmoil/PoliticalAgendas';
+import {toName} from '../../../src/common/utils/utils';
 
-describe('Ambient', function() {
+describe('Ambient', () => {
   let card: Ambient;
   let player: TestPlayer;
   let player2: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Ambient();
-    game = newTestGame(2);
-    player = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 1);
-    player.corporationCard = card;
+    [game, player, player2] = testGame(2);
+    player.corporations.push(card);
   });
 
-  it('initialAction', function() {
+  it('initialAction', () => {
     expect(game.getVenusScaleLevel()).eq(0);
     expect(player.getTerraformRating()).eq(20);
 
-    card.initialAction(player);
+    player.deferInitialAction(card);
+    runAllActions(game);
 
     expect(game.getVenusScaleLevel()).eq(4);
     expect(player.getTerraformRating()).eq(22);
   });
 
-  it('onCardPlayed', function() {
-    expect(player.getProduction(Resources.HEAT)).eq(0);
+  it('onCardPlayed', () => {
+    expect(player.production.heat).eq(0);
 
-    card.onCardPlayed(player, TestingUtils.fakeCard({tags: []}));
-    expect(player.getProduction(Resources.HEAT)).eq(0);
+    card.onCardPlayed(player, fakeCard({tags: []}));
+    expect(player.production.heat).eq(0);
 
-    card.onCardPlayed(player, TestingUtils.fakeCard({tags: [Tags.EARTH]}));
-    expect(player.getProduction(Resources.HEAT)).eq(0);
+    card.onCardPlayed(player, fakeCard({tags: [Tag.EARTH]}));
+    expect(player.production.heat).eq(0);
 
-    card.onCardPlayed(player, TestingUtils.fakeCard({tags: [Tags.VENUS]}));
-    expect(player.getProduction(Resources.HEAT)).eq(1);
-    expect(player2.getProduction(Resources.HEAT)).eq(0);
+    card.onCardPlayed(player, fakeCard({tags: [Tag.VENUS]}));
+    expect(player.production.heat).eq(1);
+    expect(player2.production.heat).eq(0);
 
-    card.onCardPlayed(player2, TestingUtils.fakeCard({tags: [Tags.VENUS]}));
-    expect(player.getProduction(Resources.HEAT)).eq(1);
-    expect(player2.getProduction(Resources.HEAT)).eq(0);
+    card.onCardPlayed(player2, fakeCard({tags: [Tag.VENUS]}));
+    expect(player.production.heat).eq(1);
+    expect(player2.production.heat).eq(0);
   });
 
-  it('canAct', function() {
+  it('canAct', () => {
     player.heat = 7;
-    (game as any).temperature = MAX_TEMPERATURE;
+    setTemperature(game, MAX_TEMPERATURE);
 
     expect(card.canAct(player)).is.false;
 
     player.heat = 8;
-    (game as any).temperature = MAX_TEMPERATURE - 2;
+    setTemperature(game, MAX_TEMPERATURE - 2);
     expect(card.canAct(player)).is.false;
 
 
     player.heat = 8;
-    (game as any).temperature = MAX_TEMPERATURE;
+    setTemperature(game, MAX_TEMPERATURE);
     expect(card.canAct(player)).is.true;
   });
 
   it('action', () => {
     player.heat = 9;
-    (game as any).temperature = MAX_TEMPERATURE;
+    setTemperature(game, MAX_TEMPERATURE);
 
     expect(player.getTerraformRating()).eq(20);
 
@@ -83,17 +86,15 @@ describe('Ambient', function() {
 
   it('action is repeatable', () => {
     player.heat = 16;
-    (game as any).temperature = MAX_TEMPERATURE;
+    setTemperature(game, MAX_TEMPERATURE);
 
-    const getBlueActions = function() {
-      const actions = TestingUtils.cast(player.getActions(), OrOptions);
-      if (actions.options[0].title === 'Perform an action from a played card') {
-        return TestingUtils.cast(actions.options[0], SelectCard);
-      }
-      return undefined;
+    const getBlueActions = () => {
+      const orOptions = cast(player.getActions(), OrOptions);
+      const option = orOptions.options.find((o) => o.title === 'Perform an action from a played card');
+      return option === undefined ? undefined : cast(option, SelectCard);
     };
 
-    expect(getBlueActions()!.cards.map((c) => (c as any).name)).deep.eq([card.name]);
+    expect(getBlueActions()!.cards.map(toName)).deep.eq([card.name]);
 
     expect(player.getTerraformRating()).eq(20);
 
@@ -104,8 +105,8 @@ describe('Ambient', function() {
     expect(player.getTerraformRating()).eq(21);
 
     expect(getBlueActions()).is.undefined;
-    TestingUtils.runAllActions(game);
-    expect(getBlueActions()!.cards.map((c) => (c as any).name)).deep.eq([card.name]);
+    runAllActions(game);
+    expect(getBlueActions()!.cards.map(toName)).deep.eq([card.name]);
 
     getBlueActions()!.cb([card]);
 
@@ -114,7 +115,28 @@ describe('Ambient', function() {
     expect(player.getTerraformRating()).eq(22);
 
     expect(getBlueActions()).is.undefined;
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
     expect(getBlueActions()).is.undefined;
   });
+
+  const redsRuns = [
+    {heat: 8, mc: 3, expected: true},
+    {heat: 11, mc: 0, expected: true},
+    {heat: 8, mc: 0, expected: false},
+  ];
+  for (const run of redsRuns) {
+    it('is compatible with Reds + Helion ' + JSON.stringify(run), () => {
+      [game, player, player2] = testGame(2, {turmoilExtension: true});
+      player.corporations.push(card);
+      player.canUseHeatAsMegaCredits = true;
+      player.game.phase = Phase.ACTION;
+      const turmoil = Turmoil.getTurmoil(game);
+      turmoil.rulingParty = new Reds();
+      PoliticalAgendas.setNextAgenda(turmoil, player.game);
+      setTemperature(game, MAX_TEMPERATURE);
+      player.heat = run.heat;
+      player.megaCredits = run.mc;
+      expect(card.canAct(player)).eq(run.expected);
+    });
+  }
 });

@@ -1,26 +1,27 @@
 import {expect} from 'chai';
-import {BiosphereSupport} from '../../../src/cards/prelude/BiosphereSupport';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {BiosphereSupport} from '../../../src/server/cards/prelude/BiosphereSupport';
+import {TestPlayer} from '../../TestPlayer';
+import {Resource} from '../../../src/common/Resource';
+import {testGame} from '../../TestGame';
 
-describe('BiosphereSupport', function() {
-  let card : BiosphereSupport; let player : Player;
+describe('BiosphereSupport', () => {
+  let card: BiosphereSupport;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new BiosphereSupport();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t play', function() {
-    player.addProduction(Resources.MEGACREDITS, -5);
+  it('Can not play', () => {
+    player.production.add(Resource.MEGACREDITS, -5);
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     expect(card.canPlay(player)).is.true;
     card.play(player);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(2);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(-1);
+    expect(player.production.plants).to.eq(2);
+    expect(player.production.megacredits).to.eq(-1);
   });
 });

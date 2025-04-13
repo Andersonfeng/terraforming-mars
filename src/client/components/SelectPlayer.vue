@@ -6,18 +6,23 @@
       <i class="form-icon"></i>
       <SelectPlayerRow :player="players.find((otherPlayer) => otherPlayer.color === player)"></SelectPlayerRow>
     </label>
-    <Button v-if="showsave === true" size="big" @click="saveData" :title="$t(playerinput.buttonLabel)" />
+    <AppButton v-if="showsave === true" size="big" @click="saveData" :title="$t(playerinput.buttonLabel)" />
   </div>
 </template>
 
 <script lang="ts">
 
 import Vue from 'vue';
-import Button from '@/client/components/common/Button.vue';
-import {PlayerInputModel} from '@/common/models/PlayerInputModel';
+import AppButton from '@/client/components/common/AppButton.vue';
+import {SelectPlayerModel} from '@/common/models/PlayerInputModel';
 import {PublicPlayerModel} from '@/common/models/PlayerModel';
 import SelectPlayerRow from '@/client/components/SelectPlayerRow.vue';
-import {InputResponse} from '@/common/inputs/InputResponse';
+import {SelectPlayerResponse} from '@/common/inputs/InputResponse';
+import {ColorWithNeutral} from '@/common/Color';
+
+type DataModel = {
+  selectedPlayer: ColorWithNeutral | undefined;
+}
 
 export default Vue.extend({
   name: 'SelectPlayer',
@@ -26,10 +31,10 @@ export default Vue.extend({
       type: Array as () => Array<PublicPlayerModel>,
     },
     playerinput: {
-      type: Object as () => PlayerInputModel,
+      type: Object as () => SelectPlayerModel,
     },
     onsave: {
-      type: Function as unknown as () => (out: InputResponse) => void,
+      type: Function as unknown as () => (out: SelectPlayerResponse) => void,
     },
     showsave: {
       type: Boolean,
@@ -38,23 +43,21 @@ export default Vue.extend({
       type: Boolean,
     },
   },
-  data() {
+  data(): DataModel {
     return {
-      selectedPlayer: '',
+      selectedPlayer: undefined,
     };
   },
   components: {
     SelectPlayerRow,
-    Button,
+    AppButton,
   },
   methods: {
     saveData() {
-      const result: string[][] = [];
-      result.push([]);
-      if (this.$data.selectedPlayer) {
-        result[0].push(this.$data.selectedPlayer);
+      if (this.selectedPlayer === undefined) {
+        return;
       }
-      this.onsave(result);
+      this.onsave({type: 'player', player: this.selectedPlayer});
     },
   },
 });

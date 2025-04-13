@@ -1,40 +1,38 @@
 import {expect} from 'chai';
-import {JetStreamMicroscrappers} from '../../../src/cards/venusNext/JetStreamMicroscrappers';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast} from '../../TestingUtils';
+import {JetStreamMicroscrappers} from '../../../src/server/cards/venusNext/JetStreamMicroscrappers';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('JetStreamMicroscrappers', function() {
-  let card : JetStreamMicroscrappers; let player : Player; let game : Game;
+describe('JetStreamMicroscrappers', () => {
+  let card: JetStreamMicroscrappers;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new JetStreamMicroscrappers();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    const action = card.play();
-    expect(action).is.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.playedCards.push(card);
     player.titanium = 2;
 
     // only one action possible
     expect(card.resourceCount).to.eq(0);
     const action = card.action(player);
-    expect(action).is.undefined;
+    cast(action, undefined);
     expect(card.resourceCount).to.eq(2);
     expect(player.titanium).to.eq(1);
 
     // both actions possible
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions).is.not.undefined;
-    expect(orOptions instanceof OrOptions).is.true;
+    const orOptions = cast(card.action(player), OrOptions);
     orOptions.options[0].cb();
     expect(card.resourceCount).to.eq(0);
     expect(game.getVenusScaleLevel()).to.eq(2);

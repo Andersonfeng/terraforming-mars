@@ -1,42 +1,37 @@
 import {expect} from 'chai';
-import {GreatDamPromo} from '../../../src/cards/promo/GreatDamPromo';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
+import {GreatDamPromo} from '../../../src/server/cards/promo/GreatDamPromo';
+import {testGame} from '../../TestGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TileType} from '../../../src/common/TileType';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, churn, maxOutOceans} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('GreatDamPromo', function() {
-  let card : GreatDamPromo; let player : Player;
+describe('GreatDamPromo', () => {
+  let card: GreatDamPromo;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new GreatDamPromo();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play without meeting requirements', function() {
+  it('Can not play without meeting requirements', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    TestingUtils.maxOutOceans(player, 4);
+  it('Should play', () => {
+    maxOutOceans(player, 4);
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(2);
-    expect(card.getVictoryPoints()).to.eq(1);
+    cast(churn(card.play(player), player), SelectSpace);
+    expect(player.production.energy).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 
-  it('Works with Ares', function() {
-    TestingUtils.maxOutOceans(player, 4).forEach((space) => space.tile = {tileType: TileType.OCEAN_CITY});
+  it('Works with Ares', () => {
+    maxOutOceans(player, 4).forEach((space) => space.tile = {tileType: TileType.OCEAN_CITY});
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(2);
-    expect(card.getVictoryPoints()).to.eq(1);
+    cast(churn(card.play(player), player), SelectSpace);
+    expect(player.production.energy).to.eq(2);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

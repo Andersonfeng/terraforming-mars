@@ -1,34 +1,38 @@
 import {expect} from 'chai';
-import {UndergroundCity} from '../../../src/cards/base/UndergroundCity';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {UndergroundCity} from '../../../src/server/cards/base/UndergroundCity';
+import {IGame} from '../../../src/server/IGame';
+import {Resource} from '../../../src/common/Resource';
+import {TestPlayer} from '../../TestPlayer';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('UndergroundCity', function() {
-  let card : UndergroundCity; let player : Player; let game : Game;
+describe('UndergroundCity', () => {
+  let card: UndergroundCity;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new UndergroundCity();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    player.addProduction(Resources.ENERGY, 1);
+  it('Can not play', () => {
+    player.production.add(Resource.ENERGY, 1);
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.ENERGY, 2);
+  it('Should play', () => {
+    player.production.add(Resource.ENERGY, 2);
     expect(card.canPlay(player)).is.true;
-    const action = card.play(player);
-    expect(action).is.not.undefined;
 
-    action.cb(action.availableSpaces[0]);
-    expect(game.getCitiesCount()).to.eq(1);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.STEEL)).to.eq(2);
+    cast(card.play(player), undefined);
+    runAllActions(player.game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+
+    action.cb(action.spaces[0]);
+    expect(game.board.getCities()).has.length(1);
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.steel).to.eq(2);
   });
 });

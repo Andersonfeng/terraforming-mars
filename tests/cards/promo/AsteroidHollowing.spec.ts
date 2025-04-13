@@ -1,47 +1,47 @@
 import {expect} from 'chai';
-import {AsteroidHollowing} from '../../../src/cards/promo/AsteroidHollowing';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, churn} from '../../TestingUtils';
+import {AsteroidHollowing} from '../../../src/server/cards/promo/AsteroidHollowing';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('AsteroidHollowing', function() {
-  let card : AsteroidHollowing; let player : Player;
+describe('AsteroidHollowing', () => {
+  let card: AsteroidHollowing;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AsteroidHollowing();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Should play', function() {
-    expect(card.play()).is.undefined;
+  it('Should play', () => {
+    cast(card.play(player), undefined);
   });
 
-  it('Can\'t act', function() {
+  it('Can not act', () => {
     player.playedCards.push(card);
     expect(card.canAct(player)).is.not.true;
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.titanium = 1;
-    expect(card.canAct(player)).is.true;
 
-    card.action(player);
+    expect(card.canAct(player)).is.true;
+    expect(churn(card.action(player), player)).is.undefined;
+
     expect(player.titanium).to.eq(0);
     expect(card.resourceCount).to.eq(1);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(1);
+    expect(player.production.megacredits).to.eq(1);
   });
 
-  it('Should give victory points', function() {
+  it('Should give victory points', () => {
     player.playedCards.push(card);
     player.titanium = 2;
 
-    card.action(player);
-    expect(card.getVictoryPoints()).to.eq(0);
+    expect(churn(card.action(player), player)).is.undefined;
+    expect(card.getVictoryPoints(player)).to.eq(0);
 
-    card.action(player);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(churn(card.action(player), player)).eq(undefined);
+
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

@@ -1,22 +1,19 @@
-import {Game} from '../../../src/Game';
-import {TestingUtils} from '../../TestingUtils';
-import {CrescentResearchAssociation} from '../../../src/cards/moon/CrescentResearchAssociation';
 import {expect} from 'chai';
+import {IGame} from '../../../src/server/IGame';
+import {testGame} from '../../TestGame';
+import {setOxygenLevel} from '../../TestingUtils';
+import {CrescentResearchAssociation} from '../../../src/server/cards/moon/CrescentResearchAssociation';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {MareNectarisMine} from '../../../src/cards/moon/MareNectarisMine';
-import {Predators} from '../../../src/cards/base/Predators';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {MareNectarisMine} from '../../../src/server/cards/moon/MareNectarisMine';
+import {Predators} from '../../../src/server/cards/base/Predators';
 
 describe('CrescentResearchAssociation', () => {
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let card: CrescentResearchAssociation;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new CrescentResearchAssociation();
   });
 
@@ -28,33 +25,34 @@ describe('CrescentResearchAssociation', () => {
 
     // Additional card requirements.
     player.titanium = 1;
-    (game as any).oxygenLevel = 14;
+    setOxygenLevel(game, 14);
 
     player.cardsInHand = [mareNectarisMine, predators];
-    player.corporationCard = card;
+    player.corporations.push(card);
 
     player.tagsForTest = {moon: 0};
     player.megaCredits = 14;
-    expect(player.getPlayableCards()).has.members([mareNectarisMine, predators]);
+    expect(player.getPlayableCardsForTest()).has.members([mareNectarisMine, predators]);
 
     player.tagsForTest = {moon: 0};
     player.megaCredits = 13;
-    expect(player.getPlayableCards()).is.empty;
+    expect(player.getPlayableCardsForTest()).is.empty;
 
     player.tagsForTest = {moon: 1};
     player.megaCredits = 13;
-    expect(player.getPlayableCards()).has.members([mareNectarisMine]);
+    expect(player.getPlayableCardsForTest()).has.members([mareNectarisMine]);
 
     player.tagsForTest = {moon: 1};
     player.megaCredits = 12;
-    expect(player.getPlayableCards()).is.empty;
+    expect(player.getPlayableCardsForTest()).is.empty;
 
     player.tagsForTest = {moon: 2};
     player.megaCredits = 12;
-    expect(player.getPlayableCards()).has.members([mareNectarisMine]);
+    expect(player.getPlayableCardsForTest()).has.members([mareNectarisMine]);
   });
 
   it('getVictoryPoints', () => {
+    player.playedCards.push(card);
     player.tagsForTest = {moon: 0};
     expect(card.getVictoryPoints(player)).eq(0);
     player.tagsForTest = {moon: 1};

@@ -1,41 +1,41 @@
 import {expect} from 'chai';
-import {BioSol} from '../../../src/cards/pathfinders/BioSol';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {newTestGame, getTestPlayer} from '../../TestGame';
-import {Tags} from '../../../src/common/cards/Tags';
-import {TestingUtils} from '../../TestingUtils';
+import {BioSol} from '../../../src/server/cards/pathfinders/BioSol';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
+import {Tag} from '../../../src/common/cards/Tag';
+import {runAllActions} from '../../TestingUtils';
 
-describe('BioSol', function() {
+describe('BioSol', () => {
   let card: BioSol;
-  let player: Player;
-  let game: Game;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new BioSol();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
-    player.corporationCard = card;
+    [game, player] = testGame(1);
+    player.corporations.push(card);
   });
 
-  it('initialAction', function() {
+  it('initialAction', () => {
     expect(player.cardsInHand).is.empty;
-    card.initialAction(player);
+    player.deferInitialAction(card);
+    runAllActions(game);
     expect(player.cardsInHand).has.length(2);
-    expect(player.cardsInHand.filter((card) => card.tags.includes(Tags.MICROBE))).has.length(2);
+    expect(player.cardsInHand.filter((card) => card.tags.includes(Tag.MICROBE))).has.length(2);
   });
 
-  it('action', function() {
+  it('action', () => {
     card.action(player);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
     expect(card.resourceCount).to.eq(1);
   });
 
   it('getVictoryPoints', () => {
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 2;
-    expect(card.getVictoryPoints()).eq(0);
+    expect(card.getVictoryPoints(player)).eq(0);
     card.resourceCount = 3;
-    expect(card.getVictoryPoints()).eq(1);
+    expect(card.getVictoryPoints(player)).eq(1);
   });
 });

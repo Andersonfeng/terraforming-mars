@@ -1,55 +1,65 @@
 import {expect} from 'chai';
-import {PowerSupplyConsortium} from '../../../src/cards/base/PowerSupplyConsortium';
-import {Game} from '../../../src/Game';
-import {SelectPlayer} from '../../../src/inputs/SelectPlayer';
+import {PowerSupplyConsortium} from '../../../src/server/cards/base/PowerSupplyConsortium';
+import {IGame} from '../../../src/server/IGame';
+import {SelectPlayer} from '../../../src/server/inputs/SelectPlayer';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {Resource} from '../../../src/common/Resource';
 import {runAllActions, cast} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('PowerSupplyConsortium', function() {
-  let card : PowerSupplyConsortium; let player : TestPlayer; let player2 : TestPlayer; let game : Game;
+describe('PowerSupplyConsortium', () => {
+  let card: PowerSupplyConsortium;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new PowerSupplyConsortium();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
-    player.popWaitingFor(); // Remove SelectInitialCards
+    [game, player, player2] = testGame(2);
   });
 
-  it('Cannot play without power tags', function() {
-    player.addProduction(Resources.ENERGY, 3);
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Cannot play without power tags', () => {
+    player.production.add(Resource.ENERGY, 3);
+    expect(card.canPlay(player)).is.not.true;
+    player.tagsForTest = {power: 1};
+    expect(card.canPlay(player)).is.false;
+    player.tagsForTest = {power: 2};
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('Can play - no targets', function() {
-    player.playedCards.push(card, card);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Can play - no targets', () => {
+    player.tagsForTest = {power: 2};
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
     runAllActions(game);
 
-    expect(player.popWaitingFor()).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
+    expect(player.production.energy).to.eq(1);
+
+    const selectPlayer = cast(player.popWaitingFor(), SelectPlayer);
+    expect(selectPlayer.players).deep.eq([player]);
+    selectPlayer.cb(player);
+    runAllActions(game);
+    expect(player.production.energy).to.eq(0);
+    expect(player2.production.energy).to.eq(0);
   });
 
-  it('Can play - single target', function() {
-    player2.setProductionForTest({energy: 1});
-    player.playedCards.push(card, card);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+  it('Can play - single target', () => {
+    player2.production.override({energy: 1});
+    player.tagsForTest = {power: 2};
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
     runAllActions(game);
 
-    expect(player.popWaitingFor()).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(player2.getProduction(Resources.ENERGY)).to.eq(0);
+    cast(player.popWaitingFor(), undefined);
+    expect(player.production.energy).to.eq(1);
+    expect(player2.production.energy).to.eq(0);
   });
 
-  it('Can play - multiple targets', function() {
-    player.addProduction(Resources.ENERGY, 1);
-    player2.addProduction(Resources.ENERGY, 3);
+  it('Can play - multiple targets', () => {
+    player.production.add(Resource.ENERGY, 1);
+    player2.production.add(Resource.ENERGY, 3);
 
     card.play(player);
 
@@ -57,17 +67,17 @@ describe('PowerSupplyConsortium', function() {
     const selectPlayer = cast(player.popWaitingFor(), SelectPlayer);
     selectPlayer.cb(player2);
     runAllActions(game);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(2);
-    expect(player2.getProduction(Resources.ENERGY)).to.eq(2);
+    expect(player.production.energy).to.eq(2);
+    expect(player2.production.energy).to.eq(2);
   });
 
-  it('Can play in solo mode if have enough power tags', function() {
-    const game = Game.newInstance('foobar2', [player], player);
-    player.playedCards.push(card, card);
-    expect(card.canPlay(player)).is.true;
+  it('Can play in solo mode if have enough power tags', () => {
+    const [soloGame, soloPlayer] = testGame(1);
+    soloPlayer.tagsForTest = {power: 2};
+    expect(card.canPlay(soloPlayer)).is.true;
 
-    card.play(player);
-    runAllActions(game);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1); // incremented
+    card.play(soloPlayer);
+    runAllActions(soloGame);
+    expect(soloPlayer.production.energy).to.eq(1); // incremented
   });
 });

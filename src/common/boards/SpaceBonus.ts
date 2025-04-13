@@ -12,38 +12,52 @@ export enum SpaceBonus {
 
     // Ares-specific
     MEGACREDITS, // 6
-    ANIMAL, // 7
+    ANIMAL, // 7 (Also used in Amazonis)
     MICROBE, // 8 (Also used in Arabia Terra)
-    ENERGY, // 9
+    ENERGY, // 9 // Ares and Terra Cimmeria
 
     // Arabia Terra-specific
     DATA, // 10
     SCIENCE, // 11
     ENERGY_PRODUCTION, // 12
 
-    // Vastitas Borealis-specific
+    // Vastitas Borealis-specific (and Terra Cimmeria)
     TEMPERATURE, // 13
+
+    // Amazonis-specific
+    _RESTRICTED, // 14
+    ASTEROID, // 15 // Used by Deimos Down Ares
+
+    // Vastitas Borealis Novus-specific
+    DELEGATE, // 16
+    // Terra Cimmeria Novus-specific
+    COLONY, // 17
+
 }
 
-const TO_STRING_MAP: Map<SpaceBonus, string> = new Map([
-  [SpaceBonus.TITANIUM, 'Titanium'],
-  [SpaceBonus.STEEL, 'Steel'],
-  [SpaceBonus.PLANT, 'Plant'],
-  [SpaceBonus.DRAW_CARD, 'Card'],
-  [SpaceBonus.HEAT, 'Heat'],
-  [SpaceBonus.OCEAN, 'Ocean'],
-  [SpaceBonus.MEGACREDITS, 'M€'],
-  [SpaceBonus.ANIMAL, 'Animal'],
-  [SpaceBonus.MICROBE, 'Microbe'],
-  [SpaceBonus.ENERGY, 'Energy'],
-  [SpaceBonus.DATA, 'Data'],
-  [SpaceBonus.SCIENCE, 'Science'],
-  [SpaceBonus.ENERGY_PRODUCTION, 'Energy Production'],
-  [SpaceBonus.TEMPERATURE, 'Temperature'],
-]);
+const TO_STRING_MAP: Record<SpaceBonus, string> = {
+  [SpaceBonus.TITANIUM]: 'Titanium',
+  [SpaceBonus.STEEL]: 'Steel',
+  [SpaceBonus.PLANT]: 'Plant',
+  [SpaceBonus.DRAW_CARD]: 'Card',
+  [SpaceBonus.HEAT]: 'Heat',
+  [SpaceBonus.OCEAN]: 'Ocean',
+  [SpaceBonus.MEGACREDITS]: 'M€',
+  [SpaceBonus.ANIMAL]: 'Animal',
+  [SpaceBonus.MICROBE]: 'Microbe',
+  [SpaceBonus.ENERGY]: 'Energy',
+  [SpaceBonus.DATA]: 'Data',
+  [SpaceBonus.SCIENCE]: 'Science',
+  [SpaceBonus.ENERGY_PRODUCTION]: 'Energy Production',
+  [SpaceBonus.TEMPERATURE]: 'Temperature',
+  [SpaceBonus._RESTRICTED]: 'UNUSED',
+  [SpaceBonus.ASTEROID]: 'Asteroid',
+  [SpaceBonus.DELEGATE]: 'Delegate',
+  [SpaceBonus.COLONY]: 'Colony',
+};
 
 export namespace SpaceBonus {
   export function toString(spaceBonus: SpaceBonus): string {
-    return TO_STRING_MAP.get(spaceBonus) || `(unnamed space bonus, id ${spaceBonus})`;
+    return TO_STRING_MAP[spaceBonus];
   }
 }

@@ -1,33 +1,32 @@
 import {expect} from 'chai';
-import {Kickstarter} from '../../../src/cards/pathfinders/Kickstarter';
+import {Kickstarter} from '../../../src/server/cards/pathfinders/Kickstarter';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {Game} from '../../../src/Game';
-import {DeclareCloneTag} from '../../../src/pathfinders/DeclareCloneTag';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Tags} from '../../../src/common/cards/Tags';
+import {testGame} from '../../TestGame';
+import {IGame} from '../../../src/server/IGame';
+import {DeclareCloneTag} from '../../../src/server/pathfinders/DeclareCloneTag';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {Tag} from '../../../src/common/cards/Tag';
+import {cast} from '../../TestingUtils';
 
-describe('Kickstarter', function() {
+describe('Kickstarter', () => {
   let card: Kickstarter;
-  let game: Game;
+  let game: IGame;
   let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Kickstarter();
-    game = newTestGame(1, {pathfindersExpansion: true});
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {pathfindersExpansion: true});
   });
 
   it('play', () => {
-    expect(card.tags).deep.eq([Tags.CLONE]);
+    expect(card.tags).deep.eq([Tag.CLONE]);
 
     card.play(player);
 
-    expect(game.deferredActions.length).eq(1);
+    expect(game.deferredActions).has.length(1);
 
-    const action = game.deferredActions.pop();
-    expect(action).instanceOf(DeclareCloneTag);
-    const options = action!.execute() as OrOptions;
+    const action = cast(game.deferredActions.pop(), DeclareCloneTag);
+    const options = cast(action.execute(), OrOptions);
 
     expect(options.options[2].title).to.match(/mars/);
     expect(game.pathfindersData).deep.eq({
@@ -50,6 +49,6 @@ describe('Kickstarter', function() {
       vps: [],
     });
 
-    expect(card.tags).deep.eq([Tags.MARS]);
+    expect(card.tags).deep.eq([Tag.MARS]);
   });
 });

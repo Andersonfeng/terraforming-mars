@@ -1,30 +1,24 @@
 import {expect} from 'chai';
-import {Game} from '../../src/Game';
-import {Player} from '../../src/Player';
-import {ALL_CARD_MANIFESTS} from '../../src/cards/AllCards';
-import {setCustomGameOptions} from '../TestingUtils';
-import {TestPlayers} from '../TestPlayers';
+import {ALL_MODULE_MANIFESTS} from '../../src/server/cards/AllManifests';
+import {CardManifest} from '../../src/server/cards/ModuleManifest';
+import {ICard} from '../../src/server/cards/ICard';
+import {CardType} from '../../src/common/cards/CardType';
 
-describe('CardMetadata', function() {
-  let player : Player;
+describe('CardMetadata', () => {
+  it('should have a VP icon', () => {
+    ALL_MODULE_MANIFESTS.forEach((manifest) => {
+      const factories: CardManifest<ICard> = {...manifest.projectCards, ...manifest.corporationCards};
 
-  beforeEach(function() {
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player, setCustomGameOptions({moonExpansion: true}));
-  });
-
-  it('should have a VP icon', function() {
-    ALL_CARD_MANIFESTS.forEach((manifest) => {
-      manifest.projectCards.factories.forEach((c) => {
-        const card = new c.Factory();
+      for (const factory of CardManifest.values(factories)) {
+        const card = new factory.Factory();
+        if (card.type === CardType.PROXY) continue;
         if (card.victoryPoints !== undefined) {
           // if (card.victoryPoints === 'special') {
           expect(card.metadata.victoryPoints, card.name + ' should have victoryPoints metadata').is.not.undefined;
         } else if (card.victoryPoints === undefined) {
           expect(card.metadata.victoryPoints, card.name + ' should not have victoryPoints metadata').is.undefined;
         }
-      });
+      }
     });
   });
 });

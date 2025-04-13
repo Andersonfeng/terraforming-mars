@@ -1,16 +1,16 @@
 import {expect} from 'chai';
-import {FueledGenerators} from '../../../src/cards/base/FueledGenerators';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {FueledGenerators} from '../../../src/server/cards/base/FueledGenerators';
+import {Resource} from '../../../src/common/Resource';
+import {testGame} from '../../TestGame';
 
-describe('FueledGenerators', function() {
-  it('Should play', function() {
+describe('FueledGenerators', () => {
+  it('Should play', () => {
     const card = new FueledGenerators();
-    const player = TestPlayers.BLUE.newPlayer();
+    const [/* game */, player] = testGame(1);
 
-    player.addProduction(Resources.PLANTS, 1);
+    player.production.add(Resource.PLANTS, 1);
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(-1);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
+    expect(player.production.megacredits).to.eq(-1);
+    expect(player.production.energy).to.eq(1);
   });
 });

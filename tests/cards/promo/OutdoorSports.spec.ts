@@ -1,63 +1,64 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {OutdoorSports} from '../../../src/cards/promo/OutdoorSports';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {ISpace} from '../../../src/boards/ISpace';
+import {testGame} from '../../TestGame';
+import {OutdoorSports} from '../../../src/server/cards/promo/OutdoorSports';
+import {TestPlayer} from '../../TestPlayer';
+import {Space} from '../../../src/server/boards/Space';
+import {partition} from '../../../src/common/utils/utils';
 
-describe('OutdoorSports', function() {
+describe('OutdoorSports', () => {
   let card: OutdoorSports;
-  let player: Player;
-  let player2: Player;
-  let oceanSpace: ISpace;
-  let spaceNextToOcean: ISpace;
-  let spaceNotNextToOcean: ISpace;
-  beforeEach(function() {
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let oceanSpace: Space;
+  let spaceNextToOcean: Space;
+  let spaceNotNextToOcean: Space;
+
+  beforeEach(() => {
     card = new OutdoorSports();
-    const game = newTestGame(2);
-    player = getTestPlayer(game, 0);
-    player2 = getTestPlayer(game, 1);
+    [/* game */, player, player2] = testGame(2);
     const board = player.game.board;
     oceanSpace = board.getAvailableSpacesForOcean(player)[0];
 
     const spacesNextToOceanSpace = board.getAdjacentSpaces(oceanSpace);
     const citySpaces = board.getAvailableSpacesForCity(player);
-    spaceNextToOcean = citySpaces.filter((space) => spacesNextToOceanSpace.includes(space))[0];
-    spaceNotNextToOcean = citySpaces.filter((space) => !spacesNextToOceanSpace.includes(space))[0];
+    [[spaceNextToOcean], [spaceNotNextToOcean]] = partition(
+      citySpaces,
+      (space) => spacesNextToOceanSpace.includes(space),
+    );
   });
 
-  it('cannotPlay', function() {
+  it('cannotPlay', () => {
     player.megaCredits = card.cost;
-    player.game.addOceanTile(player, oceanSpace.id);
+    player.game.addOcean(player, oceanSpace);
     expect(player.canPlay(card)).is.not.true;
 
-    player.game.addCityTile(player, spaceNotNextToOcean.id);
+    player.game.addCity(player, spaceNotNextToOcean);
     expect(player.canPlay(card)).is.not.true;
   });
 
-  it('canPlay', function() {
+  it('canPlay', () => {
     player.megaCredits = card.cost;
-    player.game.addOceanTile(player, oceanSpace.id);
+    player.game.addOcean(player, oceanSpace);
     expect(player.canPlay(card)).is.not.true;
 
-    player.game.addCityTile(player, spaceNextToOcean.id);
+    player.game.addCity(player, spaceNextToOcean);
     expect(player.canPlay(card)).is.true;
   });
 
-  it('canPlay - other player owns the city', function() {
+  it('canPlay - other player owns the city', () => {
     player.megaCredits = card.cost;
-    player.game.addOceanTile(player, oceanSpace.id);
+    player.game.addOcean(player, oceanSpace);
     expect(player.canPlay(card)).is.not.true;
 
-    player.game.addCityTile(player2, spaceNextToOcean.id);
+    player.game.addCity(player2, spaceNextToOcean);
     expect(player.canPlay(card)).is.true;
   });
 
-  it('play', function() {
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(0);
+  it('play', () => {
+    expect(player.production.megacredits).to.eq(0);
 
     card.play(player);
 
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    expect(player.production.megacredits).to.eq(2);
   });
 });

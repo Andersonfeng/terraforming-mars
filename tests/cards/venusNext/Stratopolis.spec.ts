@@ -1,50 +1,46 @@
 import {expect} from 'chai';
-import {Research} from '../../../src/cards/base/Research';
-import {AerialMappers} from '../../../src/cards/venusNext/AerialMappers';
-import {Stratopolis} from '../../../src/cards/venusNext/Stratopolis';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {Research} from '../../../src/server/cards/base/Research';
+import {AerialMappers} from '../../../src/server/cards/venusNext/AerialMappers';
+import {Stratopolis} from '../../../src/server/cards/venusNext/Stratopolis';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {cast, churn, runAllActions, testGame} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('Stratopolis', function() {
-  let card: Stratopolis; let player: Player;
+describe('Stratopolis', () => {
+  let card: Stratopolis;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Stratopolis();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    const gameOptions = TestingUtils.setCustomGameOptions();
-    Game.newInstance('foobar', [player, redPlayer], player, gameOptions);
+    [/* game */, player/* , player2 */] = testGame(2, {venusNextExtension: true});
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.playedCards.push(new Research());
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    expect(player.production.megacredits).to.eq(2);
   });
 
-  it('Should act - single target', function() {
+  it('Should act - single target', () => {
     player.playedCards.push(card);
     card.action(player);
+    runAllActions(player.game);
     expect(card.resourceCount).to.eq(2);
   });
 
-  it('Should act - multiple targets', function() {
+  it('Should act - multiple targets', () => {
     const card2 = new AerialMappers();
     player.playedCards.push(card, card2);
 
-    const action = card.action(player);
-    expect(action).instanceOf(SelectCard);
-        action!.cb([card2]);
-        expect(card2.resourceCount).to.eq(2);
+    const selectCard = cast(churn(card.action(player), player), SelectCard);
+    selectCard.cb([card2]);
+
+    expect(card2.resourceCount).to.eq(2);
   });
 });

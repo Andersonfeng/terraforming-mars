@@ -1,6 +1,4 @@
-import {GlobalEventModel} from '@/common/models/TurmoilModel';
 import {GlobalEventName} from '@/common/turmoil/globalEvents/GlobalEventName';
-import {PartyName} from '@/common/turmoil/PartyName';
 import {IClientGlobalEvent} from '@/common/turmoil/IClientGlobalEvent';
 // @ts-ignore events.json doesn't exist during npm run build
 import * as eventJson from '@/genfiles/events.json';
@@ -18,20 +16,10 @@ export function getGlobalEvent(globalEventName: GlobalEventName): IClientGlobalE
   return events.get(globalEventName);
 }
 
-export function getGlobalEventModel(globalEventName: GlobalEventName): GlobalEventModel {
+export function getGlobalEventOrThrow(globalEventName: GlobalEventName): IClientGlobalEvent {
   const globalEvent = getGlobalEvent(globalEventName);
-  if (globalEvent) {
-    return {
-      name: globalEvent.name,
-      description: globalEvent.description,
-      revealed: globalEvent.revealedDelegate,
-      current: globalEvent.currentDelegate,
-    };
+  if (globalEvent === undefined) {
+    throw new Error(`global event ${globalEventName} not found`);
   }
-  return {
-    name: globalEventName,
-    description: 'global event not found',
-    revealed: PartyName.GREENS,
-    current: PartyName.GREENS,
-  };
+  return globalEvent;
 }

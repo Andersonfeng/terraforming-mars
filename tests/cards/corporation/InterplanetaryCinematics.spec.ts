@@ -1,28 +1,26 @@
 import {expect} from 'chai';
-import {Bushes} from '../../../src/cards/base/Bushes';
-import {Virus} from '../../../src/cards/base/Virus';
-import {InterplanetaryCinematics} from '../../../src/cards/corporation/InterplanetaryCinematics';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {Bushes} from '../../../src/server/cards/base/Bushes';
+import {Virus} from '../../../src/server/cards/base/Virus';
+import {InterplanetaryCinematics} from '../../../src/server/cards/corporation/InterplanetaryCinematics';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('InterplanetaryCinematics', function() {
-  let card : InterplanetaryCinematics; let player : Player;
+describe('InterplanetaryCinematics', () => {
+  let card: InterplanetaryCinematics;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new InterplanetaryCinematics();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
     expect(player.steel).to.eq(20);
   });
 
-  it('Has onCardPlayed', function() {
-    player.corporationCard = card;
+  it('Has onCardPlayed', () => {
+    player.corporations.push(card);
     card.onCardPlayed(player, new Bushes());
     expect(player.megaCredits).to.eq(0);
     card.onCardPlayed(player, new Virus());

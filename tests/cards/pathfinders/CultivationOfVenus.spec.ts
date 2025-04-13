@@ -1,28 +1,27 @@
 import {expect} from 'chai';
-import {CultivationOfVenus} from '../../../src/cards/pathfinders/CultivationOfVenus';
-import {Game} from '../../../src/Game';
+import {CultivationOfVenus} from '../../../src/server/cards/pathfinders/CultivationOfVenus';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
+import {testGame} from '../../TestGame';
 
-describe('CultivationOfVenus', function() {
+describe('CultivationOfVenus', () => {
   let card: CultivationOfVenus;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CultivationOfVenus();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1);
   });
 
-  it('Can act', function() {
+  it('Can act', () => {
     player.plants = 2;
     expect(card.canAct(player)).is.false;
     player.plants = 3;
     expect(card.canAct(player)).is.true;
   });
 
-  it('act', function() {
+  it('act', () => {
     player.plants = 5;
     expect(player.getTerraformRating()).eq(14);
 
@@ -33,7 +32,8 @@ describe('CultivationOfVenus', function() {
     expect(player.getTerraformRating()).eq(15);
   });
 
-  it('victoryPoints', function() {
+  it('victoryPoints', () => {
+    player.playedCards.push(card);
     expect(card.getVictoryPoints(player)).eq(0);
     player.tagsForTest = {venus: 1};
     expect(card.getVictoryPoints(player)).eq(0);

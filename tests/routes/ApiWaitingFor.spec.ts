@@ -1,11 +1,13 @@
 import {expect} from 'chai';
-import {ApiWaitingFor} from '../../src/routes/ApiWaitingFor';
-import {Game} from '../../src/Game';
-import {TestPlayers} from '../TestPlayers';
+import {ApiWaitingFor} from '../../src/server/routes/ApiWaitingFor';
+import {Game} from '../../src/server/Game';
+import {TestPlayer} from '../TestPlayer';
 import {MockResponse} from './HttpMocks';
 import {RouteTestScaffolding} from './RouteTestScaffolding';
+import {GameId} from '../../src/common/Types';
+import {statusCode} from '../../src/common/http/statusCode';
 
-describe('ApiWaitingFor', function() {
+describe('ApiWaitingFor', () => {
   let scaffolding: RouteTestScaffolding;
   let res: MockResponse;
 
@@ -14,62 +16,62 @@ describe('ApiWaitingFor', function() {
     res = new MockResponse();
   });
 
-  it('fails when game not found', () => {
+  it('fails when game not found', async () => {
     scaffolding.url = '/api/waitingfor?id=p-some-player-id&gameAge=123&undoCount=0';
-    scaffolding.get(ApiWaitingFor.INSTANCE, res);
-    expect(res.statusCode).eq(404);
+    await scaffolding.get(ApiWaitingFor.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.notFound);
     expect(res.content).eq('Not found: cannot find game for that player');
   });
 
-  it('fails when player not found', () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const game = Game.newInstance(player.id, [player], player);
-    scaffolding.ctx.gameLoader.add(game);
-    (game as any).getPlayerById = function() {
+  it('fails when player not found', async () => {
+    const player = TestPlayer.BLACK.newPlayer();
+    const game = Game.newInstance('g' + player.id as GameId, [player], player);
+    await scaffolding.ctx.gameLoader.add(game);
+    (game as any).getPlayerById = () => {
       throw new Error('player does not exist');
     };
 
     scaffolding.url = '/api/waitingfor?id=' + player.id + '&gameAge=50&undoCount=0';
-    scaffolding.get(ApiWaitingFor.INSTANCE, res);
-    expect(res.statusCode).eq(404);
+    await scaffolding.get(ApiWaitingFor.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.notFound);
     expect(res.content).eq('Not found: player not found');
   });
 
-  it('sends model for player', () => {
-    const player = TestPlayers.BLACK.newPlayer();
+  it('sends model for player', async () => {
+    const player = TestPlayer.BLACK.newPlayer();
     const game = Game.newInstance('game-id', [player], player);
-    scaffolding.ctx.gameLoader.add(game);
+    await scaffolding.ctx.gameLoader.add(game);
 
     scaffolding.url = '/api/waitingfor?id=' + player.id + '&gameAge=50&undoCount=0';
-    scaffolding.get(ApiWaitingFor.INSTANCE, res);
-    expect(res.statusCode).eq(200);
-    expect(res.content).eq('{"result":"GO"}');
+    await scaffolding.get(ApiWaitingFor.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.ok);
+    expect(res.content).eq('{"result":"GO","waitingFor":["black"]}');
   });
 
-  it('fails when spectator not found', () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
+  it('fails when spectator not found', async () => {
+    const player = TestPlayer.BLACK.newPlayer();
+    const player2 = TestPlayer.RED.newPlayer();
     const game = Game.newInstance('game-id', [player, player2], player);
-    scaffolding.ctx.gameLoader.add(game);
-    (game as any).getBySpectatorId = function() {
+    await scaffolding.ctx.gameLoader.add(game);
+    (game as any).getBySpectatorId = () => {
       throw new Error('spectator does not exist');
     };
 
     scaffolding.url = '/api/waitingfor?id=' + game.spectatorId + '-invalid' + '&gameAge=50&undoCount=0';
-    scaffolding.get(ApiWaitingFor.INSTANCE, res);
-    expect(res.statusCode).eq(404);
+    await scaffolding.get(ApiWaitingFor.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.notFound);
     expect(res.content).eq('Not found: cannot find game for that player');
   });
 
-  it('sends model for spectator', () => {
-    const player = TestPlayers.BLACK.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
+  it('sends model for spectator', async () => {
+    const player = TestPlayer.BLACK.newPlayer();
+    const player2 = TestPlayer.RED.newPlayer();
     const game = Game.newInstance('game-id', [player, player2], player, undefined, undefined, 's-spectatorid');
-    scaffolding.ctx.gameLoader.add(game);
+    await scaffolding.ctx.gameLoader.add(game);
 
     scaffolding.url = '/api/waitingfor?id=' + game.spectatorId + '&gameAge=50&undoCount=0';
-    scaffolding.get(ApiWaitingFor.INSTANCE, res);
-    expect(res.statusCode).eq(200);
-    expect(res.content).eq('{"result":"WAIT"}');
+    await scaffolding.get(ApiWaitingFor.INSTANCE, res);
+    expect(res.statusCode).eq(statusCode.ok);
+    expect(res.content).eq('{"result":"WAIT","waitingFor":["black","red"]}');
   });
 });

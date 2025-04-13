@@ -1,17 +1,17 @@
 <template>
-  <div :class="getClasses()" />
+  <div :class="getClasses()" :data-tooltip="$t(tag)" />
 </template>
 
 <script lang="ts">
 
 import Vue from 'vue';
-import {Tags} from '@/common/cards/Tags';
+import {Tag} from '@/common/cards/Tag';
 
 export default Vue.extend({
   name: 'Tag',
   props: {
     tag: {
-      type: String as () => Tags,
+      type: String as () => Tag,
     },
     size: {
       type: String,
@@ -22,7 +22,7 @@ export default Vue.extend({
   },
   methods: {
     getClasses(): string {
-      const classes = ['tag-count'];
+      const classes = ['tag-count', 'tooltip', 'tooltip-bottom'];
       classes.push(`tag-${this.tag}`);
       if (this.size !== undefined) {
         classes.push(`tag-size-${this.size}`);

@@ -1,20 +1,37 @@
+import {Tag} from '../../../src/common/cards/Tag';
 import {expect} from 'chai';
-import {Research} from '../../../src/cards/base/Research';
-import {SolarProbe} from '../../../src/cards/colonies/SolarProbe';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {Research} from '../../../src/server/cards/base/Research';
+import {SolarProbe} from '../../../src/server/cards/colonies/SolarProbe';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('SolarProbe', function() {
-  it('Should play', function() {
+describe('SolarProbe', () => {
+  it('Should play', () => {
     const card = new SolarProbe();
-    const card2 = new Research();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player);
-    player.playedCards.push(card2);
+    const research = new Research();
+    const [/* game */, player] = testGame(2);
+
+    player.playedCards.push(research);
+
+    expect(player.tags.count(Tag.SCIENCE)).eq(2);
+
+    // Since Solar Probe is an event, the card still allows its tag to count.
     const action = card.play(player);
-    expect(action).is.undefined;
+
+    cast(action, undefined);
     expect(player.cardsInHand).has.lengthOf(1);
-    expect(card.getVictoryPoints()).to.eq(1);
+
+    // This part shows that it draws one card per 3 tags.
+    player.playedCards = [];
+    player.cardsInHand = [];
+    player.playedCards.push(research);
+    player.playedCards.push(research);
+    player.playedCards.push(research);
+
+    expect(player.tags.count(Tag.SCIENCE)).eq(6);
+
+    card.play(player);
+
+    expect(player.cardsInHand).has.lengthOf(2);
   });
 });

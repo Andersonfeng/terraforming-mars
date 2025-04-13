@@ -1,19 +1,14 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {LunarSteel} from '../../../src/cards/moon/LunarSteel';
 import {expect} from 'chai';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
+import {LunarSteel} from '../../../src/server/cards/moon/LunarSteel';
 
 describe('LunarSteel', () => {
-  let player: Player;
+  let player: TestPlayer;
   let card: LunarSteel;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [/* game */, player] = testGame(1, {moonExpansion: true});
     card = new LunarSteel();
   });
 

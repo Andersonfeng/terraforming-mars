@@ -1,15 +1,14 @@
 import {expect} from 'chai';
-import {AlliedBanks} from '../../../src/cards/prelude/AlliedBanks';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {AlliedBanks} from '../../../src/server/cards/prelude/AlliedBanks';
+import {cast} from '../../TestingUtils';
 
-describe('AlliedBanks', function() {
-  it('Should play', function() {
+describe('AlliedBanks', () => {
+  it('Should play', () => {
     const card = new AlliedBanks();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
     expect(player.megaCredits).to.eq(3);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(4);
+    expect(player.production.megacredits).to.eq(4);
   });
 });

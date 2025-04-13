@@ -6,25 +6,30 @@
       <colony :colony="colony"></colony>
     </label>
     <div v-if="showsave === true" class="nofloat">
-      <Button @click="saveData" :title="playerinput.buttonLabel" :disabled="!canSave()"/>
+      <AppButton @click="saveData" :title="playerinput.buttonLabel" :disabled="!canSave()"/>
     </div>
   </div>
 </template>
 <script lang="ts">
 import Vue from 'vue';
 import Colony from '@/client/components/colonies/Colony.vue';
-import Button from '@/client/components/common/Button.vue';
-import {PlayerInputModel} from '@/common/models/PlayerInputModel';
-import {InputResponse} from '@/common/inputs/InputResponse';
+import AppButton from '@/client/components/common/AppButton.vue';
+import {SelectColonyModel} from '@/common/models/PlayerInputModel';
+import {SelectColonyResponse} from '@/common/inputs/InputResponse';
+import {ColonyName} from '@/common/colonies/ColonyName';
+
+type DataModel = {
+  selectedColony: ColonyName | undefined,
+};
 
 export default Vue.extend({
   name: 'SelectColony',
   props: {
     playerinput: {
-      type: Object as () => PlayerInputModel,
+      type: Object as () => SelectColonyModel,
     },
     onsave: {
-      type: Function as unknown as () => (out: InputResponse) => void,
+      type: Function as unknown as () => (out: SelectColonyResponse) => void,
     },
     showsave: {
       type: Boolean,
@@ -33,26 +38,23 @@ export default Vue.extend({
       type: Boolean,
     },
   },
-  data() {
+  data(): DataModel {
     return {
-      selectedColony: undefined as string | undefined,
+      selectedColony: undefined,
     };
   },
   components: {
     'colony': Colony,
-    Button,
+    AppButton,
   },
   methods: {
     canSave() {
       return this.selectedColony !== undefined;
     },
     saveData() {
-      const result: string[][] = [];
-      result.push([]);
-      if (this.canSave()) {
-        result[0].push(this.selectedColony ?? '');
+      if (this.selectedColony !== undefined) {
+        this.onsave({type: 'colony', colonyName: this.selectedColony});
       }
-      this.onsave(result);
     },
   },
 });

@@ -1,43 +1,43 @@
-import {EcologicalSurvey} from '../../../src/cards/ares/EcologicalSurvey';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
+import {EcologicalSurvey} from '../../../src/server/cards/ares/EcologicalSurvey';
+import {IGame} from '../../../src/server/IGame';
 import {expect} from 'chai';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
 import {TileType} from '../../../src/common/TileType';
-import {Ants} from '../../../src/cards/base/Ants';
-import {Pets} from '../../../src/cards/base/Pets';
-import {EmptyBoard} from '../../ares/EmptyBoard';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {Pets} from '../../../src/server/cards/base/Pets';
+import {EmptyBoard} from '../../testing/EmptyBoard';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
-import {ArcticAlgae} from '../../../src/cards/base/ArcticAlgae';
+import {ArcticAlgae} from '../../../src/server/cards/base/ArcticAlgae';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
 import {Phase} from '../../../src/common/Phase';
-import {addGreenery, runAllActions} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {OceanCity} from '../../../src/cards/ares/OceanCity';
+import {addGreenery, cast, forceGenerationEnd, maxOutOceans, runAllActions, setOxygenLevel, setTemperature} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {OceanCity} from '../../../src/server/cards/ares/OceanCity';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {testGame} from '../../TestGame';
+import {MAX_OXYGEN_LEVEL, MAX_TEMPERATURE} from '../../../src/common/constants';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
 
 describe('EcologicalSurvey', () => {
-  let card : EcologicalSurvey;
-  let player : Player;
-  let redPlayer : Player;
-  let game : Game;
+  let card: EcologicalSurvey;
+  let player: TestPlayer;
+  let redPlayer : TestPlayer;
+  let game: IGame;
 
   beforeEach(() => {
     card = new EcologicalSurvey();
-    player = TestPlayers.BLUE.newPlayer();
-    redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+    [game, player, redPlayer] = testGame(2, {aresExtension: true});
     game.board = EmptyBoard.newInstance();
   });
 
   it('Can play', () => {
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
 
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
   // This doesn't test anything about this card, but about the behavior this card provides, from
@@ -78,7 +78,7 @@ describe('EcologicalSurvey', () => {
     animalCard.resourceCount = 0;
 
     const adjacentSpace = game.board.getAdjacentSpaces(firstSpace)[0];
-    game.addTile(player, adjacentSpace.spaceType, adjacentSpace, {tileType: TileType.GREENERY});
+    game.addTile(player, adjacentSpace, {tileType: TileType.GREENERY});
     runAllActions(game);
 
     expect(player.megaCredits).eq(2);
@@ -112,7 +112,7 @@ describe('EcologicalSurvey', () => {
       SpaceBonus.HEAT,
     ],
     player.playedCards = [card];
-    game.addTile(player, SpaceType.LAND, space, {tileType: TileType.RESTRICTED_AREA});
+    game.addTile(player, space, {tileType: TileType.RESTRICTED_AREA});
 
     runAllActions(game);
 
@@ -133,7 +133,10 @@ describe('EcologicalSurvey', () => {
     game.simpleAddTile(redPlayer, space, {tileType: TileType.OCEAN});
 
     player.plants = 0;
-    const selectSpace = new OceanCity().play(player);
+    new OceanCity().play(player);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+
     selectSpace.cb(space);
     expect(player.plants).eq(0);
   });
@@ -148,7 +151,7 @@ describe('EcologicalSurvey', () => {
     game.board.spaces[5].bonus = [];
 
     player.plants = 0;
-    game.addTile(player, SpaceType.OCEAN, game.board.spaces[5], {tileType: TileType.OCEAN});
+    game.addTile(player, game.board.spaces[5], {tileType: TileType.OCEAN});
     runAllActions(game);
     expect(player.plants).eq(3);
   });
@@ -164,7 +167,7 @@ describe('EcologicalSurvey', () => {
 
     game.phase = Phase.SOLAR;
     player.plants = 0;
-    game.addTile(player, SpaceType.OCEAN, game.board.spaces[5], {tileType: TileType.OCEAN});
+    game.addTile(player, game.board.spaces[5], {tileType: TileType.OCEAN});
     runAllActions(game);
     expect(player.plants).eq(2);
   });
@@ -176,15 +179,41 @@ describe('EcologicalSurvey', () => {
     const space = game.board.getAvailableSpacesOnLand(player)[0];
     space.bonus = [SpaceBonus.MICROBE],
 
-    game.addTile(player, SpaceType.LAND, space, {tileType: TileType.RESTRICTED_AREA});
+    game.addTile(player, space, {tileType: TileType.RESTRICTED_AREA});
     runAllActions(game);
 
     const msg = game.gameLog.pop()!;
-    expect(msg.data.length).to.eq(3);
+    expect(msg.data).has.length(3);
     expect(msg.data[0].value).to.eq(player.color);
     expect(msg.data[1].value).to.eq('Microbe');
     expect(msg.data[2].value).to.eq(card.name);
     expect(msg.message).to.eq('${0} gained a bonus ${1} because of ${2}');
     expect(microbeCard.resourceCount).eq(2);
+  });
+
+  it('Works during final greenery placement', () => {
+    const [game, player/* , player2 */] = testGame(2, {aresExtension: true, aresHazards: false});
+
+    player.playedCards.push(card);
+    // Set up end-game conditions
+    setTemperature(game, MAX_TEMPERATURE);
+    setOxygenLevel(game, MAX_OXYGEN_LEVEL);
+    maxOutOceans(player);
+    player.plants = 9;
+
+    // Pass last turn
+    forceGenerationEnd(game);
+
+    // Final greenery placement is considered part of the production phase.
+    expect(game.phase).to.eq(Phase.PRODUCTION);
+    runAllActions(game);
+    const options = cast(player.popWaitingFor(), OrOptions);
+    expect(options.title).eq('Place any final greenery from plants');
+    const selectSpace = cast(options.options[0], SelectSpace);
+    const space = selectSpace.spaces[0];
+    space.bonus = [SpaceBonus.PLANT];
+    selectSpace.cb(space);
+
+    expect(player.plants).eq(3);
   });
 });

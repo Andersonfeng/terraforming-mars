@@ -1,36 +1,36 @@
 import {expect} from 'chai';
-import {LuxuryFoods} from '../../../src/cards/venusNext/LuxuryFoods';
-import {TestPlayers} from '../../TestPlayers';
+import {LuxuryFoods} from '../../../src/server/cards/venusNext/LuxuryFoods';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('LuxuryFoods', function() {
-  it('Should play', function() {
+describe('LuxuryFoods', () => {
+  it('Should play', () => {
     const card = new LuxuryFoods();
-    const player = TestPlayers.BLUE.newPlayer();
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    const [/* game */, player] = testGame(1);
+    expect(card.canPlay(player)).is.not.true;
 
     player.tagsForTest = {venus: 1};
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
 
     player.tagsForTest = {earth: 1};
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
 
     player.tagsForTest = {jovian: 1};
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
 
     player.tagsForTest = {venus: 1, earth: 1};
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
 
     player.tagsForTest = {jovian: 1, earth: 1};
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
 
     player.tagsForTest = {venus: 1, jovian: 1};
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
 
     player.tagsForTest = {venus: 1, jovian: 1, earth: 1};
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
-    const action = card.play();
-    expect(action).is.undefined;
-    expect(card.getVictoryPoints()).to.eq(2);
+    cast(card.play(player), undefined);
+    expect(card.getVictoryPoints(player)).to.eq(2);
   });
 });

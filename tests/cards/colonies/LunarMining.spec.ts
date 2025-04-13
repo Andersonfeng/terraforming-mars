@@ -1,21 +1,17 @@
 import {expect} from 'chai';
-import {LunaGovernor} from '../../../src/cards/colonies/LunaGovernor';
-import {LunarMining} from '../../../src/cards/colonies/LunarMining';
-import {SpaceHotels} from '../../../src/cards/prelude/SpaceHotels';
-import {Game} from '../../../src/Game';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {LunaGovernor} from '../../../src/server/cards/colonies/LunaGovernor';
+import {LunarMining} from '../../../src/server/cards/colonies/LunarMining';
+import {SpaceHotels} from '../../../src/server/cards/prelude/SpaceHotels';
+import {cast, testGame} from '../../TestingUtils';
 
-describe('LunarMining', function() {
-  it('Should play', function() {
+describe('LunarMining', () => {
+  it('Should play', () => {
     const card = new LunarMining();
     const card2 = new SpaceHotels();
     const card3 = new LunaGovernor();
-    const player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('foobar', [player], player);
+    const [/* game*/, player] = testGame(1);
     player.playedCards.push(card2, card3);
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(2);
+    cast(card.play(player), undefined);
+    expect(player.production.titanium).to.eq(2);
   });
 });

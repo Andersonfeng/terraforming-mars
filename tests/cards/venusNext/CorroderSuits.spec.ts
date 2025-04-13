@@ -1,57 +1,81 @@
 import {expect} from 'chai';
-import {AerialMappers} from '../../../src/cards/venusNext/AerialMappers';
-import {CorroderSuits} from '../../../src/cards/venusNext/CorroderSuits';
-import {Dirigibles} from '../../../src/cards/venusNext/Dirigibles';
-import {FloaterUrbanism} from '../../../src/cards/pathfinders/FloaterUrbanism';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {AerialMappers} from '../../../src/server/cards/venusNext/AerialMappers';
+import {CorroderSuits} from '../../../src/server/cards/venusNext/CorroderSuits';
+import {Dirigibles} from '../../../src/server/cards/venusNext/Dirigibles';
+import {FloaterUrbanism} from '../../../src/server/cards/pathfinders/FloaterUrbanism';
+import {IGame} from '../../../src/server/IGame';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {NitriteReducingBacteria} from '../../../src/server/cards/base/NitriteReducingBacteria';
+import {testGame} from '../../TestGame';
 
-describe('CorroderSuits', function() {
-  let card : CorroderSuits; let player : Player;
+describe('CorroderSuits', () => {
+  let card: CorroderSuits;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CorroderSuits();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play - no targets', function() {
+  it('Should play - no targets', () => {
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    expect(player.production.megacredits).to.eq(2);
   });
 
-  it('Should play - single target', function() {
-    const card2 = new AerialMappers();
-    player.playedCards.push(card2);
+  it('Should play - single target', () => {
+    const aerialMappers = new AerialMappers(); // Venus tag with Floaters
+    player.playedCards.push(aerialMappers);
 
     card.play(player);
-    expect(card2.resourceCount).to.eq(1);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    runAllActions(game);
+
+    expect(aerialMappers.resourceCount).to.eq(1);
+    expect(player.production.megacredits).to.eq(2);
   });
 
-  it('Should play - multiple targets', function() {
-    const card2 = new AerialMappers();
-    const card3 = new Dirigibles();
-    player.playedCards.push(card2, card3);
+  it('Should play - multiple targets', () => {
+    const aerialMappers = new AerialMappers(); // Venus tag with Floaters
+    const dirigibles = new Dirigibles(); // Venus tag with Floaters
+    player.playedCards.push(aerialMappers, dirigibles);
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectCard);
+    cast(card.play(player), undefined);
+    runAllActions(game);
 
-        action!.cb([card2]);
-        expect(card2.resourceCount).to.eq(1);
-        expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    const selectCard = cast(player.popWaitingFor(), SelectCard);
+    expect(selectCard.cards).includes(aerialMappers);
+    expect(selectCard.cards).includes(dirigibles);
+
+    selectCard.cb([aerialMappers]);
+    expect(aerialMappers.resourceCount).to.eq(1);
+    expect(player.production.megacredits).to.eq(2);
   });
 
-  it('Should play - specialized resource type', function() {
-    const card2 = new FloaterUrbanism();
-    player.playedCards.push(card2);
+  it('Should play - specialized resource type', () => {
+    const floaterUrbanism = new FloaterUrbanism(); // Card from a fan expansion with a Venus tag and special resource type.
+    player.playedCards.push(floaterUrbanism);
 
     card.play(player);
-    expect(card2.resourceCount).to.eq(1);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
+    runAllActions(game);
+
+    expect(floaterUrbanism.resourceCount).to.eq(1);
+    expect(player.production.megacredits).to.eq(2);
+  });
+
+  it('Ignore cards that do not have a Venus tag', () => {
+    const aerialMappers = new AerialMappers(); // Venus tag with Floaters
+    const dirigibles = new Dirigibles(); // Venus tag with Floaters
+    const nitriteReducingBacteria = new NitriteReducingBacteria(); // Microbe tag with microbes
+    player.playedCards.push(aerialMappers, dirigibles, nitriteReducingBacteria);
+
+    cast(card.play(player), undefined);
+    runAllActions(game);
+
+    const selectCard = cast(player.popWaitingFor(), SelectCard);
+    expect(selectCard.cards).does.not.include(nitriteReducingBacteria);
+    expect(selectCard.cards).includes(aerialMappers);
+    expect(selectCard.cards).includes(dirigibles);
   });
 });

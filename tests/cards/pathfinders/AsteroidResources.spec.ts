@@ -1,58 +1,61 @@
 import {expect} from 'chai';
-import {AsteroidResources} from '../../../src/cards/pathfinders/AsteroidResources';
-import {Game} from '../../../src/Game';
+import {AsteroidResources} from '../../../src/server/cards/pathfinders/AsteroidResources';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Resources} from '../../../src/common/Resources';
-import {PlaceOceanTile} from '../../../src/deferredActions/PlaceOceanTile';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {testGame} from '../../TestGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {PlaceOceanTile} from '../../../src/server/deferredActions/PlaceOceanTile';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
 import {TileType} from '../../../src/common/TileType';
+import {cast, runAllActions} from '../../TestingUtils';
 
-describe('AsteroidResources', function() {
+describe('AsteroidResources', () => {
   let card: AsteroidResources;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new AsteroidResources();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1);
   });
 
-  it('canPlay', function() {
+  it('canPlay', () => {
     player.energy = 2;
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
     player.energy = 3;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('play, gain production', function() {
+  it('play, gain production', () => {
     player.energy = 3;
 
-    const options = card.play(player) as OrOptions;
+    card.play(player);
+    runAllActions(game);
+    const options = cast(player.popWaitingFor(), OrOptions);
     options.options[0].cb();
     expect(player.energy).eq(0);
-    expect(player.getProduction(Resources.TITANIUM)).eq(1);
-    expect(player.getProduction(Resources.STEEL)).eq(1);
+    expect(player.production.titanium).eq(1);
+    expect(player.production.steel).eq(1);
     expect(player.titanium).eq(0);
     expect(player.steel).eq(0);
   });
 
-  it('play, place ocean', function() {
+  it('play, place ocean', () => {
     player.energy = 3;
 
-    const options = card.play(player) as OrOptions;
+    card.play(player);
+    runAllActions(game);
+    const options = cast(player.popWaitingFor(), OrOptions);
     options.options[1].cb();
     expect(player.energy).eq(0);
-    expect(player.getProduction(Resources.TITANIUM)).eq(0);
-    expect(player.getProduction(Resources.STEEL)).eq(0);
+    expect(player.production.titanium).eq(0);
+    expect(player.production.steel).eq(0);
     expect(player.titanium).eq(1);
     expect(player.steel).eq(2);
-    const action = player.game.deferredActions.peek()! as PlaceOceanTile;
-    const select = action.execute() as SelectSpace;
-    const space = select.availableSpaces[0];
+    const action = cast(player.game.deferredActions.peek(), PlaceOceanTile);
+    const select = cast(action.execute(), SelectSpace);
+    const space = select.spaces[0];
 
     expect(space.spaceType).eq(SpaceType.OCEAN);
     expect(space.tile).is.undefined;

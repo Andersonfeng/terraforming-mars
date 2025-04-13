@@ -1,25 +1,24 @@
 import {expect} from 'chai';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {HydrogenBombardment} from '../../../src/cards/pathfinders/HydrogenBombardment';
-import {Game} from '../../../src/Game';
+import {testGame} from '../../TestGame';
+import {HydrogenBombardment} from '../../../src/server/cards/pathfinders/HydrogenBombardment';
+import {IGame} from '../../../src/server/IGame';
 import {Units} from '../../../src/common/Units';
 import {TestPlayer} from '../../TestPlayer';
 
-describe('HydrogenBombardment', function() {
+describe('HydrogenBombardment', () => {
   let card: HydrogenBombardment;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new HydrogenBombardment();
-    game = newTestGame(1, {venusNextExtension: true});
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1, {venusNextExtension: true});
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     card.play(player);
     expect(game.getVenusScaleLevel()).to.eq(2);
     expect(player.megaCredits).eq(6);
-    expect(player.getProductionForTest()).deep.eq(Units.of({titanium: 1}));
+    expect(player.production.asUnits()).deep.eq(Units.of({titanium: 1}));
   });
 });

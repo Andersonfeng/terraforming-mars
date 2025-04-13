@@ -1,54 +1,53 @@
 import {expect} from 'chai';
-import {Ants} from '../../../src/cards/base/Ants';
-import {GeologicalSurvey} from '../../../src/cards/ares/GeologicalSurvey';
-import {Pets} from '../../../src/cards/base/Pets';
-import {Game} from '../../../src/Game';
+import {Ants} from '../../../src/server/cards/base/Ants';
+import {GeologicalSurvey} from '../../../src/server/cards/ares/GeologicalSurvey';
+import {Pets} from '../../../src/server/cards/base/Pets';
+import {IGame} from '../../../src/server/IGame';
 import {Phase} from '../../../src/common/Phase';
-import {Player} from '../../../src/Player';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
 import {SpaceType} from '../../../src/common/boards/SpaceType';
 import {TileType} from '../../../src/common/TileType';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {EmptyBoard} from '../../ares/EmptyBoard';
-import {MarsFirst} from '../../../src/turmoil/parties/MarsFirst';
-import {addGreenery, resetBoard, setCustomGameOptions, setRulingPartyAndRulingPolicy, runAllActions} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {OceanCity} from '../../../src/cards/ares/OceanCity';
+import {EmptyBoard} from '../../testing/EmptyBoard';
+import {addGreenery, setRulingParty, runAllActions, cast, forceGenerationEnd, maxOutOceans, setOxygenLevel, setTemperature} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {OceanCity} from '../../../src/server/cards/ares/OceanCity';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
+import {testGame} from '../../TestGame';
+import {PartyName} from '../../../src/common/turmoil/PartyName';
+import {MAX_TEMPERATURE, MAX_OXYGEN_LEVEL} from '../../../src/common/constants';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
 
 describe('GeologicalSurvey', () => {
-  let card : GeologicalSurvey;
-  let player : Player;
-  let redPlayer : Player;
-  let game : Game;
+  let card: GeologicalSurvey;
+  let player: TestPlayer;
+  let player2 : TestPlayer;
+  let game: IGame;
 
   beforeEach(() => {
     card = new GeologicalSurvey();
-    player = TestPlayers.BLUE.newPlayer();
-    redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
+    [game, player, player2] = testGame(2, {aresExtension: true});
     game.board = EmptyBoard.newInstance();
   });
 
   it('Can play', () => {
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     addGreenery(player);
-    expect(player.canPlayIgnoringCost(card)).is.false;
+    expect(card.canPlay(player)).is.false;
   });
-
 
   it('Works with Adjacency Bonuses', () => {
     // tile types in this test are irrelevant.
@@ -68,7 +67,7 @@ describe('GeologicalSurvey', () => {
       SpaceBonus.ENERGY,
     ],
     };
-    game.addTile(player, SpaceType.LAND, firstSpace, {tileType: TileType.RESTRICTED_AREA});
+    game.addTile(player, firstSpace, {tileType: TileType.RESTRICTED_AREA});
 
     const microbeCard = new Ants();
     const animalCard = new Pets();
@@ -87,7 +86,7 @@ describe('GeologicalSurvey', () => {
     animalCard.resourceCount = 0;
 
     const adjacentSpace = game.board.getAdjacentSpaces(firstSpace)[0];
-    game.addTile(player, adjacentSpace.spaceType, adjacentSpace, {tileType: TileType.GREENERY});
+    game.addTile(player, adjacentSpace, {tileType: TileType.GREENERY});
     runAllActions(game);
 
     expect(player.megaCredits).eq(2);
@@ -121,7 +120,7 @@ describe('GeologicalSurvey', () => {
       SpaceBonus.HEAT,
     ],
     player.playedCards = [card];
-    game.addTile(player, SpaceType.LAND, space, {tileType: TileType.RESTRICTED_AREA});
+    game.addTile(player, space, {tileType: TileType.RESTRICTED_AREA});
 
     runAllActions(game);
 
@@ -133,25 +132,17 @@ describe('GeologicalSurvey', () => {
   });
 
   it('Works with Mars First policy', () => {
-    player = TestPlayers.BLUE.newPlayer();
-    const gameOptions = setCustomGameOptions();
-    game = Game.newInstance('foobar', [player], player, gameOptions);
-    const turmoil = game.turmoil!;
-    const marsFirst = new MarsFirst();
+    [game, player] = testGame(2, {turmoilExtension: true});
 
     player.playedCards.push(card);
     game.phase = Phase.ACTION; // Policies are only active in the ACTION phase
 
-    resetBoard(game);
-
-    game.addGreenery(player, '11');
+    addGreenery(player, '11');
     runAllActions(game);
     expect(player.steel).eq(0);
 
-    resetBoard(game);
-
-    setRulingPartyAndRulingPolicy(game, turmoil, marsFirst, marsFirst.policies[0].id);
-    game.addGreenery(player, '11');
+    setRulingParty(game, PartyName.MARS);
+    addGreenery(player, '12');
     runAllActions(game);
     expect(player.steel).eq(2);
   });
@@ -163,12 +154,44 @@ describe('GeologicalSurvey', () => {
     // Hand-placing an ocean to make things easy, since this test suite relies on an otherwise empty board.
     space.spaceType = SpaceType.OCEAN;
     space.bonus = [SpaceBonus.HEAT];
-    game.simpleAddTile(redPlayer, space, {tileType: TileType.OCEAN});
+    game.simpleAddTile(player2, space, {tileType: TileType.OCEAN});
 
     player.heat = 0;
-    const selectSpace = new OceanCity().play(player);
+    new OceanCity().play(player);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+
     selectSpace.cb(space);
     runAllActions(game);
     expect(player.heat).eq(0);
+  });
+
+
+  it('Works during final greenery placement', () => {
+    const [game, player/* , player2 */] = testGame(2, {aresExtension: true, aresHazards: false});
+
+    player.playedCards.push(card);
+    // Set up end-game conditions
+    setTemperature(game, MAX_TEMPERATURE);
+    setOxygenLevel(game, MAX_OXYGEN_LEVEL);
+    maxOutOceans(player);
+    player.plants = 9;
+    player.steel = 0;
+
+    // Pass last turn
+    forceGenerationEnd(game);
+
+    // Final greenery placement is considered part of the production phase.
+    expect(game.phase).to.eq(Phase.PRODUCTION);
+    runAllActions(game);
+    const options = cast(player.popWaitingFor(), OrOptions);
+    expect(options.title).eq('Place any final greenery from plants');
+    const selectSpace = cast(options.options[0], SelectSpace);
+    const space = selectSpace.spaces[0];
+    space.bonus = [SpaceBonus.STEEL];
+    selectSpace.cb(space);
+
+    expect(player.plants).eq(1);
+    expect(player.steel).eq(2);
   });
 });

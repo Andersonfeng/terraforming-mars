@@ -1,41 +1,42 @@
 import {expect} from 'chai';
-import {NitriteReducingBacteria} from '../../../src/cards/base/NitriteReducingBacteria';
-import {Game} from '../../../src/Game';
-import {OrOptions} from '../../../src/inputs/OrOptions';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, churn} from '../../TestingUtils';
+import {NitriteReducingBacteria} from '../../../src/server/cards/base/NitriteReducingBacteria';
+import {IGame} from '../../../src/server/IGame';
+import {OrOptions} from '../../../src/server/inputs/OrOptions';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('NitriteReducingBacteria', function() {
-  let card : NitriteReducingBacteria; let player : Player; let game : Game;
+describe('NitriteReducingBacteria', () => {
+  let card: NitriteReducingBacteria;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new NitriteReducingBacteria();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.playedCards.push(card);
     card.play(player);
     game.deferredActions.runNext();
     expect(card.resourceCount).to.eq(3);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.playedCards.push(card);
-    card.action(player);
+
+    expect(churn(card.action(player), player)).is.undefined;
     expect(card.resourceCount).to.eq(1);
 
     player.addResourceTo(card, 3);
-    const orOptions = card.action(player) as OrOptions;
-    expect(orOptions instanceof OrOptions).is.true;
+    const orOptions = cast(churn(card.action(player), player), OrOptions);
 
-        orOptions!.options[1].cb();
-        expect(card.resourceCount).to.eq(5);
+    expect(churn(() => orOptions.options[1].cb(), player)).is.undefined;
+    expect(card.resourceCount).to.eq(5);
 
-        orOptions!.options[0].cb();
-        expect(card.resourceCount).to.eq(2);
-        expect(player.getTerraformRating()).to.eq(21);
+    expect(churn(() => orOptions.options[0].cb(), player)).is.undefined;
+    expect(card.resourceCount).to.eq(2);
+    expect(player.getTerraformRating()).to.eq(21);
   });
 });

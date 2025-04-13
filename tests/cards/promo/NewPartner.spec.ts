@@ -1,58 +1,56 @@
 import {expect} from 'chai';
-import {CardType} from '../../../src/common/cards/CardType';
-import {CardName} from '../../../src/common/cards/CardName';
-import {Donation} from '../../../src/cards/prelude/Donation';
-import {GalileanMining} from '../../../src/cards/prelude/GalileanMining';
-import {HugeAsteroid} from '../../../src/cards/prelude/HugeAsteroid';
-import {NewPartner} from '../../../src/cards/promo/NewPartner';
-import {SmeltingPlant} from '../../../src/cards/prelude/SmeltingPlant';
-import {Game} from '../../../src/Game';
-import {SelectCard} from '../../../src/inputs/SelectCard';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {Donation} from '../../../src/server/cards/prelude/Donation';
+import {GalileanMining} from '../../../src/server/cards/prelude/GalileanMining';
+import {HugeAsteroid} from '../../../src/server/cards/prelude/HugeAsteroid';
+import {NewPartner} from '../../../src/server/cards/promo/NewPartner';
+import {SmeltingPlant} from '../../../src/server/cards/prelude/SmeltingPlant';
+import {IGame} from '../../../src/server/IGame';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {cast, runAllActions} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
+import {IPreludeCard, isPreludeCard} from '../../../src/server/cards/prelude/IPreludeCard';
 
-describe('NewPartner', function() {
-  let card : NewPartner; let player : Player; let game : Game;
+describe('NewPartner', () => {
+  let card: NewPartner;
+  let player: TestPlayer;
+  let game: IGame;
+  let smeltingPlant: IPreludeCard;
+  let donation: IPreludeCard;
+  let hugeAsteroid: IPreludeCard;
+  let galileanMining: IPreludeCard;
 
   beforeEach(() => {
     card = new NewPartner();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-
-    const gameOptions = TestingUtils.setCustomGameOptions({preludeExtension: true});
-    game = Game.newInstance('foobar', [player, redPlayer], player, gameOptions);
+    [game, player] = testGame(2, {preludeExtension: true});
+    smeltingPlant = new SmeltingPlant();
+    donation = new Donation();
+    hugeAsteroid = new HugeAsteroid();
+    galileanMining = new GalileanMining();
   });
 
-  it('Should play with at least 1 playable prelude', function() {
-    game.dealer.preludeDeck.push(new SmeltingPlant(), new Donation());
+  it('Should play with at least 1 playable prelude', () => {
+    game.preludeDeck.drawPile.push(smeltingPlant, donation);
 
-    const selectCard = TestingUtils.cast(card.play(player), SelectCard);
-    expect(selectCard.cards).has.length(2);
+    const selectCard = cast(card.play(player), SelectCard<IPreludeCard>);
+
+    expect(selectCard.cards).deep.eq([donation, smeltingPlant]);
     selectCard.cb([selectCard.cards[0]]);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(1);
-    expect(player.playedCards.every((card) => card.cardType === CardType.PRELUDE)).is.true;
+
+    expect(player.production.megacredits).to.eq(1);
+    expect(player.playedCards.every((card) => isPreludeCard(card))).is.true;
   });
 
-  it('Should play with only 1 playable prelude', function() {
-    // In this test, only one card is playable. play() should still return SelectCard with
-    // the one card, so the player sees their option.
-    game.dealer.preludeDeck.push(new HugeAsteroid(), new Donation());
-
-    const selectCard = TestingUtils.cast(card.play(player), SelectCard);
-    expect(selectCard.cards).has.length(1);
-    expect(selectCard.cards[0].name).eq(CardName.DONATION);
-  });
-
-  it('Can play with no playable preludes drawn', function() {
+  it('Can play with no playable preludes drawn', () => {
     player.megaCredits = 0;
     // Both of these cards cost MC which the player does not have, and so
-    // if the player plays this they just get the MC production.
-    game.dealer.preludeDeck.push(new HugeAsteroid(), new GalileanMining());
+    // if the player plays this they will have to fizzle one of the cards.
+    game.preludeDeck.drawPile.push(hugeAsteroid, galileanMining);
 
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(1);
+    const selectCard = cast(card.play(player), SelectCard<IPreludeCard>);
+    expect(selectCard.cards).deep.eq([galileanMining, hugeAsteroid]);
+    selectCard.cb([selectCard.cards[0]]);
+    runAllActions(game);
+    expect(player.megaCredits).eq(15);
   });
 });

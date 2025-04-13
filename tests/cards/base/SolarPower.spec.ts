@@ -1,16 +1,14 @@
-
 import {expect} from 'chai';
-import {SolarPower} from '../../../src/cards/base/SolarPower';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {SolarPower} from '../../../src/server/cards/base/SolarPower';
+import {cast} from '../../TestingUtils';
 
-describe('SolarPower', function() {
-  it('Should play', function() {
+describe('SolarPower', () => {
+  it('Should play', () => {
     const card = new SolarPower();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(card.getVictoryPoints()).to.eq(1);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.energy).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

@@ -1,22 +1,25 @@
 import {expect} from 'chai';
-import {CassiniStation} from '../../../src/cards/pathfinders/CassiniStation';
-import {Game} from '../../../src/Game';
+import {CassiniStation} from '../../../src/server/cards/pathfinders/CassiniStation';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {Leavitt} from '../../../src/cards/community/Leavitt';
-import {Mercury} from '../../../src/cards/community/Mercury';
+import {testGame} from '../../TestGame';
+import {Leavitt} from '../../../src/server/cards/community/Leavitt';
+import {Mercury} from '../../../src/server/cards/community/Mercury';
 import {Units} from '../../../src/common/Units';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
-import {TitanShuttles} from '../../../src/cards/colonies/TitanShuttles';
-import {FloatingHabs} from '../../../src/cards/venusNext/FloatingHabs';
-import {MartianCulture} from '../../../src/cards/pathfinders/MartianCulture';
-import {EconomicEspionage} from '../../../src/cards/pathfinders/EconomicEspionage';
-import {SearchForLife} from '../../../src/cards/base/SearchForLife';
+import {IProjectCard} from '../../../src/server/cards/IProjectCard';
+import {TitanShuttles} from '../../../src/server/cards/colonies/TitanShuttles';
+import {FloatingHabs} from '../../../src/server/cards/venusNext/FloatingHabs';
+import {MartianCulture} from '../../../src/server/cards/pathfinders/MartianCulture';
+import {EconomicEspionage} from '../../../src/server/cards/pathfinders/EconomicEspionage';
+import {SearchForLife} from '../../../src/server/cards/base/SearchForLife';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {cast} from '../../TestingUtils';
 
-describe('CassiniStation', function() {
+describe('CassiniStation', () => {
   let card: CassiniStation;
   let player: TestPlayer;
-  let game: Game;
+  let player2: TestPlayer;
+  let game: IGame;
 
   let floater1: IProjectCard;
   let floater2: IProjectCard;
@@ -24,10 +27,9 @@ describe('CassiniStation', function() {
   let data2: IProjectCard;
   let other: IProjectCard;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new CassiniStation();
-    game = newTestGame(2);
-    player = getTestPlayer(game, 0);
+    [game, player, player2] = testGame(2);
     floater1 = new TitanShuttles();
     floater2 = new FloatingHabs();
     data1 = new MartianCulture();
@@ -35,48 +37,48 @@ describe('CassiniStation', function() {
     other = new SearchForLife();
   });
 
-  it('play', function() {
+  it('play', () => {
     const colonyTile1 = new Leavitt();
     const colonyTile2 = new Mercury();
     game.colonies = [colonyTile1, colonyTile2];
     const options = card.play(player);
-    expect(player.getProductionForTest()).deep.eq(Units.of({energy: 0}));
+    expect(player.production.asUnits()).deep.eq(Units.of({energy: 0}));
     expect(options).is.undefined;
 
     colonyTile1.colonies.push(player.id);
 
     card.play(player);
 
-    expect(player.getProductionForTest()).deep.eq(Units.of({energy: 1}));
+    expect(player.production.asUnits()).deep.eq(Units.of({energy: 1}));
 
-    player.setProductionForTest(Units.EMPTY);
+    player.production.override(Units.EMPTY);
     colonyTile2.colonies.push(player.id);
-    colonyTile2.colonies.push(getTestPlayer(game, 1).id);
+    colonyTile2.colonies.push(player2.id);
 
     card.play(player);
 
-    expect(player.getProductionForTest()).deep.eq(Units.of({energy: 3}));
+    expect(player.production.asUnits()).deep.eq(Units.of({energy: 3}));
   });
 
-  it('play - one floater card', function() {
+  it('play - one floater card', () => {
     player.playedCards = [floater1];
     const options = card.play(player);
     expect(options).is.undefined;
     expect(floater1.resourceCount).eq(2);
   });
 
-  it('play - one data card', function() {
+  it('play - one data card', () => {
     player.playedCards = [data1];
     const options = card.play(player);
     expect(options).is.undefined;
     expect(data1.resourceCount).eq(3);
   });
 
-  it('play - all', function() {
+  it('play - all', () => {
     player.playedCards = [floater1, floater2, data1, data2, other];
-    const options = card.play(player);
+    const options = cast(card.play(player), SelectCard);
 
-    expect(options?.cards.length).eq(4);
+    expect(options?.cards).has.length(4);
 
     options?.cb([options.cards[0]]);
     expect(floater1.resourceCount).eq(2);

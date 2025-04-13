@@ -36,7 +36,7 @@ export default Vue.extend({
       case 'city':
         return 'tag-city-count tag-size-big';
       case 'delegate':
-        return 'delegate';
+        return this.gameOptions.expansions.turmoil ? 'delegate' : 'reward-3mc';
       case 'energy':
       case 'energy_production':
         return 'resource_icon resource_icon--energy';
@@ -65,12 +65,11 @@ export default Vue.extend({
       case 'titanium_production':
         return 'resource_icon resource_icon--titanium';
       case 'tr':
-        return 'tag-tr tag-size-big';
+        return 'tag-tr tag-size-big tag-type-main';
       case 'venus_scale':
         return 'venus-scale';
-      default:
-        return '';
       }
+      return '';
     },
     outerClass(): string {
       switch (this.reward) {
@@ -82,6 +81,8 @@ export default Vue.extend({
         return 'reward-3mc';
       case '6mc':
         return 'reward-6mc';
+      case 'delegate':
+        return this.gameOptions.expansions.turmoil ? '' : 'reward-3mc';
       case 'energy_production':
       case 'heat_production':
       case 'plant_production':

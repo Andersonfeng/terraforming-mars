@@ -1,20 +1,18 @@
-import {Game} from '../../../src/Game';
-import {TestingUtils} from '../../TestingUtils';
+import {IGame} from '../../../src/server/IGame';
+import {forceGenerationEnd} from '../../TestingUtils';
 import {expect} from 'chai';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {SyndicatePirateRaids} from '../../../src/cards/moon/SyndicatePirateRaids';
+import {testGame} from '../../TestGame';
+import {SyndicatePirateRaids} from '../../../src/server/cards/moon/SyndicatePirateRaids';
 
 describe('SyndicatePirateRaids', () => {
   let player: TestPlayer;
   let otherPlayer: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let card: SyndicatePirateRaids;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    otherPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('id', [player, otherPlayer], player, TestingUtils.setCustomGameOptions({coloniesExtension: true}));
+    [game, player, otherPlayer] = testGame(2, {coloniesExtension: true});
     card = new SyndicatePirateRaids();
   });
 
@@ -23,16 +21,16 @@ describe('SyndicatePirateRaids', () => {
     game.colonies[0].trade(player);
     game.colonies[1].trade(otherPlayer);
 
-    expect(player.tradesThisGeneration).eq(1);
-    expect(otherPlayer.tradesThisGeneration).eq(1);
+    expect(player.colonies.tradesThisGeneration).eq(1);
+    expect(otherPlayer.colonies.tradesThisGeneration).eq(1);
 
     expect(game.colonies[0].visitor).eq(player.id);
     expect(game.colonies[1].visitor).eq(otherPlayer.id);
 
-    TestingUtils.forceGenerationEnd(game);
+    forceGenerationEnd(game);
 
-    expect(player.tradesThisGeneration).eq(0);
-    expect(otherPlayer.tradesThisGeneration).eq(0);
+    expect(player.colonies.tradesThisGeneration).eq(0);
+    expect(otherPlayer.colonies.tradesThisGeneration).eq(0);
 
     expect(game.colonies[0].visitor).is.undefined;
     expect(game.colonies[1].visitor).is.undefined;
@@ -42,18 +40,18 @@ describe('SyndicatePirateRaids', () => {
     game.colonies[0].trade(player);
     game.colonies[1].trade(otherPlayer);
 
-    expect(player.tradesThisGeneration).eq(1);
-    expect(otherPlayer.tradesThisGeneration).eq(1);
+    expect(player.colonies.tradesThisGeneration).eq(1);
+    expect(otherPlayer.colonies.tradesThisGeneration).eq(1);
 
     expect(game.colonies[0].visitor).eq(player.id);
     expect(game.colonies[1].visitor).eq(otherPlayer.id);
 
     card.play(player);
 
-    TestingUtils.forceGenerationEnd(game);
+    forceGenerationEnd(game);
 
-    expect(player.tradesThisGeneration).eq(0);
-    expect(otherPlayer.tradesThisGeneration).eq(1);
+    expect(player.colonies.tradesThisGeneration).eq(0);
+    expect(otherPlayer.colonies.tradesThisGeneration).eq(1);
 
     expect(game.colonies[0].visitor).is.undefined;
     expect(game.colonies[1].visitor).eq(otherPlayer.id);
@@ -63,26 +61,26 @@ describe('SyndicatePirateRaids', () => {
     game.colonies[0].trade(player);
     game.colonies[1].trade(otherPlayer);
 
-    expect(player.tradesThisGeneration).eq(1);
-    expect(otherPlayer.tradesThisGeneration).eq(1);
+    expect(player.colonies.tradesThisGeneration).eq(1);
+    expect(otherPlayer.colonies.tradesThisGeneration).eq(1);
 
     expect(game.colonies[0].visitor).eq(player.id);
     expect(game.colonies[1].visitor).eq(otherPlayer.id);
 
     card.play(player);
 
-    TestingUtils.forceGenerationEnd(game);
+    forceGenerationEnd(game);
 
-    expect(player.tradesThisGeneration).eq(0);
-    expect(otherPlayer.tradesThisGeneration).eq(1);
+    expect(player.colonies.tradesThisGeneration).eq(0);
+    expect(otherPlayer.colonies.tradesThisGeneration).eq(1);
 
     expect(game.colonies[0].visitor).is.undefined;
     expect(game.colonies[1].visitor).eq(otherPlayer.id);
 
-    TestingUtils.forceGenerationEnd(game);
+    forceGenerationEnd(game);
 
-    expect(player.tradesThisGeneration).eq(0);
-    expect(otherPlayer.tradesThisGeneration).eq(0);
+    expect(player.colonies.tradesThisGeneration).eq(0);
+    expect(otherPlayer.colonies.tradesThisGeneration).eq(0);
 
     expect(game.colonies[0].visitor).is.undefined;
     expect(game.colonies[1].visitor).is.undefined;

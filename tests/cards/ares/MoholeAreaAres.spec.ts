@@ -1,28 +1,22 @@
 import {expect} from 'chai';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TileType} from '../../../src/common/TileType';
-import {MoholeAreaAres} from '../../../src/cards/ares/MoholeAreaAres';
+import {MoholeAreaAres} from '../../../src/server/cards/ares/MoholeAreaAres';
 import {SpaceBonus} from '../../../src/common/boards/SpaceBonus';
-import {ARES_OPTIONS_NO_HAZARDS} from '../../ares/AresTestHelper';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('MoholeAreaAres', function() {
-  it('Should play', function() {
+describe('MoholeAreaAres', () => {
+  it('Should play', () => {
     const card = new MoholeAreaAres();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-
-    Game.newInstance('foobar', [player, redPlayer], player, ARES_OPTIONS_NO_HAZARDS);
-    const action = card.play(player);
-
-    expect(action).is.not.undefined;
-    expect(action).instanceOf(SelectSpace);
-
-    const space = action.availableSpaces[0];
+    const [game, player] = testGame(2, {aresExtension: true});
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+    const space = action.spaces[0];
     action.cb(space);
 
-    expect(space.tile && space.tile.tileType).to.eq(TileType.MOHOLE_AREA);
+    expect(space.tile?.tileType).to.eq(TileType.MOHOLE_AREA);
     expect(space.adjacency).to.deep.eq({bonus: [SpaceBonus.HEAT, SpaceBonus.HEAT]});
   });
 });

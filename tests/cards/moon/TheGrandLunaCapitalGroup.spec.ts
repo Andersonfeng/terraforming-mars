@@ -1,41 +1,35 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {TheGrandLunaCapitalGroup} from '../../../src/cards/moon/TheGrandLunaCapitalGroup';
+import {TestPlayer} from '../../TestPlayer';
+import {TheGrandLunaCapitalGroup} from '../../../src/server/cards/moon/TheGrandLunaCapitalGroup';
 import {expect} from 'chai';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {IMoonData} from '../../../src/moon/IMoonData';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {MoonData} from '../../../src/server/moon/MoonData';
+import {testGame} from '../../TestGame';
 
 describe('TheGrandLunaCapitalGroup', () => {
-  let player: Player;
-  let otherPlayer: Player;
+  let player: TestPlayer;
+  let otherPlayer: TestPlayer;
   let card: TheGrandLunaCapitalGroup;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    otherPlayer = TestPlayers.RED.newPlayer();
-    const game = Game.newInstance('id', [player, otherPlayer], player, MOON_OPTIONS);
+    [/* game */, player, otherPlayer] = testGame(2, {moonExpansion: true});
     card = new TheGrandLunaCapitalGroup();
-    moonData = MoonExpansion.moonData(game);
+    moonData = MoonExpansion.moonData(player.game);
   });
 
   it('effect', () => {
-    const centerSpace = moonData.moon.getSpace('m07');
+    const centerSpace = moonData.moon.getSpaceOrThrow('m07');
     const adjacentSpaces = moonData.moon.getAdjacentSpaces(centerSpace);
 
     // Space 0 intentionallyleft blank
     MoonExpansion.addMineTile(player, adjacentSpaces[1].id);
-    MoonExpansion.addColonyTile(player, adjacentSpaces[2].id);
+    MoonExpansion.addHabitatTile(player, adjacentSpaces[2].id);
     MoonExpansion.addRoadTile(player, adjacentSpaces[3].id);
-    MoonExpansion.addColonyTile(player, adjacentSpaces[4].id);
+    MoonExpansion.addHabitatTile(player, adjacentSpaces[4].id);
 
     // Test 1: place non-colony
     player.megaCredits = 0;
-    player.corporationCard = card;
+    player.corporations.push(card);
     // Trigger the effect.
     MoonExpansion.addMineTile(player, centerSpace.id);
     expect(player.megaCredits).eq(0);
@@ -44,32 +38,31 @@ describe('TheGrandLunaCapitalGroup', () => {
     centerSpace.tile = undefined;
     centerSpace.player = undefined;
     player.megaCredits = 0;
-    player.corporationCard = card;
     // Trigger the effect.
-    MoonExpansion.addColonyTile(player, centerSpace.id);
+    MoonExpansion.addHabitatTile(player, centerSpace.id);
     expect(player.megaCredits).eq(4);
   });
 
   it('victoryPoints', () => {
     // It's possible better tests are necessary, but I don't think so.
     // I was wrong.
-    const centerSpace = moonData.moon.getSpace('m06');
+    const centerSpace = moonData.moon.getSpaceOrThrow('m06');
     const adjacentSpaces = moonData.moon.getAdjacentSpaces(centerSpace);
 
     expect(card.getVictoryPoints(player)).eq(0);
 
-    MoonExpansion.addColonyTile(player, centerSpace.id);
+    MoonExpansion.addHabitatTile(player, centerSpace.id);
     expect(card.getVictoryPoints(player)).eq(0);
 
-    MoonExpansion.addColonyTile(otherPlayer, adjacentSpaces[0].id);
+    MoonExpansion.addHabitatTile(otherPlayer, adjacentSpaces[0].id);
     expect(card.getVictoryPoints(player)).eq(1);
 
     adjacentSpaces[0].tile = undefined;
     adjacentSpaces[0].player = undefined;
-    MoonExpansion.addColonyTile(player, adjacentSpaces[0].id);
+    MoonExpansion.addHabitatTile(player, adjacentSpaces[0].id);
     expect(card.getVictoryPoints(player)).eq(2);
 
-    MoonExpansion.addColonyTile(otherPlayer, adjacentSpaces[1].id);
+    MoonExpansion.addHabitatTile(otherPlayer, adjacentSpaces[1].id);
     expect(card.getVictoryPoints(player)).eq(3);
   });
 });

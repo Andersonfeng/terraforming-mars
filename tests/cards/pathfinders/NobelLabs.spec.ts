@@ -1,28 +1,28 @@
 import {expect} from 'chai';
-import {NobelLabs} from '../../../src/cards/pathfinders/NobelLabs';
-import {Game} from '../../../src/Game';
+import {NobelLabs} from '../../../src/server/cards/pathfinders/NobelLabs';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {getTestPlayer, newTestGame} from '../../TestGame';
-import {IProjectCard} from '../../../src/cards/IProjectCard';
-import {RegolithEaters} from '../../../src/cards/base/RegolithEaters';
-import {SearchForLife} from '../../../src/cards/base/SearchForLife';
-import {FloatingHabs} from '../../../src/cards/venusNext/FloatingHabs';
-import {MartianCulture} from '../../../src/cards/pathfinders/MartianCulture';
-import {SelectCard} from '../../../src/inputs/SelectCard';
+import {testGame} from '../../TestGame';
+import {IProjectCard} from '../../../src/server/cards/IProjectCard';
+import {RegolithEaters} from '../../../src/server/cards/base/RegolithEaters';
+import {SearchForLife} from '../../../src/server/cards/base/SearchForLife';
+import {FloatingHabs} from '../../../src/server/cards/venusNext/FloatingHabs';
+import {MartianCulture} from '../../../src/server/cards/pathfinders/MartianCulture';
+import {SelectCard} from '../../../src/server/inputs/SelectCard';
+import {cast} from '../../TestingUtils';
 
-describe('NobelLabs', function() {
+describe('NobelLabs', () => {
   let card: NobelLabs;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
   let floater: IProjectCard;
   let microbe: IProjectCard;
   let data: IProjectCard;
   let science: IProjectCard;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new NobelLabs();
-    game = newTestGame(1);
-    player = getTestPlayer(game, 0);
+    [game, player] = testGame(1);
 
     floater = new FloatingHabs();
     microbe = new RegolithEaters();
@@ -30,7 +30,7 @@ describe('NobelLabs', function() {
     science = new SearchForLife();
   });
 
-  it('canPlay', function() {
+  it('canPlay', () => {
     player.megaCredits = card.cost;
     player.tagsForTest = {science: 3};
     expect(player.canPlay(card)).is.false;
@@ -38,7 +38,7 @@ describe('NobelLabs', function() {
     expect(player.canPlay(card)).is.true;
   });
 
-  it('canAct', function() {
+  it('canAct', () => {
     expect(card.canAct(player)).is.false;
     player.playedCards = [science];
     expect(card.canAct(player)).is.false;
@@ -50,14 +50,12 @@ describe('NobelLabs', function() {
     expect(card.canAct(player)).is.true;
   });
 
-  it('action', function() {
+  it('action', () => {
     player.playedCards = [floater, data, microbe, science];
 
     card.action(player);
 
-    const action = game.deferredActions.pop()?.execute();
-    expect(action).is.instanceOf(SelectCard);
-    const selectCard = action as SelectCard<IProjectCard>;
+    const selectCard = cast(game.deferredActions.pop()?.execute(), SelectCard);
     expect(selectCard.cards).to.have.members([floater, microbe, data]);
 
     selectCard.cb([floater]);

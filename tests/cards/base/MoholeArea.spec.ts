@@ -1,27 +1,22 @@
 import {expect} from 'chai';
-import {MoholeArea} from '../../../src/cards/base/MoholeArea';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
-import {Resources} from '../../../src/common/Resources';
+import {MoholeArea} from '../../../src/server/cards/base/MoholeArea';
+import {testGame} from '../../TestGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
+import {cast, runAllActions} from '../../TestingUtils';
 
-describe('MoholeArea', function() {
-  it('Should play', function() {
+describe('MoholeArea', () => {
+  it('Should play', () => {
     const card = new MoholeArea();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-
-    expect(action).is.not.undefined;
-    expect(action).instanceOf(SelectSpace);
-
-    const space = action.availableSpaces[0];
+    const [game, player] = testGame(2);
+    card.play(player);
+    runAllActions(game);
+    const action = cast(player.popWaitingFor(), SelectSpace);
+    const space = action.spaces[0];
     action.cb(space);
 
-    expect(space.tile && space.tile.tileType).to.eq(TileType.MOHOLE_AREA);
-    expect(player.getProduction(Resources.HEAT)).to.eq(4);
+    expect(space.tile?.tileType).to.eq(TileType.MOHOLE_AREA);
+    expect(player.production.heat).to.eq(4);
     expect(space.adjacency?.bonus).eq(undefined);
   });
 });

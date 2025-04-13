@@ -1,15 +1,11 @@
-import {expect} from 'chai';
-import {GreatAquifer} from '../../../src/cards/prelude/GreatAquifer';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {GreatAquifer} from '../../../src/server/cards/prelude/GreatAquifer';
+import {testGame} from '../../TestGame';
+import {cast} from '../../TestingUtils';
 
-describe('GreatAquifer', function() {
-  it('Should play', function() {
+describe('GreatAquifer', () => {
+  it('Should play', () => {
     const card = new GreatAquifer();
-    const player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
-    const action = card.play(player);
-    expect(action).is.undefined;
+    const [/* game */, player] = testGame(2);
+    cast(card.play(player), undefined);
   });
 });

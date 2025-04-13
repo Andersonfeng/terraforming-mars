@@ -1,25 +1,26 @@
 import {expect} from 'chai';
-import {Europa} from '../../src/colonies/Europa';
-import {PlaceOceanTile} from '../../src/deferredActions/PlaceOceanTile';
-import {Game} from '../../src/Game';
-import {Player} from '../../src/Player';
-import {Resources} from '../../src/common/Resources';
-import {TestPlayers} from '../TestPlayers';
-import {TestingUtils} from '../TestingUtils';
+import {Europa} from '../../src/server/colonies/Europa';
+import {PlaceOceanTile} from '../../src/server/deferredActions/PlaceOceanTile';
+import {IGame} from '../../src/server/IGame';
+import {TestPlayer} from '../TestPlayer';
+import {cast, runAllActions, setRulingParty} from '../TestingUtils';
+import {testGame} from '../TestGame';
+import {PartyName} from '../../src/common/turmoil/PartyName';
+import {SelectSpace} from '../../src/server/inputs/SelectSpace';
 
-describe('Europa', function() {
-  let europa: Europa; let player: Player; let player2: Player; let game: Game;
+describe('Europa', () => {
+  let europa: Europa;
+  let player: TestPlayer;
+  let player2: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     europa = new Europa();
-    player = TestPlayers.BLUE.newPlayer();
-    player2 = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, player2], player);
-    game.gameOptions.coloniesExtension = true;
+    [game, player, player2] = testGame(2, {coloniesExtension: true});
     game.colonies.push(europa);
   });
 
-  it('Should build', function() {
+  it('Should build', () => {
     europa.addColony(player);
     expect(game.deferredActions).has.lengthOf(1);
     const action = game.deferredActions.pop()!;
@@ -27,21 +28,47 @@ describe('Europa', function() {
     expect(action.player).to.eq(player);
   });
 
-  it('Should trade', function() {
-    europa.trade(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(1);
-    expect(player2.getProduction(Resources.MEGACREDITS)).to.eq(0);
+  it('Should build, reds', () => {
+    [game, player, player2] = testGame(2, {coloniesExtension: true, venusNextExtension: true, turmoilExtension: true});
+    game.colonies.push(europa);
+
+    expect(player.colonies.getPlayableColonies()).includes(europa);
+
+    setRulingParty(game, PartyName.REDS);
+
+    expect(player.colonies.getPlayableColonies()).does.not.include(europa);
+
+    player.megaCredits = 3;
+
+    expect(player.colonies.getPlayableColonies()).includes(europa);
+
+    europa.addColony(player);
+
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
+    selectSpace.cb(selectSpace.spaces[0]);
+    runAllActions(game);
+    cast(player.popWaitingFor(), undefined);
+
+    expect(player.getTerraformRating()).eq(21);
+    expect(player.megaCredits).eq(0);
   });
 
-  it('Should give trade bonus', function() {
+  it('Should trade', () => {
+    europa.trade(player);
+    expect(player.production.megacredits).to.eq(1);
+    expect(player2.production.megacredits).to.eq(0);
+  });
+
+  it('Should give trade bonus', () => {
     europa.addColony(player);
     game.deferredActions.pop();
 
     europa.trade(player2);
-    TestingUtils.runAllActions(game);
+    runAllActions(game);
 
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(0);
-    expect(player2.getProduction(Resources.MEGACREDITS)).to.eq(1);
+    expect(player.production.megacredits).to.eq(0);
+    expect(player2.production.megacredits).to.eq(1);
     expect(player.megaCredits).to.eq(1);
     expect(player2.megaCredits).to.eq(0);
   });

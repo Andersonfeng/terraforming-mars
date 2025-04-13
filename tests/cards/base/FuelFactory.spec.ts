@@ -1,28 +1,29 @@
 import {expect} from 'chai';
-import {FuelFactory} from '../../../src/cards/base/FuelFactory';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {FuelFactory} from '../../../src/server/cards/base/FuelFactory';
+import {Resource} from '../../../src/common/Resource';
+import {testGame} from '../../TestGame';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('FuelFactory', function() {
-  let card : FuelFactory; let player : Player;
+describe('FuelFactory', () => {
+  let card: FuelFactory;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new FuelFactory();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
-    player.addProduction(Resources.ENERGY, 1);
+  it('Should play', () => {
+    player.production.add(Resource.ENERGY, 1);
     expect(card.canPlay(player)).is.true;
     card.play(player);
 
-    expect(player.getProduction(Resources.ENERGY)).to.eq(0);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(1);
-    expect(player.getProduction(Resources.TITANIUM)).to.eq(1);
+    expect(player.production.energy).to.eq(0);
+    expect(player.production.megacredits).to.eq(1);
+    expect(player.production.titanium).to.eq(1);
   });
 });

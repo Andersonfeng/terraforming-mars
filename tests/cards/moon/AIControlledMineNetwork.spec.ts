@@ -1,22 +1,19 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {AIControlledMineNetwork} from '../../../src/cards/moon/AIControlledMineNetwork';
+import {testGame} from '../../TestGame';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {AIControlledMineNetwork} from '../../../src/server/cards/moon/AIControlledMineNetwork';
 import {expect} from 'chai';
-import {MoonExpansion} from '../../../src/moon/MoonExpansion';
-import {IMoonData} from '../../../src/moon/IMoonData';
-
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
+import {MoonExpansion} from '../../../src/server/moon/MoonExpansion';
+import {MoonData} from '../../../src/server/moon/MoonData';
 
 describe('AIControlledMineNetwork', () => {
-  let player: Player;
+  let game: IGame;
+  let player: TestPlayer;
   let card: AIControlledMineNetwork;
-  let moonData: IMoonData;
+  let moonData: MoonData;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    const game = Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [game, player] = testGame(1, {moonExpansion: true});
     card = new AIControlledMineNetwork();
     moonData = MoonExpansion.moonData(game);
   });
@@ -26,10 +23,10 @@ describe('AIControlledMineNetwork', () => {
     player.megaCredits = card.cost;
 
     moonData.logisticRate = 1;
-    expect(player.getPlayableCards()).does.not.include(card);
+    expect(player.getPlayableCardsForTest()).does.not.include(card);
 
     moonData.logisticRate = 2;
-    expect(player.getPlayableCards()).does.include(card);
+    expect(player.getPlayableCardsForTest()).does.include(card);
   });
 
   it('play', () => {

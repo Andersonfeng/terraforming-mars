@@ -1,22 +1,23 @@
 import {expect} from 'chai';
-import {TestingUtils} from '../TestingUtils';
-import {ColonyDealer} from '../../src/colonies/ColonyDealer';
-import {Random} from '../../src/Random';
+import {ColonyDealer} from '../../src/server/colonies/ColonyDealer';
+import {SeededRandom} from '../../src/common/utils/Random';
+import {DEFAULT_GAME_OPTIONS} from '../../src/server/game/GameOptions';
+import {toName} from '../../src/common/utils/utils';
 
-describe('ColonyDealer', function() {
-  const options = TestingUtils.setCustomGameOptions({venusNextExtension: false, coloniesExtension: false, turmoilExtension: false, communityCardsOption: false});
+describe('ColonyDealer', () => {
+  const options = {...DEFAULT_GAME_OPTIONS, venusNextExtension: false, coloniesExtension: false, turmoilExtension: false, communityCardsOption: false};
 
   it('draw', () => {
-    const dealer = new ColonyDealer(new Random(1), options);
+    const dealer = new ColonyDealer(new SeededRandom(1), options);
     dealer.drawColonies(2);
-    expect(dealer.colonies.map((c) => c.name)).deep.eq([
+    expect(dealer.colonies.map(toName)).deep.eq([
       'Enceladus',
       'Luna',
       'Miranda',
       'Pluto',
       'Triton',
     ]);
-    expect(dealer.discardedColonies.map((c) => c.name)).deep.eq([
+    expect(dealer.discardedColonies.map(toName)).deep.eq([
       'Callisto',
       'Ceres',
       'Europa',
@@ -27,7 +28,7 @@ describe('ColonyDealer', function() {
   });
 
   it('colonies dealt by player count', () => {
-    const rng = new Random(1);
+    const rng = new SeededRandom(1);
     let dealer = new ColonyDealer(rng, options);
     dealer.drawColonies(1);
     expect(dealer.colonies).has.length(4);

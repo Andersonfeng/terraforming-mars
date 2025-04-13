@@ -1,18 +1,14 @@
 import {expect} from 'chai';
-import {TollStation} from '../../../src/cards/base/TollStation';
-import {WarpDrive} from '../../../src/cards/colonies/WarpDrive';
-import {Game} from '../../../src/Game';
-import {TestPlayers} from '../../TestPlayers';
+import {TollStation} from '../../../src/server/cards/base/TollStation';
+import {WarpDrive} from '../../../src/server/cards/colonies/WarpDrive';
+import {cast, testGame} from '../../TestingUtils';
 
-describe('WarpDrive', function() {
-  it('Should play', function() {
+describe('WarpDrive', () => {
+  it('Should play', () => {
     const card = new WarpDrive();
-    const player = TestPlayers.BLUE.newPlayer();
-    const player2 = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, player2], player);
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
-    const action = card.play();
-    expect(action).is.undefined;
+    const [/* game */, player/* , player2 */] = testGame(2);
+    expect(card.canPlay(player)).is.not.true;
+    cast(card.play(player), undefined);
     expect(card.getCardDiscount(player, new TollStation())).to.eq(4);
   });
 });

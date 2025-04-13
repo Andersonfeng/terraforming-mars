@@ -1,19 +1,14 @@
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestingUtils} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {RustEatingBacteria} from '../../../src/cards/moon/RustEatingBacteria';
+import {runAllActions, testGame} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {RustEatingBacteria} from '../../../src/server/cards/moon/RustEatingBacteria';
 import {expect} from 'chai';
 
-const MOON_OPTIONS = TestingUtils.setCustomGameOptions({moonExpansion: true});
-
 describe('RustEatingBacteria', () => {
-  let player: Player;
+  let player: TestPlayer;
   let card: RustEatingBacteria;
 
   beforeEach(() => {
-    player = TestPlayers.BLUE.newPlayer();
-    Game.newInstance('id', [player], player, MOON_OPTIONS);
+    [/* game */, player] = testGame(1, {moonExpansion: true});
     card = new RustEatingBacteria();
   });
 
@@ -29,6 +24,7 @@ describe('RustEatingBacteria', () => {
     player.steel = 1;
     card.resourceCount = 0;
     card.action(player);
+    runAllActions(player.game);
     expect(card.resourceCount).eq(2);
     expect(player.steel).eq(0);
   });

@@ -19,6 +19,10 @@ first response is to ask for clarification or possibly significant changes. We c
 respectfully working with you to ensure your change can be accepted, and also, that it be
 clear, correct, and well-tested.
 
+## Translations
+
+Note that translating the game to your locale has its own completely different set of problems. See [Translations](https://github.com/terraforming-mars/terraforming-mars/wiki/Translations) on the wiki.
+
 ## Unit Tests
 
 We care that our project is correct, and that means testing, and unit tests are our best way of ensuring that future changes don’t break existing behavior.
@@ -29,7 +33,7 @@ If you both agree that the code doesn't need any tests, don't be surprised if yo
 
 ## Readability
 
-The code needs to be readable as well as correct. Far too often we have reviewed code from just a few months before, where a regular contributor has since disappeared, and nobody understands what it does. So before sending  PR for review, consider these things: _Is your code structured well? Do comments explain the tricky parts? Do variable names make sense? If you weren’t around to maintain the change, would someone else understand?_
+The code needs to be readable as well as correct. Far too often we have accepted code from a casual or regular contributor, said contributor has disappeared, and nobody today understand what it does. So before sending  PR for review, consider these things: _Is your code structured well? Do comments explain the tricky parts? Do variable names make sense? If you weren’t around to maintain the change, would someone else understand?_
 
 If these things seem difficult, just ask us for help, even if your code is in a partially-completed state.
 

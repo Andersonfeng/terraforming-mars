@@ -1,38 +1,37 @@
 import {expect} from 'chai';
-import {Player} from '../../../src/Player';
-import {setCustomGameOptions} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
-import {Game, GameOptions} from '../../../src/Game';
+import {cast, runAllActions} from '../../TestingUtils';
+import {TestPlayer} from '../../TestPlayer';
+import {IGame} from '../../../src/server/IGame';
 import {PartyName} from '../../../src/common/turmoil/PartyName';
-import {ExecutiveOrder} from '../../../src/cards/community/ExecutiveOrder';
-import {SelectPartyToSendDelegate} from '../../../src/inputs/SelectPartyToSendDelegate';
-import {OrOptions} from '../../../src/inputs/OrOptions';
+import {ExecutiveOrder} from '../../../src/server/cards/community/ExecutiveOrder';
+import {SelectParty} from '../../../src/server/inputs/SelectParty';
+import {SelectGlobalEvent} from '../../../src/server/inputs/SelectGlobalEvent';
+import {testGame} from '../../TestGame';
 
-describe('ExecutiveOrder', function() {
-  let card : ExecutiveOrder; let player : Player; let game : Game;
+describe('ExecutiveOrder', () => {
+  let card: ExecutiveOrder;
+  let player: TestPlayer;
+  let game: IGame;
 
   beforeEach(() => {
     card = new ExecutiveOrder();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-
-    const gameOptions = setCustomGameOptions() as GameOptions;
-    game = Game.newInstance('foobar', [player, redPlayer], player, gameOptions);
+    [game, player] = testGame(2, {turmoilExtension: true});
   });
 
-  it('Should play', function() {
-    card.play(player);
-    expect(player.megaCredits).to.eq(10);
-    expect(game.deferredActions).has.lengthOf(2);
-
+  it('Should play', () => {
     const turmoil = game.turmoil!;
-    const selectGlobalEvent = game.deferredActions.pop()!.execute() as OrOptions;
-    selectGlobalEvent.options[0].cb();
-    expect(turmoil.currentGlobalEvent).is.not.undefined;
+    const selectGlobalEvent = cast(card.play(player), SelectGlobalEvent);
+    expect(selectGlobalEvent.globalEvents).has.length(4);
 
-    const selectParty = game.deferredActions.pop()!.execute() as SelectPartyToSendDelegate;
+    expect(player.megaCredits).to.eq(10);
+    selectGlobalEvent.cb(selectGlobalEvent.globalEvents[0]);
+
+    expect(turmoil.currentGlobalEvent).eq(selectGlobalEvent.globalEvents[0]);
+    runAllActions(game);
+
+    const selectParty = cast(player.popWaitingFor(), SelectParty);
     selectParty.cb(PartyName.MARS);
-    const marsFirst = turmoil.getPartyByName(PartyName.MARS)!;
-    expect(marsFirst.delegates.filter((d) => d === player.id)).has.lengthOf(2);
+    const marsFirst = turmoil.getPartyByName(PartyName.MARS);
+    expect(marsFirst.delegates.get(player)).eq(2);
   });
 });

@@ -1,35 +1,32 @@
 import {expect} from 'chai';
-import {KelpFarming} from '../../../src/cards/base/KelpFarming';
-import {Game} from '../../../src/Game';
+import {KelpFarming} from '../../../src/server/cards/base/KelpFarming';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
 import {maxOutOceans} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
 
-describe('KelpFarming', function() {
-  let card : KelpFarming; let player : TestPlayer;
+describe('KelpFarming', () => {
+  let card: KelpFarming;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new KelpFarming();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     maxOutOceans(player, 6);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     const plantsCount = player.plants;
     card.play(player);
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(2);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(3);
+    expect(player.production.megacredits).to.eq(2);
+    expect(player.production.plants).to.eq(3);
     expect(player.plants).to.eq(plantsCount + 2);
 
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

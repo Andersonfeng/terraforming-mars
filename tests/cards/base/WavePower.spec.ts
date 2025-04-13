@@ -1,32 +1,29 @@
 import {expect} from 'chai';
-import {WavePower} from '../../../src/cards/base/WavePower';
-import {Game} from '../../../src/Game';
+import {WavePower} from '../../../src/server/cards/base/WavePower';
+import {testGame} from '../../TestGame';
 import {TestPlayer} from '../../TestPlayer';
-import {Resources} from '../../../src/common/Resources';
 import {maxOutOceans} from '../../TestingUtils';
-import {TestPlayers} from '../../TestPlayers';
 
-describe('WavePower', function() {
-  let card : WavePower; let player : TestPlayer;
+describe('WavePower', () => {
+  let card: WavePower;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new WavePower();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    Game.newInstance('foobar', [player, redPlayer], player);
+    [/* game */, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
+  it('Can not play', () => {
     maxOutOceans(player, 2);
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     maxOutOceans(player, 3);
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
-    expect(player.getProduction(Resources.ENERGY)).to.eq(1);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(player.production.energy).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 });

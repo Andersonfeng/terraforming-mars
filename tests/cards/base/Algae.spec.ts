@@ -1,35 +1,34 @@
 import {expect} from 'chai';
-import {Algae} from '../../../src/cards/base/Algae';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {Resources} from '../../../src/common/Resources';
+import {Algae} from '../../../src/server/cards/base/Algae';
+import {IGame} from '../../../src/server/IGame';
 import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
+import {TestPlayer} from '../../TestPlayer';
+import {testGame} from '../../TestGame';
 
-describe('Algae', function() {
-  let card : Algae; let player : Player; let game : Game;
+describe('Algae', () => {
+  let card: Algae;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Algae();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Can\'t play', function() {
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+  it('Can not play', () => {
+    expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     const oceanSpaces = game.board.getAvailableSpacesForOcean(player);
     for (let i = 0; i < 5; i++) {
       oceanSpaces[i].tile = {tileType: TileType.OCEAN};
     }
 
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    expect(card.canPlay(player)).is.true;
 
     card.play(player);
     expect(player.plants).to.eq(1);
-    expect(player.getProduction(Resources.PLANTS)).to.eq(2);
+    expect(player.production.plants).to.eq(2);
   });
 });

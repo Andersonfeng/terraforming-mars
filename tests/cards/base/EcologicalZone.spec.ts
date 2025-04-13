@@ -1,50 +1,55 @@
 import {expect} from 'chai';
-import {EcologicalZone} from '../../../src/cards/base/EcologicalZone';
-import {EcologyExperts} from '../../../src/cards/prelude/EcologyExperts';
-import {Game} from '../../../src/Game';
-import {SelectSpace} from '../../../src/inputs/SelectSpace';
+import {EcologicalZone} from '../../../src/server/cards/base/EcologicalZone';
+import {EcologyExperts} from '../../../src/server/cards/prelude/EcologyExperts';
+import {IGame} from '../../../src/server/IGame';
+import {SelectSpace} from '../../../src/server/inputs/SelectSpace';
 import {Phase} from '../../../src/common/Phase';
-import {Player} from '../../../src/Player';
 import {TileType} from '../../../src/common/TileType';
-import {TestPlayers} from '../../TestPlayers';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
-describe('EcologicalZone', function() {
-  let card : EcologicalZone; let player : Player; let game : Game;
+describe('EcologicalZone', () => {
+  let card: EcologicalZone;
+  let player: TestPlayer;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new EcologicalZone();
-    player = TestPlayers.BLUE.newPlayer();
-    const redPlayer = TestPlayers.RED.newPlayer();
-    game = Game.newInstance('foobar', [player, redPlayer], player);
+    [game, player] = testGame(2);
   });
 
-  it('Cannot play', function() {
+  it('Cannot play', () => {
     expect(card.canPlay(player)).is.not.true;
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
+    expect(card.canPlay(player)).is.false;
+
     const landSpace = game.board.getAvailableSpacesOnLand(player)[0];
-    game.addGreenery(player, landSpace.id);
+    game.addGreenery(player, landSpace);
+
     expect(card.canPlay(player)).is.true;
 
-    const action = card.play(player);
-    expect(action).instanceOf(SelectSpace);
+    cast(card.play(player), undefined);
+    runAllActions(game);
+    const selectSpace = cast(player.popWaitingFor(), SelectSpace);
 
-    const adjacentSpace = action.availableSpaces[0];
-    action.cb(adjacentSpace);
-    expect(adjacentSpace.tile && adjacentSpace.tile.tileType).to.eq(TileType.ECOLOGICAL_ZONE);
+    const adjacentSpace = selectSpace.spaces[0];
+    selectSpace.cb(adjacentSpace);
+    expect(adjacentSpace.tile?.tileType).to.eq(TileType.ECOLOGICAL_ZONE);
 
     card.onCardPlayed(player, card);
     expect(card.resourceCount).to.eq(2);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
     expect(adjacentSpace.adjacency?.bonus).eq(undefined);
   });
 
-  it('Should get triggered by EcoExperts if played together', function() {
+  it('Should get triggered by EcoExperts if played together', () => {
     game.phase = Phase.PRELUDES;
 
     const landSpace = game.board.getAvailableSpacesOnLand(player)[0];
-    game.addGreenery(player, landSpace.id);
+    game.addGreenery(player, landSpace);
 
     const ecoExpertCard = new EcologyExperts();
     player.playCard(ecoExpertCard);

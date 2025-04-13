@@ -1,48 +1,46 @@
 import {expect} from 'chai';
-import {HydrogenProcessingPlant} from '../../../src/cards/pathfinders/HydrogenProcessingPlant';
-import {Game} from '../../../src/Game';
+import {HydrogenProcessingPlant} from '../../../src/server/cards/pathfinders/HydrogenProcessingPlant';
+import {IGame} from '../../../src/server/IGame';
 import {TestPlayer} from '../../TestPlayer';
-import {TestPlayers} from '../../TestPlayers';
-import {TestingUtils} from '../../TestingUtils';
+import {addOcean, setOxygenLevel, testGame} from '../../TestingUtils';
 import {Units} from '../../../src/common/Units';
 
-describe('HydrogenProcessingPlant', function() {
+describe('HydrogenProcessingPlant', () => {
   let card: HydrogenProcessingPlant;
   let player: TestPlayer;
-  let game: Game;
+  let game: IGame;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new HydrogenProcessingPlant();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
     player.playedCards.push(card);
   });
 
-  it('canPlay', function() {
-    (game as any).oxygenLevel = 2;
-    expect(player.canPlayIgnoringCost(card)).is.false;
+  it('canPlay', () => {
+    setOxygenLevel(game, 2);
+    expect(card.canPlay(player)).is.false;
 
-    (game as any).oxygenLevel = 3;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    setOxygenLevel(game, 3);
+    expect(card.canPlay(player)).is.true;
   });
 
-  it('play', function() {
+  it('play', () => {
     game.increaseOxygenLevel(player, 1);
     game.increaseOxygenLevel(player, 1);
     game.increaseOxygenLevel(player, 1);
     expect(game.getOxygenLevel()).eq(3);
-    TestingUtils.addOcean(player);
-    TestingUtils.addOcean(player);
-    TestingUtils.addOcean(player);
-    TestingUtils.addOcean(player);
-    TestingUtils.addOcean(player);
-    TestingUtils.addOcean(player);
-    expect(player.getProductionForTest()).deep.eq(Units.EMPTY);
+    addOcean(player);
+    addOcean(player);
+    addOcean(player);
+    addOcean(player);
+    addOcean(player);
+    addOcean(player);
+    expect(player.production.asUnits()).deep.eq(Units.EMPTY);
 
     card.play(player);
 
     expect(game.getOxygenLevel()).eq(2);
-    expect(player.getProductionForTest()).deep.eq(Units.of({energy: 3}));
+    expect(player.production.asUnits()).deep.eq(Units.of({energy: 3}));
   });
 });
 

@@ -1,44 +1,46 @@
 import {expect} from 'chai';
-import {Psychrophiles} from '../../../src/cards/prelude/Psychrophiles';
-import {Game} from '../../../src/Game';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {Psychrophiles} from '../../../src/server/cards/prelude/Psychrophiles';
+import {IGame} from '../../../src/server/IGame';
+import {TestPlayer} from '../../TestPlayer';
+import {cast, runAllActions, setTemperature} from '../../TestingUtils';
+import {testGame} from '../../TestGame';
 
 describe('Psychrophiles', () => {
-  let card : Psychrophiles; let player : Player; let game : Game;
+  let card: Psychrophiles;
+  let player: TestPlayer;
+  let game: IGame;
 
   beforeEach(() => {
     card = new Psychrophiles();
-    player = TestPlayers.BLUE.newPlayer();
-    game = Game.newInstance('foobar', [player], player);
+    [game, player] = testGame(1);
   });
 
   it('Cannot play', () => {
-    (game as any).temperature = -18;
-    expect(player.canPlayIgnoringCost(card)).is.not.true;
+    setTemperature(game, -18);
+    expect(card.canPlay(player)).is.not.true;
   });
 
   it('Can play', () => {
-    (game as any).temperature = -20;
-    expect(player.canPlayIgnoringCost(card)).is.true;
+    setTemperature(game, -20);
+    expect(card.canPlay(player)).is.true;
   });
 
   it('Should play', () => {
-    expect(player.canPlayIgnoringCost(card)).is.true;
-    const action = card.play();
-    expect(action).is.undefined;
+    expect(card.canPlay(player)).is.true;
+    cast(card.play(player), undefined);
   });
 
   it('Can act', () => {
-    expect(card.canAct()).is.true;
+    expect(card.canAct(player)).is.true;
   });
 
   it('Should act', () => {
-    expect(player.getMicrobesCanSpend()).to.eq(0);
+    expect(player.getSpendable('microbes')).to.eq(0);
     player.playedCards.push(card);
 
     card.action(player);
+    runAllActions(game);
     expect(player.getCardsWithResources()).has.lengthOf(1);
-    expect(player.getMicrobesCanSpend()).to.eq(1);
+    expect(player.getSpendable('microbes')).to.eq(1);
   });
 });

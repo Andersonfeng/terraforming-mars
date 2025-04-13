@@ -1,26 +1,29 @@
 import {expect} from 'chai';
-import {Tardigrades} from '../../../src/cards/base/Tardigrades';
-import {Player} from '../../../src/Player';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {runAllActions} from '../../TestingUtils';
+import {Tardigrades} from '../../../src/server/cards/base/Tardigrades';
+import {TestPlayer} from '../../TestPlayer';
 
-describe('Tardigrades', function() {
-  let card : Tardigrades; let player : Player;
+describe('Tardigrades', () => {
+  let card: Tardigrades;
+  let player: TestPlayer;
 
-  beforeEach(function() {
+  beforeEach(() => {
     card = new Tardigrades();
-    player = TestPlayers.BLUE.newPlayer();
+    [/* game */, player] = testGame(1);
   });
 
-  it('Should play', function() {
+  it('Should play', () => {
     player.playedCards.push(card);
-    card.play();
+    card.play(player);
     player.addResourceTo(card, 7);
-    expect(card.getVictoryPoints()).to.eq(1);
+    expect(card.getVictoryPoints(player)).to.eq(1);
   });
 
-  it('Should act', function() {
+  it('Should act', () => {
     player.playedCards.push(card);
     card.action(player);
+    runAllActions(player.game);
     expect(card.resourceCount).to.eq(1);
   });
 });

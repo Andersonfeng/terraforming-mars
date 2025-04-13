@@ -1,21 +1,25 @@
 <template>
     <div class="cards-filter">
-        <h2 v-i18n>Cards to exclude from the game</h2>
+        <h2 v-i18n>{{ title }}</h2>
         <div class="cards-filter-results-cont" v-if="selectedCardNames.length">
             <div class="cards-filter-result" v-for="cardName in selectedCardNames" v-bind:key="cardName">
-                <label>{{ cardName }}<i class="create-game-expansion-icon expansion-icon-prelude" title="This card is prelude" v-if="isPrelude(cardName)"></i></label>
-                <Button size="small" type="close" @click="removeCard(cardName)" />
+                <label>{{ cardName }}
+                  <i class="create-game-expansion-icon expansion-icon-prelude" title="This card is prelude" v-if="isPrelude(cardName)"></i>
+                  <i class="create-game-expansion-icon expansion-icon-ceo" title="This card is CEO" v-if="isCEO(cardName)"></i>
+                </label>
+                <AppButton size="small" type="close" @click="removeCard(cardName)" />
             </div>
         </div>
         <div class="cards-filter-input">
             <div>
-                <input class="form-input" :placeholder="$t('Start typing the card name to exclude')" v-model="searchTerm" />
+                <input class="form-input" :placeholder="$t(this.hint)" v-model="searchTerm" />
             </div>
             <div class="cards-filter-suggest" v-if="foundCardNames.length">
                 <div class="cards-filter-suggest-item" v-for="cardName in foundCardNames" v-bind:key="cardName">
                     <a href="#" v-on:click.prevent="addCard(cardName)">
                       {{ cardName }}
                       <i class="create-game-expansion-icon expansion-icon-prelude" title="This card is prelude" v-if="isPrelude(cardName)"></i>
+                      <i class="create-game-expansion-icon expansion-icon-ceo" title="This card is CEO" v-if="isCEO(cardName)"></i>
                     </a>
                 </div>
             </div>
@@ -26,15 +30,16 @@
 <script lang="ts">
 import Vue from 'vue';
 import {CardName} from '@/common/cards/CardName';
-import Button from '@/client/components/common/Button.vue';
-import {byType, getCard, getCards, toName} from '@/client/cards/ClientCardManifest';
+import AppButton from '@/client/components/common/AppButton.vue';
+import {byType, getCard, getCards} from '@/client/cards/ClientCardManifest';
 import {CardType} from '@/common/cards/CardType';
+import {toName} from '@/common/utils/utils';
 
 const allItems: Array<CardName> = [
   ...getCards(byType(CardType.AUTOMATED)),
   ...getCards(byType(CardType.ACTIVE)),
   ...getCards(byType(CardType.EVENT)),
-  ...getCards(byType(CardType.PRELUDE)),
+  ...getCards(byType(CardType.CEO)),
 ].map(toName)
   .sort((a, b) => a.localeCompare(b));
 
@@ -46,18 +51,32 @@ interface CardsFilterModel {
 
 export default Vue.extend({
   name: 'CardsFilter',
-  props: {},
-  data() {
+  props: {
+    title: {
+      type: String,
+      required: true,
+    },
+    hint: {
+      type: String,
+      required: true,
+    },
+  },
+  data(): CardsFilterModel {
     return {
       selectedCardNames: [],
       foundCardNames: [],
       searchTerm: '',
-    } as CardsFilterModel;
+    };
   },
-  components: {Button},
+  components: {
+    AppButton,
+  },
   methods: {
     isPrelude(cardName: CardName) {
-      return getCard(cardName)?.cardType === CardType.PRELUDE;
+      return getCard(cardName)?.type === CardType.PRELUDE;
+    },
+    isCEO(cardName: CardName) {
+      return getCard(cardName)?.type === CardType.CEO;
     },
     removeCard(cardNameToRemove: CardName) {
       this.selectedCardNames = this.selectedCardNames.filter((curCardName) => curCardName !== cardNameToRemove).sort();

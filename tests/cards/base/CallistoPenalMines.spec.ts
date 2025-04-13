@@ -1,16 +1,14 @@
-
 import {expect} from 'chai';
-import {CallistoPenalMines} from '../../../src/cards/base/CallistoPenalMines';
-import {Resources} from '../../../src/common/Resources';
-import {TestPlayers} from '../../TestPlayers';
+import {testGame} from '../../TestGame';
+import {CallistoPenalMines} from '../../../src/server/cards/base/CallistoPenalMines';
+import {cast} from '../../TestingUtils';
 
-describe('CallistoPenalMines', function() {
-  it('Should play', function() {
+describe('CallistoPenalMines', () => {
+  it('Should play', () => {
     const card = new CallistoPenalMines();
-    const player = TestPlayers.BLUE.newPlayer();
-    const action = card.play(player);
-    expect(action).is.undefined;
-    expect(player.getProduction(Resources.MEGACREDITS)).to.eq(3);
-    expect(card.getVictoryPoints()).to.eq(2);
+    const [/* game */, player] = testGame(1);
+    cast(card.play(player), undefined);
+    expect(player.production.megacredits).to.eq(3);
+    expect(card.getVictoryPoints(player)).to.eq(2);
   });
 });
